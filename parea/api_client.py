@@ -5,7 +5,7 @@ import httpx
 
 class HTTPClient:
     _instance = None
-    base_url = "http://localhost:8000/api/parea/v1"
+    base_url = "https://www.optimusprompt.ai/api/parea/v1"
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
