@@ -1,7 +1,6 @@
 # type: ignore[attr-defined]
 """Parea python sdk"""
 
-import sys
 from importlib import metadata as importlib_metadata
 
 
