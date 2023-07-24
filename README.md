@@ -107,6 +107,7 @@ Building a new version of the application contains steps:
   with [`safety`](https://github.com/pyupio/safety) and [`bandit`](https://github.com/PyCQA/bandit)
 - Testing with [`pytest`](https://docs.pytest.org/en/latest/).
 -
+
 Ready-to-use [`.editorconfig`](https://github.com/parea-ai/parea-sdk/blob/master/.editorconfig), [`.dockerignore`](https://github.com/parea-ai/parea-sdk/blob/master/.dockerignore),
 and [`.gitignore`](https://github.com/parea-ai/parea-sdk/blob/master/.gitignore). You don't have to worry about those
 things.
@@ -131,8 +132,10 @@ things.
 ### Open source community features
 
 -
+
 Ready-to-use [Pull Requests templates](https://github.com/parea-ai/parea-sdk/blob/master/.github/PULL_REQUEST_TEMPLATE.md)
 and several [Issue templates](https://github.com/parea-ai/parea-sdk/tree/master/.github/ISSUE_TEMPLATE).
+
 - Files such as: `LICENSE`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, and `SECURITY.md` are generated automatically.
 - [`Stale bot`](https://github.com/apps/stale) that closes abandoned issues after a period of inactivity. (You will
   only [need to setup free plan](https://github.com/marketplace/stale)). Configuration
@@ -143,13 +146,13 @@ and several [Issue templates](https://github.com/parea-ai/parea-sdk/tree/master/
 ## Installation
 
 ```bash
-pip install -U parea-sdk
+pip install -U parea
 ```
 
 or install with `Poetry`
 
 ```bash
-poetry add parea-sdk
+poetry add parea
 ```
 
 ### Makefile usage
