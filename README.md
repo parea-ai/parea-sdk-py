@@ -18,13 +18,13 @@ Parea python sdk
 ## Installation
 
 ```bash
-pip install -U parea
+pip install -U parea-ai
 ```
 
 or install with `Poetry`
 
 ```bash
-poetry add parea
+poetry add parea-ai
 ```
 
 ## Getting Started
@@ -34,8 +34,8 @@ import os
 
 from dotenv import load_dotenv
 
-from parea.client import Parea
-from parea.schemas.models import Completion, UseDeployedPrompt, CompletionResponse, UseDeployedPromptResponse
+from parea_ai.client import Parea
+from parea_ai.schemas.models import Completion, UseDeployedPrompt, CompletionResponse, UseDeployedPromptResponse
 
 load_dotenv()
 
@@ -99,7 +99,7 @@ See [LICENSE](https://github.com/parea-ai/parea-sdk/blob/master/LICENSE) for mor
 
 ```bibtex
 @misc{parea-sdk,
-  author = {parea-ai},
+  author = {joel-parea-ai},
   title = {Parea python sdk},
   year = {2023},
   publisher = {GitHub},

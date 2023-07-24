@@ -1,7 +1,7 @@
 """Tests for hello function."""
 import pytest
 
-from parea.example import hello
+from parea_ai.example import hello
 
 
 @pytest.mark.parametrize(

@@ -1,7 +1,7 @@
 # This file contains values from Cookiecutter
 
 default_context:
-  project_name: "parea"
+  project_name: "parea-ai"
   project_description: "Parea python sdk"
   organization: "parea-ai"
   license: "Apache Software License 2.0"

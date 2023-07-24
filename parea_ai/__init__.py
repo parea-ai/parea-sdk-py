@@ -11,7 +11,7 @@
 
 from importlib import metadata as importlib_metadata
 
-from parea.client import Parea
+from parea_ai.client import Parea
 
 
 def get_version() -> str:
