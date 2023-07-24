@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 from enum import Enum
 
@@ -31,7 +31,6 @@ class ModelParams:
 
 @define
 class LLMInputs:
-    inputs: Optional[dict[str, Any]] = None
     model: Optional[str] = None
     provider: Optional[str] = None
     model_params: Optional[ModelParams] = None
@@ -42,7 +41,8 @@ class LLMInputs:
 
 @define
 class Completion:
-    llm_inputs: LLMInputs
+    inputs: Optional[dict[str, Any]] = None
+    llm_configuration: Optional[LLMInputs] = None
     end_user_identifier: Optional[str] = None
     deployment_id: Optional[str] = None
     name: Optional[str] = None
