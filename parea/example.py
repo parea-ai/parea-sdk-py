@@ -10,7 +10,8 @@ load_dotenv()
 
 p = Parea(api_key=os.getenv("API_KEY"))
 
-deployment_id = os.getenv("DEPLOYMENT_ID")
+# You will find this deployment_id in the Parea dashboard
+deployment_id = "p-qsefFeFEICnxqJ_yLjji"
 # Assuming my deployed prompt's message is:
 # {"role": "user", "content": "Write a hello world program using {{x}} and the {{y}} framework."}
 inputs = {"inputs": {"x": "Golang", "y": "Fiber"}}
