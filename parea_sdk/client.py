@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import os
 
@@ -9,10 +9,6 @@ load_dotenv()
 
 
 class HTTPClient:
-    """
-    A utility class for making HTTP requests.
-    """
-
     _instance = None
     base_url = os.getenv("PAREA_API_URL")
 

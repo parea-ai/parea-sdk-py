@@ -17,7 +17,7 @@ homepage = "https://github.com/parea-ai/parea-sdk"
 keywords = []  #! Update me
 
 # Pypi classifiers: https://pypi.org/classifiers/
-classifiers = [  #! Update me
+classifiers = [#! Update me
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
   "Operating System :: OS Independent",
@@ -32,26 +32,26 @@ classifiers = [  #! Update me
 [tool.poetry.dependencies]
 python = "^3.9"
 httpx = "^0.24.1"
-poetry-dotenv = "^0.4.0"
 python-dotenv = "^1.0.0"
+poetry-plugin-dotenv = "^0.5.1"
 
 [tool.poetry.dev-dependencies]
 bandit = "^1.7.1"
-black = {version = "^23.7.0", allow-prereleases = true}
+black = { version = "^23.7.0", allow-prereleases = true }
 darglint = "^1.8.1"
-isort = {extras = ["colors"], version = "^5.10.1"}
-mypy = "^0.910"
-mypy-extensions = "^0.4.3"
-pre-commit = "^2.15.0"
+isort = { extras = ["colors"], version = "^5.10.1" }
+mypy = "^1.4.1"
+mypy-extensions = "^1.0.0"
+pre-commit = "^3.3.3"
 pydocstyle = "^6.1.1"
 pylint = "^2.11.1"
-pytest = "^6.2.5"
-pyupgrade = "^2.29.1"
-safety = "^1.10.3"
-coverage = "^6.1.2"
+pytest = "^7.4.0"
+pyupgrade = "^3.9.0"
+safety = "^2.3.5"
+coverage = "^7.2.7"
 coverage-badge = "^1.1.0"
 pytest-html = "^3.1.1"
-pytest-cov = "^3.0.0"
+pytest-cov = "^4.1.0"
 
 [tool.black]
 # https://github.com/psf/black
@@ -118,7 +118,7 @@ warn_unused_ignores = true
 [tool.pytest.ini_options]
 # https://docs.pytest.org/en/6.2.x/customize.html#pyproject-toml
 # Directories that are not visited by pytest collector:
-norecursedirs =["hooks", "*.egg", ".eggs", "dist", "build", "docs", ".tox", ".git", "__pycache__"]
+norecursedirs = ["hooks", "*.egg", ".eggs", "dist", "build", "docs", ".tox", ".git", "__pycache__"]
 doctest_optionflags = ["NUMBER", "NORMALIZE_WHITESPACE", "IGNORE_EXCEPTION_DETAIL"]
 
 # Extra options:
