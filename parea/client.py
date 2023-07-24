@@ -1,7 +1,7 @@
 from attrs import asdict, define, field
 
-from parea_ai.api_client import HTTPClient
-from parea_ai.schemas.models import Completion, CompletionResponse, UseDeployedPrompt, UseDeployedPromptResponse
+from parea.api_client import HTTPClient
+from parea.schemas.models import Completion, CompletionResponse, UseDeployedPrompt, UseDeployedPromptResponse
 
 COMPLETION_ENDPOINT = "/completion"
 DEPLOYED_PROMPT_ENDPOINT = "/deployed-prompt"

@@ -34,8 +34,8 @@ import os
 
 from dotenv import load_dotenv
 
-from parea_ai.client import Parea
-from parea_ai.schemas.models import Completion, UseDeployedPrompt, CompletionResponse, UseDeployedPromptResponse
+from parea.client import Parea
+from parea.schemas.models import Completion, UseDeployedPrompt, CompletionResponse, UseDeployedPromptResponse
 
 load_dotenv()
 

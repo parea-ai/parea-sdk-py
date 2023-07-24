@@ -5,7 +5,8 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "parea-ai"
-version = "0.1.1a0"
+packages = [{ include = "parea" }]
+version = "0.1.1a1"
 description = "Parea python sdk"
 readme = "README.md"
 authors = ["joel-parea-ai <joel@parea.ai>"]
@@ -136,7 +137,7 @@ addopts = [
 source = ["tests"]
 
 [coverage.paths]
-source = "parea_ai"
+source = "parea"
 
 [coverage.run]
 branch = true
