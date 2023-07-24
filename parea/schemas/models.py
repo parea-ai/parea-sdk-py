@@ -1,4 +1,4 @@
-from typing import Any, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from enum import Enum
 
@@ -34,7 +34,6 @@ class LLMInputs:
     inputs: Optional[dict[str, Any]] = None
     model: Optional[str] = None
     provider: Optional[str] = None
-    is_azure: bool = False
     model_params: Optional[ModelParams] = None
     messages: Optional[list[Message]] = None
     functions: Optional[list[Any]] = None
@@ -47,13 +46,8 @@ class Completion:
     end_user_identifier: Optional[str] = None
     deployment_id: Optional[str] = None
     name: Optional[str] = None
-    eval_metric_id: Optional[int] = None
     metadata: Optional[dict] = None
-    provider_api_key: Optional[str] = None
-    stream: bool = False
     cache: bool = True
-    retry: bool = False
-    fallback_strategy: Optional[list[str]] = None
     log_omit_inputs: bool = False
     log_omit_outputs: bool = False
     log_omit: bool = False
@@ -98,5 +92,4 @@ class UseDeployedPromptResponse:
     prompt: Optional[Prompt] = None
     model: Optional[str] = None
     provider: Optional[str] = None
-    is_azure: bool = False
     model_params: Optional[dict[str, Any]] = None
