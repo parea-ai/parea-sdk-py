@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 from enum import Enum
 
@@ -45,7 +45,7 @@ class LLMInputs:
 class Completion:
     llm_inputs: LLMInputs
     end_user_identifier: Optional[str] = None
-    prompt_deployment_id: Optional[str] = None
+    deployment_id: Optional[str] = None
     name: Optional[str] = None
     eval_metric_id: Optional[int] = None
     metadata: Optional[dict] = None

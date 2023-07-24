@@ -8,11 +8,15 @@ from parea.schemas.models import Completion, UseDeployedPrompt
 
 load_dotenv()
 
-p = Parea(api_key=os.getenv("DEV_API_KEY"))
+p = Parea(api_key=os.getenv("API_KEY"))
 
-deployment_id = os.getenv("DEV_DEPLOYMENT_ID")
+deployment_id = os.getenv("DEPLOYMENT_ID")
+# Assuming my deployed prompt's message is:
+# {"role": "user", "content": "Write a hello world program using {{x}} and the {{y}} framework."}
 inputs = {"inputs": {"x": "Golang", "y": "Fiber"}}
-test_completion = Completion(**{"prompt_deployment_id": deployment_id, "llm_inputs": inputs, "metadata": {"purpose": "testing"}})
+test_completion = Completion(**{"deployment_id": deployment_id, "llm_inputs": inputs, "metadata": {"purpose": "testing"}})
+# By passing in my inputs, instead of unfilled variables {{x}} and {{y}}, we will also have the filled in prompt:
+# {"role": "user", "content": "Write a hello world program using Golang and the Fiber framework."}
 test_get_prompt = UseDeployedPrompt(deployment_id, inputs)
 
 
