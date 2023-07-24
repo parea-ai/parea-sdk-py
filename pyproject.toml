@@ -32,8 +32,8 @@ classifiers = [  #! Update me
 [tool.poetry.dependencies]
 python = "^3.9"
 httpx = "^0.24.1"
-poetry-dotenv = "^0.4.0"
 python-dotenv = "^1.0.0"
+poetry-plugin-dotenv = "^0.5.1"
 
 [tool.poetry.dev-dependencies]
 bandit = "^1.7.1"
