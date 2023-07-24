@@ -4,7 +4,7 @@ requires = ["poetry_core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "parea-sdk"
+name = "parea"
 version = "0.1.0"
 description = "Parea python sdk"
 readme = "README.md"
@@ -14,17 +14,15 @@ repository = "https://github.com/parea-ai/parea-sdk"
 homepage = "https://github.com/parea-ai/parea-sdk"
 
 # Keywords description https://python-poetry.org/docs/pyproject/#keywords
-keywords = []  #! Update me
+keywords = []
 
 # Pypi classifiers: https://pypi.org/classifiers/
-classifiers = [#! Update me
-  "Development Status :: 3 - Alpha",
-  "Intended Audience :: Developers",
-  "Operating System :: OS Independent",
-  "Topic :: Software Development :: Libraries :: Python Modules",
+classifiers = [
   "License :: OSI Approved :: Apache Software License",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
 ]
 
 
@@ -133,7 +131,7 @@ addopts = [
 source = ["tests"]
 
 [coverage.paths]
-source = "parea-sdk"
+source = "parea"
 
 [coverage.run]
 branch = true

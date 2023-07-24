@@ -80,6 +80,7 @@ cmake-build-*/
 out/
 
 # mpeltonen/sbt-idea plugin
+.idea
 .idea_modules/
 
 # JIRA plugin
