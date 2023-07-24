@@ -3,7 +3,7 @@ import os
 
 from dotenv import load_dotenv
 
-from parea.parea import Parea
+from parea.client import Parea
 from parea.schemas.models import Completion, UseDeployedPrompt
 
 load_dotenv()

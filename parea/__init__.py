@@ -1,7 +1,17 @@
 # type: ignore[attr-defined]
-"""Parea python sdk"""
+# flake8: noqa
+
+"""
+    Parea API SDK
+
+    The Parea SDK allows you to interact with Parea from your product or service.
+    To install the official [Python SDK](https://pypi.org/project/parea/),
+    run the following command:  ```bash pip install parea ```.
+"""
 
 from importlib import metadata as importlib_metadata
+
+from parea.client import Parea
 
 
 def get_version() -> str:
