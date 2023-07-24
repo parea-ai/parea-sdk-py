@@ -41,8 +41,8 @@ class LLMInputs:
 
 @define
 class Completion:
-    inputs: Optional[dict[str, Any]] = None
-    llm_configuration: Optional[LLMInputs] = None
+    llm_inputs: Optional[dict[str, Any]] = None
+    llm_configuration: LLMInputs = LLMInputs()
     end_user_identifier: Optional[str] = None
     deployment_id: Optional[str] = None
     name: Optional[str] = None
@@ -73,7 +73,7 @@ class CompletionResponse:
 @define
 class UseDeployedPrompt:
     deployment_id: str
-    inputs: Optional[dict[str, Any]] = None
+    llm_inputs: Optional[dict[str, Any]] = None
 
 
 @define

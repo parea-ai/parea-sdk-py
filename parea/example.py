@@ -14,15 +14,15 @@ p = Parea(api_key=os.getenv("API_KEY"))
 deployment_id = os.getenv("DEPLOYMENT_ID")
 # Assuming your deployed prompt's message is:
 # {"role": "user", "content": "Write a hello world program using {{x}} and the {{y}} framework."}
-inputs = {"inputs": {"x": "Golang", "y": "Fiber"}}
+llm_inputs = {"x": "Golang", "y": "Fiber"}
 
 # You can easily unpack a dictionary into an attrs class
-test_completion = Completion(**{"deployment_id": deployment_id, "llm_inputs": inputs, "metadata": {"purpose": "testing"}})
+test_completion = Completion(**{"deployment_id": deployment_id, "llm_inputs": llm_inputs, "metadata": {"purpose": "testing"}})
 
 # By passing in my inputs, in addition to the raw message with unfilled variables {{x}} and {{y}},
 # you we will also get the filled-in prompt:
 # {"role": "user", "content": "Write a hello world program using Golang and the Fiber framework."}
-test_get_prompt = UseDeployedPrompt(deployment_id=deployment_id, inputs=inputs)
+test_get_prompt = UseDeployedPrompt(deployment_id=deployment_id, llm_inputs=llm_inputs)
 
 
 def main():
