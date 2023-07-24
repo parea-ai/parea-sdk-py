@@ -3,8 +3,8 @@ import os
 
 from dotenv import load_dotenv
 
-from parea_sdk.parea import Parea
-from parea_sdk.schemas.models import Completion, UseDeployedPrompt
+from parea.parea import Parea
+from parea.schemas.models import Completion, UseDeployedPrompt
 
 load_dotenv()
 
