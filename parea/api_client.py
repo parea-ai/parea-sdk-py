@@ -5,7 +5,7 @@ import httpx
 
 class HTTPClient:
     _instance = None
-    base_url = "https://www.optimusprompt.ai/api/parea/v1"
+    base_url = "https://optimus-prompt-backend.vercel.app/api/parea/v1"
     api_key = None
 
     def __new__(cls, *args, **kwargs):
