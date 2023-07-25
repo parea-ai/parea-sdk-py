@@ -5,7 +5,8 @@ import httpx
 
 class HTTPClient:
     _instance = None
-    base_url = "http://localhost:8000/api/parea/v1"
+    base_url = "https://www.optimusprompt.ai/api/parea/v1"
+    api_key = None
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
@@ -14,18 +15,21 @@ class HTTPClient:
             cls._instance.async_client = httpx.AsyncClient(base_url=cls.base_url, timeout=60 * 3.0)
         return cls._instance
 
+    def set_api_key(self, api_key: str):
+        self.api_key = api_key
+
     def request(
         self,
         method: str,
         endpoint: str,
         data: Optional[dict[str, Any]] = None,
         params: Optional[dict[str, Any]] = None,
-        authorization: Optional[str] = None,
+        api_key: Optional[str] = None,
     ) -> httpx.Response:
         """
         Makes an HTTP request to the specified endpoint.
         """
-        headers = {"Authorization": f"Bearer {authorization}"} if authorization else None
+        headers = {"x-api-key": self.api_key} if self.api_key else api_key
         response = self.sync_client.request(method, endpoint, json=data, headers=headers, params=params)
         response.raise_for_status()
         return response
@@ -36,12 +40,12 @@ class HTTPClient:
         endpoint: str,
         data: Optional[dict[str, Any]] = None,
         params: Optional[dict[str, Any]] = None,
-        authorization: Optional[str] = None,
+        api_key: Optional[str] = None,
     ) -> httpx.Response:
         """
         Makes an asynchronous HTTP request to the specified endpoint.
         """
-        headers = {"Authorization": f"Bearer {authorization}"} if authorization else None
+        headers = {"x-api-key": self.api_key} if self.api_key else api_key
         response = await self.async_client.request(method, endpoint, json=data, headers=headers, params=params)
         response.raise_for_status()
         return response

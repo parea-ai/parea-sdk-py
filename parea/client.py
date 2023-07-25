@@ -12,12 +12,14 @@ class Parea:
     api_key: str = field(init=True, default="")
     _client: HTTPClient = field(init=False, default=HTTPClient())
 
+    def __attrs_post_init__(self):
+        self._client.set_api_key(self.api_key)
+
     def completion(self, data: Completion) -> CompletionResponse:
         r = self._client.request(
             "POST",
             COMPLETION_ENDPOINT,
             data=asdict(data),
-            authorization=self.api_key,
         )
         return CompletionResponse(**r.json())
 
@@ -26,7 +28,6 @@ class Parea:
             "POST",
             COMPLETION_ENDPOINT,
             data=asdict(data),
-            authorization=self.api_key,
         )
         return CompletionResponse(**r.json())
 
@@ -35,7 +36,6 @@ class Parea:
             "POST",
             DEPLOYED_PROMPT_ENDPOINT,
             data=asdict(data),
-            authorization=self.api_key,
         )
         return UseDeployedPromptResponse(**r.json())
 
@@ -44,6 +44,5 @@ class Parea:
             "POST",
             DEPLOYED_PROMPT_ENDPOINT,
             data=asdict(data),
-            authorization=self.api_key,
         )
         return UseDeployedPromptResponse(**r.json())
