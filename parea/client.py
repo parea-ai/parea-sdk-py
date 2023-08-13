@@ -1,10 +1,13 @@
+import uuid
+
 from attrs import asdict, define, field
 
 from parea.api_client import HTTPClient
-from parea.schemas.models import Completion, CompletionResponse, UseDeployedPrompt, UseDeployedPromptResponse
+from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, UseDeployedPrompt, UseDeployedPromptResponse
 
 COMPLETION_ENDPOINT = "/completion"
 DEPLOYED_PROMPT_ENDPOINT = "/deployed-prompt"
+RECORD_FEEDBACK_ENDPOINT = "/feedback"
 
 
 @define
@@ -46,3 +49,15 @@ class Parea:
             data=asdict(data),
         )
         return UseDeployedPromptResponse(**r.json())
+
+    async def record_feedback(self, data: FeedbackRequest) -> None:
+        await self._client.request_async(
+            "POST",
+            RECORD_FEEDBACK_ENDPOINT,
+            data=asdict(data),
+        )
+
+
+def gen_trace_id() -> str:
+    """Generate a unique trace id for each chain of requests"""
+    return str(uuid.uuid4())
