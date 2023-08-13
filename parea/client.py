@@ -50,7 +50,14 @@ class Parea:
         )
         return UseDeployedPromptResponse(**r.json())
 
-    async def record_feedback(self, data: FeedbackRequest) -> None:
+    def record_feedback(self, data: FeedbackRequest) -> None:
+        self._client.request(
+            "POST",
+            RECORD_FEEDBACK_ENDPOINT,
+            data=asdict(data),
+        )
+
+    async def arecord_feedback(self, data: FeedbackRequest) -> None:
         await self._client.request_async(
             "POST",
             RECORD_FEEDBACK_ENDPOINT,
