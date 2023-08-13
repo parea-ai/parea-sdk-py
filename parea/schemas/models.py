@@ -2,7 +2,7 @@ from typing import Any, Optional, Union
 
 from enum import Enum
 
-from attrs import define
+from attrs import define, field, validators
 
 
 class Role(str, Enum):
@@ -41,12 +41,16 @@ class LLMInputs:
 
 @define
 class Completion:
+    trace_id: Optional[str] = None
+    trace_name: Optional[str] = None
     llm_inputs: Optional[dict[str, Any]] = None
     llm_configuration: LLMInputs = LLMInputs()
     end_user_identifier: Optional[str] = None
     deployment_id: Optional[str] = None
     name: Optional[str] = None
     metadata: Optional[dict] = None
+    tags: Optional[list[str]] = None
+    target: Optional[str] = None
     cache: bool = True
     log_omit_inputs: bool = False
     log_omit_outputs: bool = False
@@ -55,6 +59,7 @@ class Completion:
 
 @define
 class CompletionResponse:
+    inference_id: str
     content: str
     latency: float
     input_tokens: int
@@ -67,6 +72,7 @@ class CompletionResponse:
     status: str
     start_timestamp: str
     end_timestamp: str
+    trace_id: Optional[str] = None
     error: Optional[str] = None
 
 
@@ -93,3 +99,12 @@ class UseDeployedPromptResponse:
     model: Optional[str] = None
     provider: Optional[str] = None
     model_params: Optional[dict[str, Any]] = None
+
+
+@define
+class FeedbackRequest:
+    score: float = field(validator=[validators.ge(0), validators.le(1)])
+    trace_id: Optional[str] = None
+    inference_id: Optional[str] = None
+    name: Optional[str] = None
+    target: Optional[str] = None
