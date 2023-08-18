@@ -38,6 +38,7 @@ httpx = "^0.24.1"
 python-dotenv = "^1.0.0"
 poetry-plugin-dotenv = "^0.5.1"
 pyupgrade = "^3.9.0"
+jupyter = "^1.0.0"
 
 [tool.poetry.dev-dependencies]
 bandit = "^1.7.1"
