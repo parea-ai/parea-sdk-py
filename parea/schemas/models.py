@@ -108,3 +108,8 @@ class FeedbackRequest:
     inference_id: Optional[str] = None
     name: Optional[str] = None
     target: Optional[str] = None
+
+
+@define
+class LogRequest:
+    pass

@@ -3,11 +3,13 @@ import uuid
 from attrs import asdict, define, field
 
 from parea.api_client import HTTPClient
-from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, UseDeployedPrompt, UseDeployedPromptResponse
+from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, UseDeployedPrompt, \
+    UseDeployedPromptResponse, LogRequest
 
 COMPLETION_ENDPOINT = "/completion"
 DEPLOYED_PROMPT_ENDPOINT = "/deployed-prompt"
 RECORD_FEEDBACK_ENDPOINT = "/feedback"
+LOG_ENDPOINT = "/log"
 
 
 @define
@@ -61,6 +63,20 @@ class Parea:
         await self._client.request_async(
             "POST",
             RECORD_FEEDBACK_ENDPOINT,
+            data=asdict(data),
+        )
+
+    def log(self, data: LogRequest) -> None:
+        self._client.request(
+            "POST",
+            LOG_ENDPOINT,
+            data=asdict(data),
+        )
+
+    async def alog(self, data: LogRequest) -> None:
+        await self._client.request_async(
+            "POST",
+            LOG_ENDPOINT,
             data=asdict(data),
         )
 
