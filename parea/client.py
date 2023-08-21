@@ -3,8 +3,7 @@ import uuid
 from attrs import asdict, define, field
 
 from parea.api_client import HTTPClient
-from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, UseDeployedPrompt, \
-    UseDeployedPromptResponse, LogRequest
+from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, LogRequest, UseDeployedPrompt, UseDeployedPromptResponse
 
 COMPLETION_ENDPOINT = "/completion"
 DEPLOYED_PROMPT_ENDPOINT = "/deployed-prompt"
