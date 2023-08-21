@@ -21,7 +21,6 @@ class Message:
 
 @define
 class ModelParams:
-    model: str
     temp: float = 0.5
     top_p: float = 1.0
     frequency_penalty: float = 0.0
@@ -112,4 +111,32 @@ class FeedbackRequest:
 
 @define
 class LogRequest:
-    pass
+    inference_id: Optional[str] = None
+    trace_id: Optional[str] = None
+    trace_name: Optional[str] = None
+    end_user_identifier: Optional[str] = None
+    error: Optional[str] = None
+    status: Optional[str] = None
+
+    start_timestamp: str = ""
+    end_timestamp: str = ""
+    duration: float = 0.0
+
+    deployment_id: Optional[str] = None
+    name: Optional[str] = None
+    evaluation_metrics_ids: Optional[list[int]] = None
+    metadata: Optional[dict] = None
+    cache_hit: bool = False
+    target: Optional[str] = None
+    tags: Optional[list[str]] = None
+
+    llm_inputs: Optional[dict[str, Any]] = None
+    llm_configuration: LLMInputs = LLMInputs()
+
+    output: Optional[str] = ""
+    latency: Optional[float] = 0.0
+    input_tokens: Optional[int] = 0
+    output_tokens: Optional[int] = 0
+    total_tokens: Optional[int] = 0
+    cost: Optional[float] = None
+    feedback_score: Optional[float] = None
