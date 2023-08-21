@@ -141,8 +141,6 @@ def main():
 
 async def main_async():
   await p.alog(data=log_request)
-
-
 ```
 
 
