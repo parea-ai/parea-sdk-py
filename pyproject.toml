@@ -39,6 +39,7 @@ python-dotenv = "^1.0.0"
 poetry-plugin-dotenv = "^0.5.1"
 pyupgrade = "^3.9.0"
 jupyter = "^1.0.0"
+pydantic = "^2.2.1"
 
 [tool.poetry.dev-dependencies]
 bandit = "^1.7.1"
@@ -57,6 +58,8 @@ coverage = "^7.2.7"
 coverage-badge = "^1.1.0"
 pytest-html = "^3.1.1"
 pytest-cov = "^4.1.0"
+pydantic = "^2.2.1"
+openai = "^0.27.8"
 
 [tool.black]
 # https://github.com/psf/black
