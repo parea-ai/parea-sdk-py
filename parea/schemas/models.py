@@ -21,7 +21,6 @@ class Message:
 
 @define
 class ModelParams:
-    model: str
     temp: float = 0.5
     top_p: float = 1.0
     frequency_penalty: float = 0.0

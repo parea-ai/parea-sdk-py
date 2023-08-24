@@ -38,7 +38,7 @@ from parea.schemas.models import Completion, UseDeployedPrompt, CompletionRespon
 
 load_dotenv()
 
-p = Parea(api_key=os.getenv("API_KEY"))
+p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
 # You will find this deployment_id in the Parea dashboard
 deployment_id = '<DEPLOYMENT_ID>'
@@ -77,6 +77,72 @@ async def main_async():
   print("\n\n")
   print(deployed_prompt)
 ```    
+
+
+### Logging results from LLM providers
+
+```python
+import os
+
+from dotenv import load_dotenv
+
+import openai
+from parea import Parea
+from parea.schemas.models import LogRequest
+
+load_dotenv()
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
+p = Parea(api_key=os.getenv("PAREA_API_KEY"))
+
+
+# define your OpenAI call as you would normally
+x = "Golang"
+y = "Fiber"
+inputs = {"x": x, "y": y}
+messages = [
+  {"role": "user", "content": f"Write a hello world program using {x} and the {y} framework."},
+]
+model = "gpt-3.5-turbo"
+model_params = {
+  "temperature": 0.7,
+  "top_p": 1.0,
+}
+completion = openai.ChatCompletion.create(
+  model=model,
+  messages=messages,
+  **model_params
+)
+output = completion.choices[0].message['content']
+
+# the LogRequest schema
+log_request: LogRequest = LogRequest(
+  status="success",
+  name='Test Log',
+  llm_inputs={
+    "x": x,
+    "y": y,
+  },
+  llm_configuration={
+    'model': model,
+    'messages': messages,
+    'model_params': model_params,
+  },
+  output=output,
+  input_tokens=completion.usage['prompt_tokens'],
+  output_tokens=completion.usage['completion_tokens'],
+  total_tokens=completion.usage['total_tokens'],
+)
+
+
+def main():
+  p.log(data=log_request)
+
+
+async def main_async():
+  await p.alog(data=log_request)
+```
+
 
 ### Open source community features
 
