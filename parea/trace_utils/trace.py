@@ -1,6 +1,5 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
-import asyncio
 import contextvars
 import inspect
 import json
@@ -44,7 +43,6 @@ def trace_insert(data: dict[str, Any]):
     current_trace_data: TraceLog = trace_data.get()[current_trace_id]
 
     for key, new_value in data.items():
-        print(key, new_value)
         existing_value = current_trace_data.__getattribute__(key)
         current_trace_data.__setattr__(key, merge(existing_value, new_value) if existing_value else new_value)
 
@@ -135,67 +133,3 @@ def traceable(
         return decorator(func)
 
     return decorator
-
-
-@traceable
-def run_child1(x):
-    return 1 + x
-
-
-@traceable
-def run_child2(y):
-    return run_grand_child1(y) + y
-
-
-@traceable
-def run_grand_child1(z):
-    # Add metadata to the trace data for this function
-    trace_insert({"metadata": {"internal": True, "tokens": 3}})
-    return 3 * z
-
-
-@traceable
-def parent(x, y):
-    answer1 = run_child1(x)
-    answer2 = run_child2(y)
-    return (answer1 + answer2) / 2
-
-
-@traceable
-def parent2(x, y):
-    return (x + y) / 2
-
-
-@traceable
-async def arun_child1(x):
-    await asyncio.sleep(1)  # simulate IO-bound operation
-    return 1 + x
-
-
-@traceable
-async def arun_child2(y):
-    res = await arun_grand_child1(y)
-    return res + y
-
-
-@traceable
-async def arun_grand_child1(z):
-    await asyncio.sleep(1)  # simulate IO-bound operation
-    current_trace_id = trace_context.get()[-1]
-    trace_data.get()[current_trace_id]["metadata"] = {
-        "internal": True,
-        "tokens": 3,
-    }
-    return 3 * z
-
-
-@traceable
-async def aparent(x, y):
-    answer1 = await arun_child1(x)
-    answer2 = await arun_child2(y)
-    return (answer1 + answer2) / 2
-
-
-@traceable
-async def aparent2(x, y):
-    return (x + y) / 2

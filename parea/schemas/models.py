@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 from enum import Enum
 
@@ -137,7 +137,7 @@ class TraceLog:
     # metrics filled from either decorator or completion
     end_timestamp: Optional[str] = None
     end_user_identifier: Optional[str] = None
-    metadata: Optional[dict[str, str]] = None
+    metadata: Optional[dict[str, Any]] = None
     target: Optional[str] = None
     tags: Optional[list[str]] = None
     inputs: Optional[dict[str, str]] = None

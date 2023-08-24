@@ -1,3 +1,4 @@
+import asyncio
 import os
 from datetime import datetime
 
@@ -5,7 +6,7 @@ from dotenv import load_dotenv
 
 from parea.client import Parea
 from parea.schemas.models import Completion, CompletionResponse, UseDeployedPrompt, UseDeployedPromptResponse
-from parea.trace_utils.trace import traceable
+from parea.trace_utils.trace import trace_insert, traceable
 
 load_dotenv()
 
@@ -42,6 +43,78 @@ def main(llm_inputs, metadata):
 #
 # def hello(name: str) -> str:
 #     return f"Hello {name}!"
+
+
+@traceable
+def run_child1(x):
+    return 1 + x
+
+
+@traceable
+def run_child2(y):
+    return run_grand_child1(y) + y
+
+
+@traceable
+def run_grand_child1(z):
+    # Add metadata to the trace data for this function
+    trace_insert({"metadata": {"internal": True, "tokens": 3}})
+    return 3 * z
+
+
+@traceable
+def parent(x, y):
+    answer1 = run_child1(x)
+    answer2 = run_child2(y)
+    return (answer1 + answer2) / 2
+
+
+@traceable
+def parent2(x, y):
+    return (x + y) / 2
+
+
+@traceable
+async def arun_child1(x):
+    await asyncio.sleep(1)  # simulate IO-bound operation
+    return 1 + x
+
+
+@traceable
+async def arun_child2(y):
+    res = await arun_grand_child1(y)
+    return res + y
+
+
+@traceable
+async def arun_grand_child1(z):
+    await asyncio.sleep(1)  # simulate IO-bound operation
+    trace_insert({"metadata": {"internal": True, "tokens": 3}})
+    return 3 * z
+
+
+@traceable
+async def aparent(x, y):
+    answer1 = await arun_child1(x)
+    answer2 = await arun_child2(y)
+    return (answer1 + answer2) / 2
+
+
+@traceable
+async def aparent2(x, y):
+    return (x + y) / 2
+
+
+def retester_main():
+    parent(6, 2)
+    parent(3, 4)
+    parent2(3, 12)
+
+
+async def atester_main():
+    await aparent(6, 2)
+    await aparent(3, 4)
+    await aparent2(3, 12)
 
 
 @traceable
@@ -92,19 +165,8 @@ def argument_chain(query: str, additional_description: str = "") -> str:
 
 
 if __name__ == "__main__":
-    result = argument_chain(
-        "Whether sunshine is good for you.",
-        additional_description="Provide a concise, few sentence argument on why sunshine is good for you.",
-    )
-
-
-# if __name__ == "__main__":
-#     # Assuming your deployed prompt's message is:
-#     # {"role": "user", "content": "Write a hello world program using {{x}} and the {{y}} framework."}
-#     llm_inputs = {"x": "Golang", "y": "Fiber"}
-#     metadata= {"purpose": "testing"}
-#     completion_response, deployed_prompt = main(llm_inputs, metadata)
-#     print(completion_response)
-#     # print("\n\n")
-#     # print(deployed_prompt)
-#     # asyncio.run(main_async())
+    # result = argument_chain(
+    #     "Whether sunshine is good for you.",
+    #     additional_description="Provide a concise, few sentence argument on why sunshine is good for you.",
+    # )
+    retester_main()
