@@ -38,8 +38,12 @@ def merge(old, new):
     return new
 
 
+def get_current_trace_id():
+    return trace_context.get()[-1]
+
+
 def trace_insert(data: dict[str, Any]):
-    current_trace_id = trace_context.get()[-1]
+    current_trace_id = get_current_trace_id()
     current_trace_data: TraceLog = trace_data.get()[current_trace_id]
 
     for key, new_value in data.items():
@@ -47,7 +51,7 @@ def trace_insert(data: dict[str, Any]):
         current_trace_data.__setattr__(key, merge(existing_value, new_value) if existing_value else new_value)
 
 
-def traceable(
+def trace(
     name: Optional[str] = None,
     tags: Optional[list[str]] = None,
     metadata: Optional[dict[str, Any]] = None,

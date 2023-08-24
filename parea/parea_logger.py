@@ -14,7 +14,6 @@ class PareaLogger:
         self._client = client
 
     def record_log(self, data: TraceLog) -> None:
-        print(f"Logging to database: {data}")
         self._client.request(
             "POST",
             LOG_ENDPOINT,
