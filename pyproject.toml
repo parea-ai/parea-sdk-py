@@ -58,7 +58,6 @@ coverage-badge = "^1.1.0"
 pytest-html = "^3.1.1"
 pytest-cov = "^4.1.0"
 pydantic = "^2.2.1"
-openai = "^0.27.8"
 
 [tool.black]
 # https://github.com/psf/black
