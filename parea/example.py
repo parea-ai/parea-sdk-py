@@ -137,6 +137,10 @@ def critic(argument: str) -> str:
         Completion(
             deployment_id="p-_4w8th0eJlWAx9g8g20Ov",
             llm_inputs={"argument": argument},
+            end_user_identifier="user_1",
+            metadata={"githash": "e38f04c83"},
+            tags=["tutorial"],
+            target="you're right, i give up",
         )
     ).content
 
@@ -165,8 +169,8 @@ def argument_chain(query: str, additional_description: str = "") -> str:
 
 
 if __name__ == "__main__":
-    # result = argument_chain(
-    #     "Whether sunshine is good for you.",
-    #     additional_description="Provide a concise, few sentence argument on why sunshine is good for you.",
-    # )
-    retester_main()
+    result = argument_chain(
+        "Whether sunshine is good for you.",
+        additional_description="Provide a concise, few sentence argument on why sunshine is good for you.",
+    )
+    # retester_main()
