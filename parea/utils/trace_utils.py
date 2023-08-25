@@ -97,32 +97,42 @@ def trace(
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
             trace_id = init_trace(func.__name__, args, kwargs, func)
+            result = None
             try:
                 result = await func(*args, **kwargs)
-                end_time = time.time()
-                trace_data.get()[trace_id].end_timestamp = to_date_and_time_string(end_time)
+                # end_time = time.time()
+                # trace_data.get()[trace_id].end_timestamp = to_date_and_time_string(end_time)
                 output = asdict(result) if isinstance(result, CompletionResponse) else result
                 trace_data.get()[trace_id].output = json.dumps(output)
             except Exception as e:
                 logger.exception(f"Error occurred in function {func.__name__}")
-                raise e
+                trace_data.get()[trace_id].error = str(e)
+                # trace_data.get()[trace_id].status = "error"
+                # raise e
             finally:
+                end_time = time.time()
+                trace_data.get()[trace_id].end_timestamp = to_date_and_time_string(end_time)
                 cleanup_trace(trace_id)
             return result
 
         @wraps(func)
         def wrapper(*args, **kwargs):
             trace_id = init_trace(func.__name__, args, kwargs, func)
+            result = None
             try:
                 result = func(*args, **kwargs)
-                end_time = time.time()
-                trace_data.get()[trace_id].end_timestamp = to_date_and_time_string(end_time)
+                # end_time = time.time()
+                # trace_data.get()[trace_id].end_timestamp = to_date_and_time_string(end_time)
                 output = asdict(result) if isinstance(result, CompletionResponse) else result
                 trace_data.get()[trace_id].output = json.dumps(output)
             except Exception as e:
                 logger.exception(f"Error occurred in function {func.__name__}")
-                raise e
+                trace_data.get()[trace_id].error = str(e)
+                # trace_data.get()[trace_id].status = "error"
+                # raise e
             finally:
+                end_time = time.time()
+                trace_data.get()[trace_id].end_timestamp = to_date_and_time_string(end_time)
                 cleanup_trace(trace_id)
             return result
 
