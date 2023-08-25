@@ -1,5 +1,3 @@
-from typing import Dict, List
-
 import os
 import time
 from datetime import datetime
@@ -15,12 +13,22 @@ load_dotenv()
 p = Parea(api_key=os.getenv("DEV_API_KEY"))
 
 
+LIMIT = 10
+
+
+def dump_task(task):
+    d = ""
+    for tasklet in task:
+        d += f"\n{tasklet.get('task_name','')}"
+    d = d.strip()
+    return d
+
+
 @trace
 def call_openai(
     data: list[dict],
     model: str = "gpt-3.5-turbo",
     temperature: float = 0.0,
-    metadata: dict = None,
 ) -> CompletionResponse:
     return p.completion(
         data=Completion(
@@ -29,8 +37,7 @@ def call_openai(
                 provider="openai",
                 model_params=ModelParams(temp=temperature),
                 messages=[Message(**d) for d in data],
-            ),
-            metadata=metadata,
+            )
         )
     )
 
@@ -69,7 +76,7 @@ def refiner(query: str, additional_description: str, current_arg: str, criticism
         [
             {
                 "role": "system",
-                "content": f"You are a debater making an argument on a topic." f"{additional_description}" f" The current time is {datetime.now()}",
+                "content": f"You are a debater making an argument on a topic. {additional_description}. " f"The current time is {datetime.now()}",
             },
             {"role": "user", "content": f"The discussion topic is {query}"},
             {"role": "assistant", "content": current_arg},
@@ -103,7 +110,7 @@ def refiner2(query: str, additional_description: str, current_arg: str, criticis
         [
             {
                 "role": "system",
-                "content": f"You are a debater making an argument on a topic." f"{additional_description}" f" The current time is {datetime.now()}",
+                "content": f"You are a debater making an argument on a topic. {additional_description}. The current time is {datetime.now()}",
             },
             {"role": "user", "content": f"The discussion topic is {query}"},
             {"role": "assistant", "content": current_arg},
@@ -126,23 +133,12 @@ def argument_chain3(query: str, additional_description: str = "") -> CompletionR
     return refiner2(query, additional_description, argument, criticism)
 
 
-LIMIT = 10
-
-
-def dump_task(task):
-    d = ""  # init
-    for tasklet in task:
-        d += f"\n{tasklet.get('task_name','')}"
-    d = d.strip()
-    return d
-
-
 @trace
 def expound_task(main_objective: str, current_task: str) -> list[dict[str, str]]:
     prompt = [
         {
             "role": "system",
-            "content": (f"You are an AI who performs one task based on the following objective: {main_objective}\n" f"Your task: {current_task}\nResponse:",),
+            "content": f"You are an AI who performs one task based on the following objective: {main_objective}\n" f"Your task: {current_task}\nResponse:",
         },
     ]
     response = call_openai(prompt).content
@@ -195,15 +191,15 @@ def run_agent(main_objective: str, initial_task: str = "") -> list[dict[str, str
 
 
 if __name__ == "__main__":
-    # result = argument_chain(
-    #     "Whether moonshine is good for you.",
-    #     additional_description="Provide a concise, few sentence argument on why moonshine is good for you.",
-    # )
-    # print(result)
-    #
+    result = argument_chain(
+        "Whether coffee is good for you.",
+        additional_description="Provide a concise, few sentence argument on why coffee is good for you.",
+    )
+    print(result)
+
     result2, trace_id = argument_chain2(
-        "Whether chocolate is good for you.",
-        additional_description="Provide a concise, few sentence argument on why chocolate is good for you.",
+        "Whether wine is good for you.",
+        additional_description="Provide a concise, few sentence argument on why wine is good for you.",
     )
     time.sleep(3)
     p.record_feedback(
@@ -214,20 +210,20 @@ if __name__ == "__main__":
         )
     )
     print(result2)
-    #
-    # result3 = argument_chain3(
-    #     "Whether moonshine is good for you.",
-    #     additional_description="Provide a concise, few sentence argument on why moonshine is good for you.",
-    # )
-    # time.sleep(3)
-    # p.record_feedback(
-    #     FeedbackRequest(
-    #         trace_id=result3.inference_id,
-    #         score=0.7,  # 0.0 (bad) to 1.0 (good)
-    #         target="Moonshine is wonderful. End of story.",
-    #     )
-    # )
-    # print(result3.content)
-    #
-    # result4 = run_agent("Become a machine learning expert.", "Learn about tensors.")
-    # print(result4)
+
+    result3 = argument_chain3(
+        "Whether moonshine is good for you.",
+        additional_description="Provide a concise, few sentence argument on why moonshine is good for you.",
+    )
+    time.sleep(3)
+    p.record_feedback(
+        FeedbackRequest(
+            trace_id=result3.inference_id,
+            score=0.7,  # 0.0 (bad) to 1.0 (good)
+            target="Moonshine is wonderful. End of story.",
+        )
+    )
+    print(result3.content)
+
+    result4 = run_agent("Become a machine learning expert.", "Learn about tensors.")
+    print(result4)
