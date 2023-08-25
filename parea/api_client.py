@@ -10,7 +10,7 @@ load_dotenv()
 
 class HTTPClient:
     _instance = None
-    base_url = os.getenv("DEV_HOST")  # "https://optimus-prompt-backend.vercel.app/api/parea/v1"
+    base_url = os.getenv("DEV_HOST") or "https://optimus-prompt-backend.vercel.app/api/parea/v1"
     api_key = None
 
     def __new__(cls, *args, **kwargs):
