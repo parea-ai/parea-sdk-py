@@ -90,6 +90,46 @@ def refiner(query: str, additional_description: str, current_arg: str, criticism
 
 
 @trace
+def deployed_argument_generator(query: str, additional_description: str = "") -> str:
+    return p.completion(
+        Completion(
+            deployment_id="p-Ar-Oi14-nBxHUiradyql9",
+            llm_inputs={
+                "additional_description": additional_description,
+                "date": f"{datetime.now()}",
+                "query": query,
+            },
+        )
+    ).content
+
+
+@trace
+def deployed_critic(argument: str) -> str:
+    return p.completion(
+        Completion(
+            deployment_id="p-W2yPy93tAczYrxkipjli6",
+            llm_inputs={"argument": argument},
+        )
+    ).content
+
+
+@trace
+def deployed_refiner(query: str, additional_description: str, current_arg: str, criticism: str) -> str:
+    return p.completion(
+        Completion(
+            deployment_id="p-8Er1Xo0GDGF2xtpmMOpbn",
+            llm_inputs={
+                "additional_description": additional_description,
+                "date": f"{datetime.now()}",
+                "query": query,
+                "current_arg": current_arg,
+                "criticism": criticism,
+            },
+        )
+    ).content
+
+
+@trace
 def argument_chain(query: str, additional_description: str = "") -> str:
     argument = argument_generator(query, additional_description)
     criticism = critic(argument)
@@ -123,6 +163,22 @@ def refiner2(query: str, additional_description: str, current_arg: str, criticis
     )
 
 
+@trace
+def deployed_refiner2(query: str, additional_description: str, current_arg: str, criticism: str) -> CompletionResponse:
+    return p.completion(
+        Completion(
+            deployment_id="p-8Er1Xo0GDGF2xtpmMOpbn",
+            llm_inputs={
+                "additional_description": additional_description,
+                "date": f"{datetime.now()}",
+                "query": query,
+                "current_arg": current_arg,
+                "criticism": criticism,
+            },
+        )
+    )
+
+
 @trace(
     tags=["cookbook-example", "feedback_tracked"],
     metadata={"source": "python-sdk"},
@@ -131,6 +187,31 @@ def argument_chain3(query: str, additional_description: str = "") -> CompletionR
     argument = argument_generator(query, additional_description)
     criticism = critic(argument)
     return refiner2(query, additional_description, argument, criticism)
+
+
+@trace
+def deployed_argument_chain(query: str, additional_description: str = "") -> str:
+    argument = deployed_argument_generator(query, additional_description)
+    criticism = deployed_critic(argument)
+    return deployed_refiner(query, additional_description, argument, criticism)
+
+
+@trace
+def deployed_argument_chain2(query: str, additional_description: str = "") -> tuple[str, str]:
+    trace_id = get_current_trace_id()
+    argument = deployed_argument_generator(query, additional_description)
+    criticism = deployed_critic(argument)
+    return deployed_refiner(query, additional_description, argument, criticism), trace_id
+
+
+@trace(
+    tags=["cookbook-example-deployed", "feedback_tracked-deployed"],
+    metadata={"source": "python-sdk", "deployed": True},
+)
+def deployed_argument_chain3(query: str, additional_description: str = "") -> CompletionResponse:
+    argument = deployed_argument_generator(query, additional_description)
+    criticism = deployed_critic(argument)
+    return deployed_refiner2(query, additional_description, argument, criticism)
 
 
 @trace
@@ -227,3 +308,37 @@ if __name__ == "__main__":
 
     result4 = run_agent("Become a machine learning expert.", "Learn about tensors.")
     print(result4)
+
+    result5 = deployed_argument_chain(
+        "Whether coffee is good for you.",
+        additional_description="Provide a concise, few sentence argument on why coffee is good for you.",
+    )
+    print(result5)
+
+    result6, trace_id2 = deployed_argument_chain2(
+        "Whether wine is good for you.",
+        additional_description="Provide a concise, few sentence argument on why wine is good for you.",
+    )
+    time.sleep(3)
+    p.record_feedback(
+        FeedbackRequest(
+            trace_id=trace_id2,
+            score=0.0,  # 0.0 (bad) to 1.0 (good)
+            target="Moonshine is wonderful.",
+        )
+    )
+    print(result6)
+
+    result7 = deployed_argument_chain3(
+        "Whether moonshine is good for you.",
+        additional_description="Provide a concise, few sentence argument on why moonshine is good for you.",
+    )
+    time.sleep(3)
+    p.record_feedback(
+        FeedbackRequest(
+            trace_id=result7.inference_id,
+            score=0.7,  # 0.0 (bad) to 1.0 (good)
+            target="Moonshine is wonderful. End of story.",
+        )
+    )
+    print(result7.error or result7.content)
