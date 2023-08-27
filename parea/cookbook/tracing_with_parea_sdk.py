@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import os
 import time
 from datetime import datetime
@@ -275,39 +273,39 @@ def run_agent(main_objective: str, initial_task: str = "") -> tuple[list[dict[st
 
 
 if __name__ == "__main__":
-    # result = argument_chain(
-    #     "Whether coffee is good for you.",
-    #     additional_description="Provide a concise, few sentence argument on why coffee is good for you.",
-    # )
-    # print(result)
-    #
-    # result2, trace_id = argument_chain2(
-    #     "Whether wine is good for you.",
-    #     additional_description="Provide a concise, few sentence argument on why wine is good for you.",
-    # )
-    # time.sleep(3)
-    # p.record_feedback(
-    #     FeedbackRequest(
-    #         trace_id=trace_id,
-    #         score=0.0,  # 0.0 (bad) to 1.0 (good)
-    #         target="Moonshine is wonderful.",
-    #     )
-    # )
-    # print(result2)
-    #
-    # result3 = argument_chain3(
-    #     "Whether moonshine is good for you.",
-    #     additional_description="Provide a concise, few sentence argument on why moonshine is good for you.",
-    # )
-    # time.sleep(3)
-    # p.record_feedback(
-    #     FeedbackRequest(
-    #         trace_id=result3.inference_id,
-    #         score=0.7,  # 0.0 (bad) to 1.0 (good)
-    #         target="Moonshine is wonderful. End of story.",
-    #     )
-    # )
-    # print(result3.content)
+    result = argument_chain(
+        "Whether coffee is good for you.",
+        additional_description="Provide a concise, few sentence argument on why coffee is good for you.",
+    )
+    print(result)
+
+    result2, trace_id = argument_chain2(
+        "Whether wine is good for you.",
+        additional_description="Provide a concise, few sentence argument on why wine is good for you.",
+    )
+    time.sleep(3)
+    p.record_feedback(
+        FeedbackRequest(
+            trace_id=trace_id,
+            score=0.0,  # 0.0 (bad) to 1.0 (good)
+            target="Moonshine is wonderful.",
+        )
+    )
+    print(result2)
+
+    result3 = argument_chain3(
+        "Whether moonshine is good for you.",
+        additional_description="Provide a concise, few sentence argument on why moonshine is good for you.",
+    )
+    time.sleep(3)
+    p.record_feedback(
+        FeedbackRequest(
+            trace_id=result3.inference_id,
+            score=0.7,  # 0.0 (bad) to 1.0 (good)
+            target="Moonshine is wonderful. End of story.",
+        )
+    )
+    print(result3.content)
 
     result4, trace_id2 = run_agent("Become a machine learning expert.", "Learn about tensors.")
     time.sleep(3)
@@ -319,37 +317,37 @@ if __name__ == "__main__":
         )
     )
     print(result4)
-    #
-    # result5 = deployed_argument_chain(
-    #     "Whether coffee is good for you.",
-    #     additional_description="Provide a concise, few sentence argument on why coffee is good for you.",
-    # )
-    # print(result5)
-    #
-    # result6, trace_id3 = deployed_argument_chain2(
-    #     "Whether wine is good for you.",
-    #     additional_description="Provide a concise, few sentence argument on why wine is good for you.",
-    # )
-    # time.sleep(3)
-    # p.record_feedback(
-    #     FeedbackRequest(
-    #         trace_id=trace_id3,
-    #         score=0.0,  # 0.0 (bad) to 1.0 (good)
-    #         target="Moonshine is wonderful.",
-    #     )
-    # )
-    # print(result6)
-    #
-    # result7 = deployed_argument_chain3(
-    #     "Whether moonshine is good for you.",
-    #     additional_description="Provide a concise, few sentence argument on why moonshine is good for you.",
-    # )
-    # time.sleep(3)
-    # p.record_feedback(
-    #     FeedbackRequest(
-    #         trace_id=result7.inference_id,
-    #         score=0.7,  # 0.0 (bad) to 1.0 (good)
-    #         target="Moonshine is wonderful. End of story.",
-    #     )
-    # )
-    # print(result7.error or result7.content)
+
+    result5 = deployed_argument_chain(
+        "Whether coffee is good for you.",
+        additional_description="Provide a concise, few sentence argument on why coffee is good for you.",
+    )
+    print(result5)
+
+    result6, trace_id3 = deployed_argument_chain2(
+        "Whether wine is good for you.",
+        additional_description="Provide a concise, few sentence argument on why wine is good for you.",
+    )
+    time.sleep(3)
+    p.record_feedback(
+        FeedbackRequest(
+            trace_id=trace_id3,
+            score=0.0,  # 0.0 (bad) to 1.0 (good)
+            target="Moonshine is wonderful.",
+        )
+    )
+    print(result6)
+
+    result7 = deployed_argument_chain3(
+        "Whether moonshine is good for you.",
+        additional_description="Provide a concise, few sentence argument on why moonshine is good for you.",
+    )
+    time.sleep(3)
+    p.record_feedback(
+        FeedbackRequest(
+            trace_id=result7.inference_id,
+            score=0.7,  # 0.0 (bad) to 1.0 (good)
+            target="Moonshine is wonderful. End of story.",
+        )
+    )
+    print(result7.error or result7.content)
