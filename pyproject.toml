@@ -6,7 +6,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry]
 name = "parea-ai"
 packages = [{ include = "parea" }]
-version = "0.1.4"
+version = "0.2.0"
 description = "Parea python sdk"
 readme = "README.md"
 authors = ["joel-parea-ai <joel@parea.ai>"]
@@ -39,6 +39,7 @@ python-dotenv = "^1.0.0"
 poetry-plugin-dotenv = "^0.5.1"
 pyupgrade = "^3.9.0"
 jupyter = "^1.0.0"
+contextvars = "^2.4"
 
 [tool.poetry.dev-dependencies]
 bandit = "^1.7.1"

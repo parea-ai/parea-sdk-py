@@ -3,12 +3,13 @@ import uuid
 from attrs import asdict, define, field
 
 from parea.api_client import HTTPClient
-from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, LogRequest, UseDeployedPrompt, UseDeployedPromptResponse
+from parea.parea_logger import parea_logger
+from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, UseDeployedPrompt, UseDeployedPromptResponse
+from parea.utils.trace_utils import get_current_trace_id
 
 COMPLETION_ENDPOINT = "/completion"
 DEPLOYED_PROMPT_ENDPOINT = "/deployed-prompt"
 RECORD_FEEDBACK_ENDPOINT = "/feedback"
-LOG_ENDPOINT = "/log"
 
 
 @define
@@ -18,8 +19,10 @@ class Parea:
 
     def __attrs_post_init__(self):
         self._client.set_api_key(self.api_key)
+        parea_logger.set_client(self._client)
 
     def completion(self, data: Completion) -> CompletionResponse:
+        data.inference_id = get_current_trace_id()
         r = self._client.request(
             "POST",
             COMPLETION_ENDPOINT,
@@ -28,6 +31,7 @@ class Parea:
         return CompletionResponse(**r.json())
 
     async def acompletion(self, data: Completion) -> CompletionResponse:
+        data.inference_id = get_current_trace_id()
         r = await self._client.request_async(
             "POST",
             COMPLETION_ENDPOINT,
@@ -62,20 +66,6 @@ class Parea:
         await self._client.request_async(
             "POST",
             RECORD_FEEDBACK_ENDPOINT,
-            data=asdict(data),
-        )
-
-    def log(self, data: LogRequest) -> None:
-        self._client.request(
-            "POST",
-            LOG_ENDPOINT,
-            data=asdict(data),
-        )
-
-    async def alog(self, data: LogRequest) -> None:
-        await self._client.request_async(
-            "POST",
-            LOG_ENDPOINT,
             data=asdict(data),
         )
 

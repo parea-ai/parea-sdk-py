@@ -40,7 +40,7 @@ class LLMInputs:
 
 @define
 class Completion:
-    trace_id: Optional[str] = None
+    inference_id: Optional[str] = None
     trace_name: Optional[str] = None
     llm_inputs: Optional[dict[str, Any]] = None
     llm_configuration: LLMInputs = LLMInputs()
@@ -110,33 +110,39 @@ class FeedbackRequest:
 
 
 @define
-class LogRequest:
-    inference_id: Optional[str] = None
-    trace_id: Optional[str] = None
-    trace_name: Optional[str] = None
-    end_user_identifier: Optional[str] = None
+class TraceLog:
+    trace_id: str
+    start_timestamp: str
+    organization_id: Optional[str] = None
+
+    # metrics filled from completion
     error: Optional[str] = None
     status: Optional[str] = None
-
-    start_timestamp: str = ""
-    end_timestamp: str = ""
-    duration: float = 0.0
-
     deployment_id: Optional[str] = None
-    name: Optional[str] = None
-    evaluation_metrics_ids: Optional[list[int]] = None
-    metadata: Optional[dict] = None
+    evaluation_metric_ids: Optional[list[int]] = None
     cache_hit: bool = False
-    target: Optional[str] = None
-    tags: Optional[list[str]] = None
-
-    llm_inputs: Optional[dict[str, Any]] = None
-    llm_configuration: LLMInputs = LLMInputs()
-
-    output: Optional[str] = ""
+    configuration: LLMInputs = LLMInputs()
     latency: Optional[float] = 0.0
     input_tokens: Optional[int] = 0
     output_tokens: Optional[int] = 0
     total_tokens: Optional[int] = 0
-    cost: Optional[float] = None
+    cost: Optional[float] = 0.0
     feedback_score: Optional[float] = None
+
+    # info filled from decorator
+    trace_name: Optional[str] = None
+    children: list[str] = field(factory=list)
+
+    # metrics filled from either decorator or completion
+    end_timestamp: Optional[str] = None
+    end_user_identifier: Optional[str] = None
+    metadata: Optional[dict[str, Any]] = None
+    target: Optional[str] = None
+    tags: Optional[list[str]] = None
+    inputs: Optional[dict[str, str]] = None
+    output: Optional[str] = None
+
+
+@define
+class TraceLogTree(TraceLog):
+    children: Optional[list[TraceLog]] = None
