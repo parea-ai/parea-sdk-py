@@ -7,12 +7,12 @@ import logging
 import threading
 import time
 from collections import ChainMap
-from datetime import datetime
 from functools import wraps
 from uuid import uuid4
 
 from attrs import asdict
 
+from parea.helpers import to_date_and_time_string
 from parea.parea_logger import parea_logger
 from parea.schemas.models import CompletionResponse, TraceLog
 
@@ -24,10 +24,6 @@ trace_context = contextvars.ContextVar("trace_context", default=[])
 
 # A dictionary to hold trace data for each trace
 trace_data = contextvars.ContextVar("trace_data", default={})
-
-
-def to_date_and_time_string(timestamp: float) -> str:
-    return datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S %Z").strip()
 
 
 def merge(old, new):
