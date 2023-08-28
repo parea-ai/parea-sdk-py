@@ -1,10 +1,10 @@
 import os
 from datetime import datetime
 
-from dotenv import load_dotenv
 import openai
-from parea import Parea
+from dotenv import load_dotenv
 
+from parea import Parea
 
 load_dotenv()
 
@@ -14,53 +14,66 @@ p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
 
 def argument_generator(query: str, additional_description: str = "", date=datetime.now()) -> str:
-    return openai.ChatCompletion.create(
-        model='gpt-3.5-turbo-0613',
-        messages=[
-            {
-                'role': 'system',
-                'content': f'''You are a debater making an argument on a topic.
+    return (
+        openai.ChatCompletion.create(
+            model="gpt-3.5-turbo-0613",
+            messages=[
+                {
+                    "role": "system",
+                    "content": f"""You are a debater making an argument on a topic.
 {additional_description}.
-The current time is {date}'''
-            },
-            {'role': 'user', 'content': f'''The discussion topic is {query}'''},
-        ],
-        temperature=0.0
-    ).choices[0].message['content']
+The current time is {date}""",
+                },
+                {"role": "user", "content": f"""The discussion topic is {query}"""},
+            ],
+            temperature=0.0,
+        )
+        .choices[0]
+        .message["content"]
+    )
 
 
 def critic(argument: str) -> str:
-    return openai.ChatCompletion.create(
-        model='gpt-3.5-turbo-0613',
-        messages=[
-            {'role': 'system', 'content': f'''You are a critic.
+    return (
+        openai.ChatCompletion.create(
+            model="gpt-3.5-turbo-0613",
+            messages=[
+                {
+                    "role": "system",
+                    "content": f"""You are a critic.
 What unresolved questions or criticism do you have after reading the following argument?
-Provide a concise summary of your feedback.'''
-            },
-            {'role': 'user', 'content': f'''{argument}'''},
-        ],
-        temperature=0.0
-    ).choices[0].message['content']
+Provide a concise summary of your feedback.""",
+                },
+                {"role": "user", "content": f"""{argument}"""},
+            ],
+            temperature=0.0,
+        )
+        .choices[0]
+        .message["content"]
+    )
 
 
 def refiner(query: str, additional_description: str, current_arg: str, criticism: str, date=datetime.now()) -> str:
-    return openai.ChatCompletion.create(
-        model='gpt-3.5-turbo-0613',
-        messages=[
-            {'role': 'system', 'content': f'''You are a debater making an argument on a topic.
+    return (
+        openai.ChatCompletion.create(
+            model="gpt-3.5-turbo-0613",
+            messages=[
+                {
+                    "role": "system",
+                    "content": f"""You are a debater making an argument on a topic.
 {additional_description}.
-The current time is {date}'''
-             },
-            {'role': 'user', 'content': f'''The discussion topic is {query}'''},
-            {'role': 'assistant', 'content': f'''{current_arg}'''},
-            {'role': 'user', 'content': f'''{criticism}'''},
-            {
-                'role': 'system',
-                'content': f'''Please generate a new argument that incorporates the feedback from the user.'''
-            }
-        ],
-        temperature=0.0
-    ).choices[0].message['content']
+The current time is {date}""",
+                },
+                {"role": "user", "content": f"""The discussion topic is {query}"""},
+                {"role": "assistant", "content": f"""{current_arg}"""},
+                {"role": "user", "content": f"""{criticism}"""},
+                {"role": "system", "content": f"""Please generate a new argument that incorporates the feedback from the user."""},
+            ],
+            temperature=0.0,
+        )
+        .choices[0]
+        .message["content"]
+    )
 
 
 def argument_chain(query: str, additional_description: str = "") -> str:
@@ -82,7 +95,7 @@ if __name__ == "__main__":
     p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
     trace_id = get_current_trace_id()
-    print(f'trace_id: {trace_id}')
+    print(f"trace_id: {trace_id}")
     p.record_feedback(
         FeedbackRequest(
             trace_id=trace_id,

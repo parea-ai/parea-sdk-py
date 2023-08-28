@@ -1,11 +1,12 @@
+from typing import Any, Callable, List, Tuple
+
 import functools
 import inspect
-from typing import Any, Callable, List, Tuple
 import time
 from uuid import uuid4
 
 from parea.schemas.models import TraceLog
-from parea.utils.trace_utils import to_date_and_time_string, trace_context, trace_data, default_logger
+from parea.utils.trace_utils import default_logger, to_date_and_time_string, trace_context, trace_data
 
 
 class Wrapper:
@@ -16,17 +17,13 @@ class Wrapper:
 
     def wrap_functions(self, module: Any, func_names: List[str]):
         for func_name in func_names:
-            func_name_parts = func_name.split('.')
+            func_name_parts = func_name.split(".")
             original = functools.reduce(getattr, func_name_parts, module)
-            setattr(
-                module if len(func_name_parts) == 1 else functools.reduce(getattr, func_name_parts[:-1], module),
-                func_name_parts[-1],
-                self._wrapped_func(original)
-            )
+            setattr(module if len(func_name_parts) == 1 else functools.reduce(getattr, func_name_parts[:-1], module), func_name_parts[-1], self._wrapped_func(original))
 
     def _wrapped_func(self, original_func: Callable) -> Callable:
         unwrapped_func = original_func
-        while hasattr(original_func, '__wrapped__'):
+        while hasattr(original_func, "__wrapped__"):
             unwrapped_func = original_func.__wrapped__
         return self._get_decorator(unwrapped_func, original_func)
 
@@ -44,7 +41,7 @@ class Wrapper:
         trace_data.get()[trace_id] = TraceLog(
             trace_id=trace_id,
             start_timestamp=to_date_and_time_string(start_time),
-            trace_name='LLM',
+            trace_name="LLM",
             end_user_identifier=None,
             metadata=None,
             target=None,
@@ -83,6 +80,7 @@ class Wrapper:
                 raise
             finally:
                 self._cleanup_trace(trace_id, start_time, response, args, kwargs)
+
         return wrapper
 
     def sync_decorator(self, orig_func: Callable) -> Callable:
@@ -98,6 +96,7 @@ class Wrapper:
                 raise
             finally:
                 self._cleanup_trace(trace_id, start_time, error, response, args, kwargs)
+
         return wrapper
 
     def _cleanup_trace(self, trace_id: str, start_time: float, error: str, response: Any, args, kwargs):
