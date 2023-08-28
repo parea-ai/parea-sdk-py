@@ -78,23 +78,24 @@ async def main_async():
   print(deployed_prompt)
 ```    
 
-
 ### Logging results from LLM providers
 
 ```python
 import os
-
-from dotenv import load_dotenv
+import time
 
 import openai
+from dotenv import load_dotenv
+
 from parea import Parea
-from parea.schemas.models import LogRequest
+from parea.helpers import to_date_and_time_string, gen_trace_id
+from parea.parea_logger import parea_logger
+from parea.schemas.models import TraceLog, LLMInputs
 
 load_dotenv()
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 p = Parea(api_key=os.getenv("PAREA_API_KEY"))
-
 
 # define your OpenAI call as you would normally
 x = "Golang"
@@ -108,41 +109,35 @@ model_params = {
   "temperature": 0.7,
   "top_p": 1.0,
 }
-completion = openai.ChatCompletion.create(
-  model=model,
-  messages=messages,
-  **model_params
-)
-output = completion.choices[0].message['content']
+model_config = {"model": model, "messages": messages, "model_params": model_params}
+start_time = time.time()
+completion = openai.ChatCompletion.create(model=model, messages=messages, **model_params)
+output = completion.choices[0].message["content"]
+end_time = time.time()
 
-# the LogRequest schema
-log_request: LogRequest = LogRequest(
+# the TraceLog schema
+log_request = TraceLog(
+  trace_id=gen_trace_id(),
+  start_timestamp=to_date_and_time_string(start_time),
+  end_timestamp=to_date_and_time_string(end_time),
   status="success",
-  name='Test Log',
-  llm_inputs={
-    "x": x,
-    "y": y,
-  },
-  llm_configuration={
-    'model': model,
-    'messages': messages,
-    'model_params': model_params,
-  },
+  trace_name="Test Log",
+  inputs=inputs,
+  configuration=LLMInputs(**model_config),
   output=output,
-  input_tokens=completion.usage['prompt_tokens'],
-  output_tokens=completion.usage['completion_tokens'],
-  total_tokens=completion.usage['total_tokens'],
+  input_tokens=completion.usage["prompt_tokens"],
+  output_tokens=completion.usage["completion_tokens"],
+  total_tokens=completion.usage["total_tokens"],
 )
 
 
 def main():
-  p.log(data=log_request)
+  parea_logger.record_log(data=log_request)
 
 
 async def main_async():
-  await p.alog(data=log_request)
+  await parea_logger.arecord_log(data=log_request)
 ```
-
 
 ### Open source community features
 

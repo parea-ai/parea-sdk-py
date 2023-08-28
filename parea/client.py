@@ -1,5 +1,3 @@
-import uuid
-
 from attrs import asdict, define, field
 
 from parea.api_client import HTTPClient
@@ -68,8 +66,3 @@ class Parea:
             RECORD_FEEDBACK_ENDPOINT,
             data=asdict(data),
         )
-
-
-def gen_trace_id() -> str:
-    """Generate a unique trace id for each chain of requests"""
-    return str(uuid.uuid4())
