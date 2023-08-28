@@ -5,7 +5,7 @@ import time
 from dotenv import load_dotenv
 
 from parea import Parea
-from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, LLMInputs, Message, ModelParams
+from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, LLMInputs, Message, ModelParams, Role
 from parea.utils.trace_utils import get_current_trace_id, trace
 
 load_dotenv()
@@ -13,7 +13,7 @@ load_dotenv()
 p = Parea(api_key=os.getenv("DEV_API_KEY"))
 
 
-LIMIT = 1
+LIMIT = 5
 
 
 def dump_task(task):
@@ -26,7 +26,7 @@ def dump_task(task):
 
 @trace
 def call_llm(
-    data: list[dict],
+    data: list[Message],
     model: str = "gpt-3.5-turbo",
     provider: str = "openai",
     temperature: float = 0.0,
@@ -37,7 +37,7 @@ def call_llm(
                 model=model,
                 provider=provider,
                 model_params=ModelParams(temp=temperature),
-                messages=[Message(**d) for d in data],
+                messages=data,
             )
         )
     )
@@ -46,10 +46,10 @@ def call_llm(
 @trace
 def expound_task(main_objective: str, current_task: str) -> list[dict[str, str]]:
     prompt = [
-        {
-            "role": "system",
-            "content": f"You are an AI who performs one task based on the following objective: {main_objective}\n" f"Your task: {current_task}\nResponse:",
-        },
+        Message(
+            role=Role.system,
+            content=f"You are an AI who performs one task based on the following objective: {main_objective}\n" f"Your task: {current_task}\nResponse:",
+        ),
     ]
     response = call_llm(prompt).content
     new_tasks = response.split("\n") if "\n" in response else [response]
@@ -63,14 +63,14 @@ def generate_tasks(main_objective: str, expounded_initial_task: list[dict[str, s
 
     task_expansion = dump_task(expounded_initial_task)
     prompt = [
-        {
-            "role": "system",
-            "content": (
+        Message(
+            role=Role.system,
+            content=(
                 f"You are an AI who creates tasks based on the following MAIN OBJECTIVE: {main_objective}\n"
                 f"Create tasks pertaining directly to your previous research here:\n"
                 f"{task_expansion}\nResponse:"
             ),
-        },
+        ),
     ]
     response = call_llm(data=prompt, model=select_llm_option[0], provider=select_llm_option[1]).content
     new_tasks = response.split("\n") if "\n" in response else [response]
