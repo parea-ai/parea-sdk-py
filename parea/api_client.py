@@ -1,9 +1,6 @@
 from typing import Any, Optional
 
 import httpx
-from dotenv import load_dotenv
-
-load_dotenv()
 
 
 class HTTPClient:
