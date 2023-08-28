@@ -1,94 +1,122 @@
 import functools
 import inspect
-from typing import Any, Callable, List
+from typing import Any, Callable, List, Tuple
 import time
+from uuid import uuid4
 
 from parea.schemas.models import TraceLog
-from parea.utils.trace_utils import to_date_and_time_string
+from parea.utils.trace_utils import to_date_and_time_string, trace_context, trace_data, default_logger
 
 
 class Wrapper:
-    def __init__(self, module: Any, func_names: List[str], resolver: Callable, log: Callable) -> None:
+    def __init__(self, module: Any, func_names: List[str], resolver: Callable, log: Callable = default_logger) -> None:
         self.resolver = resolver
         self.log = log
-        self.set_funcs(module, func_names)
+        self.wrap_functions(module, func_names)
 
-    def set_funcs(self, module: Any, func_names: List[str]):
+    def wrap_functions(self, module: Any, func_names: List[str]):
         for func_name in func_names:
             func_name_parts = func_name.split('.')
             original = functools.reduce(getattr, func_name_parts, module)
             setattr(
-                self.get_func_module(module, func_name_parts),
+                module if len(func_name_parts) == 1 else functools.reduce(getattr, func_name_parts[:-1], module),
                 func_name_parts[-1],
                 self._wrapped_func(original)
             )
 
-    @staticmethod
-    def get_func_module(module: Any, func_name_parts: List[str]):
-        return module if len(func_name_parts) == 1 else functools.reduce(getattr, func_name_parts[:-1], module)
-
     def _wrapped_func(self, original_func: Callable) -> Callable:
-        unwrapped_func = self.get_unwrapped_func(original_func)
-        return self.get_wrapper(unwrapped_func, original_func)
-
-    @staticmethod
-    def get_unwrapped_func(original_func: Callable) -> Callable:
+        unwrapped_func = original_func
         while hasattr(original_func, '__wrapped__'):
-            original_func = original_func.__wrapped__
-        return original_func
+            unwrapped_func = original_func.__wrapped__
+        return self._get_decorator(unwrapped_func, original_func)
 
-    def get_wrapper(self, unwrapped_func: Callable, original_func: Callable):
+    def _get_decorator(self, unwrapped_func: Callable, original_func: Callable):
         if inspect.iscoroutinefunction(unwrapped_func):
-            return self.async_wrapper(original_func)
+            return self.async_decorator(original_func)
         else:
-            return self.sync_wrapper(original_func)
+            return self.sync_decorator(original_func)
 
-    def async_wrapper(self, orig_func: Callable) -> Callable:
+    def _init_trace(self) -> Tuple[str, float]:
+        start_time = time.time()
+        trace_id = str(uuid4())
+        trace_context.get().append(trace_id)
+
+        trace_data.get()[trace_id] = TraceLog(
+            trace_id=trace_id,
+            start_timestamp=to_date_and_time_string(start_time),
+            trace_name='LLM',
+            end_user_identifier=None,
+            metadata=None,
+            target=None,
+            tags=None,
+            inputs={},
+        )
+
+        parent_trace_id = trace_context.get()[-2] if len(trace_context.get()) > 1 else None
+        if not parent_trace_id:
+            # we don't have a parent trace id, so we need to create one
+            parent_trace_id = str(uuid4())
+            trace_context.get().insert(0, parent_trace_id)
+            trace_data.get()[parent_trace_id] = TraceLog(
+                trace_id=parent_trace_id,
+                start_timestamp=to_date_and_time_string(start_time),
+                end_user_identifier=None,
+                metadata=None,
+                target=None,
+                tags=None,
+                inputs={},
+            )
+        trace_data.get()[parent_trace_id].children.append(trace_id)
+        self.log(parent_trace_id)
+
+        return trace_id, start_time
+
+    def async_decorator(self, orig_func: Callable) -> Callable:
         async def wrapper(*args, **kwargs):
-            start_time = time.time()
+            trace_id, start_time = self._init_trace()
             response = None
-            error = None
             try:
                 response = await orig_func(*args, **kwargs)
                 return response
             except Exception as e:
-                error = e
+                self._handle_error(trace_id, e)
                 raise
             finally:
-                self.log_result(start_time, response, error, args, kwargs)
+                self._cleanup_trace(trace_id, start_time, response, args, kwargs)
         return wrapper
 
-    def sync_wrapper(self, orig_func: Callable) -> Callable:
+    def sync_decorator(self, orig_func: Callable) -> Callable:
         def wrapper(*args, **kwargs):
-            start_time = time.time()
+            trace_id, start_time = self._init_trace()
             response = None
             error = None
             try:
                 response = orig_func(*args, **kwargs)
                 return response
             except Exception as e:
-                error = e
+                error = str(e)
                 raise
             finally:
-                self.log_result(start_time, response, error, args, kwargs)
+                self._cleanup_trace(trace_id, start_time, error, response, args, kwargs)
         return wrapper
 
-    def log_result(self, start_time: float, response: Any, error: Any, args, kwargs):
+    def _cleanup_trace(self, trace_id: str, start_time: float, error: str, response: Any, args, kwargs):
         end_time = time.time()
-        latency = end_time - start_time
+        trace_data.get()[trace_id].end_timestamp = to_date_and_time_string(end_time)
+        trace_data.get()[trace_id].latency = end_time - start_time
 
-        start_timestamp = to_date_and_time_string(start_time)
-        end_timestamp = to_date_and_time_string(end_time)
+        if error:
+            trace_data.get()[trace_id].error = error
+            trace_data.get()[trace_id].status = "error"
+        else:
+            trace_data.get()[trace_id].status = "success"
 
-        log_data_dict = {
-            'trace_id': '',
-            'start_timestamp': start_timestamp,
-            'end_timestamp': end_timestamp,
-            "error": str(error),
-            "status": "success" if not error else "error",
-            "latency": latency,
-        }
+        self.resolver(trace_id, args, kwargs, response)
 
-        log_data_dict_provider = self.resolver(args, kwargs, response)
-        self.log(TraceLog(**log_data_dict, **log_data_dict_provider))
+        self.log(trace_id)
+        trace_context.get().pop()
 
+    @staticmethod
+    def _handle_error(trace_id: str, e: Exception):
+        trace_data.get()[trace_id].error = str(e)
+        trace_data.get()[trace_id].status = "error"

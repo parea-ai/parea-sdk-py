@@ -4,7 +4,8 @@ from typing import Any, Callable, Dict, Optional, Sequence
 import openai
 
 from .wrapper import Wrapper
-from ..schemas.models import LLMInputs
+from ..schemas.models import LLMInputs, ModelParams
+from ..utils.trace_utils import trace_data
 
 
 class OpenAIWrapper:
@@ -14,8 +15,7 @@ class OpenAIWrapper:
     }
 
     @staticmethod
-    def resolver(_args: Sequence[Any], kwargs: Dict[str, Any], response: Optional[Any]) -> Dict:
-        llm_config = {key: value for key, value in kwargs.items() if key in []}  # todo: parse kwargs properly according to LLMInputs & ModelParams
+    def resolver(trace_id: str, _args: Sequence[Any], kwargs: Dict[str, Any], response: Optional[Any]) -> Dict:
         if response:
             usage = response["usage"]
             output = OpenAIWrapper._get_output(response)
@@ -23,14 +23,26 @@ class OpenAIWrapper:
             output = None
             usage = {}
 
-        return {
-            "provider": "openai",
-            "configuration": LLMInputs(**llm_config),
-            "input_tokens": usage.get('prompt_tokens', 0),
-            "output_tokens": usage.get('completion_tokens', 0),
-            "total_tokens": usage.get('total_tokens', 0),
-            "output": output,
-        }
+        llm_inputs = LLMInputs(
+            model=kwargs.get('model', None),
+            provider='openai',
+            messages=kwargs.get('messages', None),
+            functions=kwargs.get('functions', None),
+            function_call=kwargs.get('function_call', None),
+            model_params=ModelParams(
+                temp=kwargs.get('temperature', 1.0),
+                max_length=kwargs.get('max_tokens', None),
+                top_p=kwargs.get('top_p', 1.0),
+                frequency_penalty=kwargs.get('frequency_penalty', 0.0),
+                presence_penalty=kwargs.get('presence_penalty', 0.0),
+            )
+        )
+
+        trace_data.get()[trace_id].configuration = llm_inputs
+        trace_data.get()[trace_id].input_tokens = usage.get('prompt_tokens', 0)
+        trace_data.get()[trace_id].output_tokens = usage.get('completion_tokens', 0)
+        trace_data.get()[trace_id].total_tokens = usage.get('total_tokens', 0)
+        trace_data.get()[trace_id].output = output
 
     @staticmethod
     def init(log: Callable):

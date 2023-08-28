@@ -12,6 +12,7 @@
 from importlib import metadata as importlib_metadata
 
 from parea.client import Parea
+import parea.wrapper  # noqa: F401
 
 
 def get_version() -> str:
