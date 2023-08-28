@@ -12,8 +12,9 @@ load_dotenv()
 
 p = Parea(api_key=os.getenv("DEV_API_KEY"))
 
-
-LIMIT = 5
+# Parea SDK makes it easy to use different LLMs with the same apis structure and standardized request/response schemas.
+LLM_OPTIONS = [("gpt-3.5-turbo", "openai"), ("gpt-4", "openai"), ("claude-instant-1", "anthropic"), ("claude-2", "anthropic")]
+LIMIT = 1
 
 
 def dump_task(task):
@@ -58,9 +59,7 @@ def expound_task(main_objective: str, current_task: str) -> list[dict[str, str]]
 
 @trace
 def generate_tasks(main_objective: str, expounded_initial_task: list[dict[str, str]]) -> list[str]:
-    llm_options = [("gpt-3.5-turbo", "openai"), ("gpt-4", "openai"), ("claude-instant-1", "anthropic"), ("claude-2", "anthropic")]
-    select_llm_option = random.choice(llm_options)
-
+    select_llm_option = random.choice(LLM_OPTIONS)
     task_expansion = dump_task(expounded_initial_task)
     prompt = [
         Message(
@@ -106,6 +105,6 @@ def run_agent(main_objective: str, initial_task: str = "") -> tuple[list[dict[st
 
 if __name__ == "__main__":
     result, trace_id = run_agent("Become a machine learning expert.", "Learn about tensors.")
-    time.sleep(3)
+    time.sleep(1)
     p.record_feedback(FeedbackRequest(trace_id=trace_id, score=0.642))
     print(result)
