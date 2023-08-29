@@ -9,7 +9,7 @@ def init():
     if _initialized_parea_wrapper:
         return
 
-    OpenAIWrapper.init(default_logger)
+    OpenAIWrapper().init(default_logger)
 
     _initialized_parea_wrapper = True
 
