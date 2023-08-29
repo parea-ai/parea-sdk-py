@@ -71,7 +71,6 @@ class CompletionResponse:
     status: str
     start_timestamp: str
     end_timestamp: str
-    trace_id: Optional[str] = None
     error: Optional[str] = None
 
 
