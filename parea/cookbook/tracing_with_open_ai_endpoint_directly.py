@@ -12,7 +12,7 @@ load_dotenv()
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-p = Parea(api_key=os.getenv("DEV_API_KEY"))
+p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
 
 def call_openai(data: list[dict], model: str = "gpt-3.5-turbo-0613", temperature: float = 0.0) -> str:

@@ -9,7 +9,7 @@ from parea.utils.trace_utils import get_current_trace_id, trace
 
 load_dotenv()
 
-p = Parea(api_key=os.getenv("DEV_API_KEY"))
+p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
 
 @trace
