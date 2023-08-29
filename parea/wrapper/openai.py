@@ -8,7 +8,6 @@ from ..schemas.models import LLMInputs, ModelParams
 from ..utils.trace_utils import trace_data
 from .wrapper import Wrapper
 
-
 MODEL_COST_MAPPING: Dict[str, float] = {
     "gpt-4": 0.03,
     "gpt-4-0314": 0.03,
@@ -75,9 +74,7 @@ class OpenAIWrapper:
 
         model_rate = OpenAIWrapper.get_model_cost(model)
         model_completion_rate = OpenAIWrapper.get_model_cost(model, is_completion=True)
-        completion_cost = model_completion_rate * (
-            usage.get("completion_tokens", 0) / 1000
-        )
+        completion_cost = model_completion_rate * (usage.get("completion_tokens", 0) / 1000)
         prompt_cost = model_rate * (usage.get("prompt_tokens", 0) / 1000)
         total_cost = sum([prompt_cost, completion_cost])
 
@@ -119,12 +116,7 @@ class OpenAIWrapper:
 
         cost = MODEL_COST_MAPPING.get(model_name, None)
         if cost is None:
-            msg = (
-                f"Unknown model: {model_name}. "
-                f"Please provide a valid OpenAI model name. "
-                f"Known models are: {', '.join(MODEL_COST_MAPPING.keys())}"
-            )
+            msg = f"Unknown model: {model_name}. " f"Please provide a valid OpenAI model name. " f"Known models are: {', '.join(MODEL_COST_MAPPING.keys())}"
             raise ValueError(msg)
 
         return cost
-
