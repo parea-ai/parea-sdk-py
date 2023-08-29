@@ -1,6 +1,5 @@
 import os
 import random
-import time
 
 from dotenv import load_dotenv
 
@@ -105,6 +104,5 @@ def run_agent(main_objective: str, initial_task: str = "") -> tuple[list[dict[st
 
 if __name__ == "__main__":
     result, trace_id = run_agent("Become a machine learning expert.", "Learn about tensors.")
-    time.sleep(1)
-    p.record_feedback(FeedbackRequest(trace_id=trace_id, score=0.642))
     print(result)
+    p.record_feedback(FeedbackRequest(trace_id=trace_id, score=0.642))
