@@ -9,7 +9,7 @@ from parea.utils.trace_utils import get_current_trace_id, trace
 
 load_dotenv()
 
-p = Parea(api_key=os.getenv("DEV_API_KEY"))
+p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
 # Parea SDK makes it easy to use different LLMs with the same apis structure and standardized request/response schemas.
 LLM_OPTIONS = [("gpt-3.5-turbo", "openai"), ("gpt-4", "openai"), ("claude-instant-1", "anthropic"), ("claude-2", "anthropic")]
