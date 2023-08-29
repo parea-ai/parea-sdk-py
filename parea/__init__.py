@@ -11,6 +11,7 @@
 
 from importlib import metadata as importlib_metadata
 
+import parea.wrapper  # noqa: F401
 from parea.client import Parea
 
 

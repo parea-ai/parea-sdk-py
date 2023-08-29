@@ -21,7 +21,7 @@ class Message:
 
 @define
 class ModelParams:
-    temp: float = 0.5
+    temp: float = 1.0
     top_p: float = 1.0
     frequency_penalty: float = 0.0
     presence_penalty: float = 0.0

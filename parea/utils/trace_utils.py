@@ -84,11 +84,7 @@ def trace(
     def cleanup_trace(trace_id):
         end_time = time.time()
         trace_data.get()[trace_id].end_timestamp = to_date_and_time_string(end_time)
-        logging_thread = threading.Thread(
-            target=parea_logger.record_log,
-            kwargs={"data": trace_data.get()[trace_id]},
-        )
-        logging_thread.start()
+        default_logger(trace_id)
         trace_context.get().pop()
 
     def decorator(func):
@@ -135,3 +131,11 @@ def trace(
         return decorator(func)
 
     return decorator
+
+
+def default_logger(trace_id: str):
+    logging_thread = threading.Thread(
+        target=parea_logger.record_log,
+        kwargs={"data": trace_data.get()[trace_id]},
+    )
+    logging_thread.start()
