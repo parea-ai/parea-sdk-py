@@ -3,6 +3,7 @@ from typing import Any, Callable, Dict, Optional, Sequence
 import json
 
 import openai
+from openai.openai_object import OpenAIObject
 
 from ..schemas.models import LLMInputs, ModelParams
 from ..utils.trace_utils import trace_data
@@ -46,11 +47,10 @@ MODEL_COST_MAPPING: Dict[str, float] = {
 class OpenAIWrapper:
     original_methods = {"ChatCompletion.create": openai.ChatCompletion.create, "ChatCompletion.acreate": openai.ChatCompletion.acreate}
 
-    @staticmethod
-    def resolver(trace_id: str, _args: Sequence[Any], kwargs: Dict[str, Any], response: Optional[Any]):
+    def resolver(self, trace_id: str, _args: Sequence[Any], kwargs: Dict[str, Any], response: Optional[Any]):
         if response:
             usage = response["usage"]
-            output = OpenAIWrapper._get_output(response)
+            output = self._get_output(response)
         else:
             output = None
             usage = {}
@@ -72,8 +72,8 @@ class OpenAIWrapper:
             ),
         )
 
-        model_rate = OpenAIWrapper.get_model_cost(model)
-        model_completion_rate = OpenAIWrapper.get_model_cost(model, is_completion=True)
+        model_rate = self.get_model_cost(model)
+        model_completion_rate = self.get_model_cost(model, is_completion=True)
         completion_cost = model_completion_rate * (usage.get("completion_tokens", 0) / 1000)
         prompt_cost = model_rate * (usage.get("prompt_tokens", 0) / 1000)
         total_cost = sum([prompt_cost, completion_cost])
@@ -85,9 +85,8 @@ class OpenAIWrapper:
         trace_data.get()[trace_id].cost = total_cost
         trace_data.get()[trace_id].output = output
 
-    @staticmethod
-    def init(log: Callable):
-        Wrapper(resolver=OpenAIWrapper.resolver, log=log, module=openai, func_names=list(OpenAIWrapper.original_methods.keys()))
+    def init(self, log: Callable):
+        Wrapper(resolver=self.resolver, log=log, module=openai, func_names=list(OpenAIWrapper.original_methods.keys()))
 
     @staticmethod
     def _get_output(result) -> str:
@@ -101,7 +100,7 @@ class OpenAIWrapper:
     @staticmethod
     def _format_function_call(response_message) -> str:
         function_name = response_message["function_call"]["name"]
-        if isinstance(response_message["function_call"]["arguments"], openai.openai_object.OpenAIObject):
+        if isinstance(response_message["function_call"]["arguments"], OpenAIObject):
             function_args = dict(response_message["function_call"]["arguments"])
         else:
             function_args = json.loads(response_message["function_call"]["arguments"])
