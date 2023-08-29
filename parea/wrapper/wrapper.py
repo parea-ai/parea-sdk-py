@@ -72,14 +72,15 @@ class Wrapper:
         async def wrapper(*args, **kwargs):
             trace_id, start_time = self._init_trace()
             response = None
+            error = None
             try:
                 response = await orig_func(*args, **kwargs)
                 return response
             except Exception as e:
-                self._handle_error(trace_id, e)
+                error = str(e)
                 raise
             finally:
-                self._cleanup_trace(trace_id, start_time, response, args, kwargs)
+                self._cleanup_trace(trace_id, start_time, error, response, args, kwargs)
 
         return wrapper
 
@@ -114,8 +115,3 @@ class Wrapper:
 
         self.log(trace_id)
         trace_context.get().pop()
-
-    @staticmethod
-    def _handle_error(trace_id: str, e: Exception):
-        trace_data.get()[trace_id].error = str(e)
-        trace_data.get()[trace_id].status = "error"
