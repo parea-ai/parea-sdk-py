@@ -34,7 +34,7 @@ def merge(old, new):
     return new
 
 
-def get_current_trace_id():
+def get_current_trace_id() -> str:
     return trace_context.get()[-1]
 
 

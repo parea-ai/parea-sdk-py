@@ -1,3 +1,6 @@
+import asyncio
+import time
+
 from attrs import asdict, define, field
 
 from parea.api_client import HTTPClient
@@ -54,6 +57,7 @@ class Parea:
         return UseDeployedPromptResponse(**r.json())
 
     def record_feedback(self, data: FeedbackRequest) -> None:
+        time.sleep(2)  # give logs time to update
         self._client.request(
             "POST",
             RECORD_FEEDBACK_ENDPOINT,
@@ -61,6 +65,7 @@ class Parea:
         )
 
     async def arecord_feedback(self, data: FeedbackRequest) -> None:
+        await asyncio.sleep(2)  # give logs time to update
         await self._client.request_async(
             "POST",
             RECORD_FEEDBACK_ENDPOINT,

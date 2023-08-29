@@ -1,5 +1,4 @@
 import os
-import time
 from datetime import datetime
 
 from dotenv import load_dotenv
@@ -136,7 +135,7 @@ if __name__ == "__main__":
         "Whether wine is good for you.",
         additional_description="Provide a concise, few sentence argument on why wine is good for you.",
     )
-    time.sleep(3)
+    print(result2)
     p.record_feedback(
         FeedbackRequest(
             trace_id=trace_id2,
@@ -144,13 +143,12 @@ if __name__ == "__main__":
             target="Moonshine is wonderful.",
         )
     )
-    print(result2)
 
     result3 = argument_chain3(
         "Whether moonshine is good for you.",
         additional_description="Provide a concise, few sentence argument on why moonshine is good for you.",
     )
-    time.sleep(3)
+    print(result3.content)
     p.record_feedback(
         FeedbackRequest(
             trace_id=result3.inference_id,
@@ -158,4 +156,3 @@ if __name__ == "__main__":
             target="Moonshine is wonderful. End of story.",
         )
     )
-    print(result3.content)
