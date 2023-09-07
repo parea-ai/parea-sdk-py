@@ -94,7 +94,7 @@ class Wrapper:
                 return response
             except Exception as e:
                 error = str(e)
-                raise
+                raise e
             finally:
                 self._cleanup_trace(trace_id, start_time, error, response, args, kwargs)
 

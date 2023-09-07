@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Optional, Tuple
 
 import contextvars
 import inspect
@@ -57,7 +57,7 @@ def trace(
     target: Optional[str] = None,
     end_user_identifier: Optional[str] = None,
 ):
-    def init_trace(func_name, args, kwargs, func):
+    def init_trace(func_name, args, kwargs, func) -> Tuple[str, float]:
         start_time = time.time()
         trace_id = str(uuid4())
         trace_context.get().append(trace_id)
@@ -82,19 +82,19 @@ def trace(
         if parent_trace_id:
             trace_data.get()[parent_trace_id].children.append(trace_id)
 
-        return trace_id
+        return trace_id, start_time
 
-    def cleanup_trace(trace_id):
+    def cleanup_trace(trace_id, start_time):
         end_time = time.time()
         trace_data.get()[trace_id].end_timestamp = to_date_and_time_string(end_time)
+        trace_data.get()[trace_id].latency = end_time - start_time
         default_logger(trace_id)
         trace_context.get().pop()
 
     def decorator(func):
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
-            trace_id = init_trace(func.__name__, args, kwargs, func)
-            result = None
+            trace_id, start_time = init_trace(func.__name__, args, kwargs, func)
             try:
                 result = await func(*args, **kwargs)
                 output = asdict(result) if isinstance(result, CompletionResponse) else result
@@ -103,14 +103,14 @@ def trace(
                 logger.exception(f"Error occurred in function {func.__name__}, {e}")
                 trace_data.get()[trace_id].error = str(e)
                 trace_data.get()[trace_id].status = "error"
+                raise e
             finally:
-                cleanup_trace(trace_id)
+                cleanup_trace(trace_id, start_time)
             return result
 
         @wraps(func)
         def wrapper(*args, **kwargs):
-            trace_id = init_trace(func.__name__, args, kwargs, func)
-            result = None
+            trace_id, start_time = init_trace(func.__name__, args, kwargs, func)
             try:
                 result = func(*args, **kwargs)
                 output = asdict(result) if isinstance(result, CompletionResponse) else result
@@ -119,8 +119,9 @@ def trace(
                 logger.exception(f"Error occurred in function {func.__name__}, {e}")
                 trace_data.get()[trace_id].error = str(e)
                 trace_data.get()[trace_id].status = "error"
+                raise e
             finally:
-                cleanup_trace(trace_id)
+                cleanup_trace(trace_id, start_time)
             return result
 
         if inspect.iscoroutinefunction(func):
