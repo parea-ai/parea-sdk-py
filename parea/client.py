@@ -23,7 +23,7 @@ class Parea:
         parea_logger.set_client(self._client)
 
     def completion(self, data: Completion) -> CompletionResponse:
-        data.inference_id = get_current_trace_id()
+        data.inference_id = get_current_trace_id() or None
         r = self._client.request(
             "POST",
             COMPLETION_ENDPOINT,

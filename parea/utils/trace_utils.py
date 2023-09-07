@@ -35,7 +35,10 @@ def merge(old, new):
 
 
 def get_current_trace_id() -> str:
-    return trace_context.get()[-1]
+    stack = trace_context.get()
+    if stack:
+        return stack[-1]
+    return ""
 
 
 def trace_insert(data: dict[str, Any]):
