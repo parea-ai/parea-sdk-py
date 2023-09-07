@@ -72,6 +72,7 @@ class CompletionResponse:
     start_timestamp: str
     end_timestamp: str
     error: Optional[str] = None
+    trace_id: Optional[str] = None
 
 
 @define
