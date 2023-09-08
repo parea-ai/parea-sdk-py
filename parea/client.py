@@ -7,7 +7,7 @@ from attrs import asdict, define, field
 from parea.api_client import HTTPClient
 from parea.parea_logger import parea_logger
 from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, UseDeployedPrompt, UseDeployedPromptResponse
-from parea.utils.trace_utils import default_logger, trace_data, get_current_trace_id
+from parea.utils.trace_utils import default_logger, get_current_trace_id, trace_data
 
 COMPLETION_ENDPOINT = "/completion"
 DEPLOYED_PROMPT_ENDPOINT = "/deployed-prompt"
