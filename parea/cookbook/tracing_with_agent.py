@@ -24,7 +24,6 @@ def dump_task(task):
     return d
 
 
-@trace
 def call_llm(
     data: list[Message],
     model: str = "gpt-3.5-turbo",

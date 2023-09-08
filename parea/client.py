@@ -1,12 +1,13 @@
 import asyncio
 import time
+from uuid import uuid4
 
 from attrs import asdict, define, field
 
 from parea.api_client import HTTPClient
 from parea.parea_logger import parea_logger
 from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, UseDeployedPrompt, UseDeployedPromptResponse
-from parea.utils.trace_utils import get_current_trace_id
+from parea.utils.trace_utils import default_logger, get_current_trace_id, trace_data
 
 COMPLETION_ENDPOINT = "/completion"
 DEPLOYED_PROMPT_ENDPOINT = "/deployed-prompt"
@@ -23,21 +24,29 @@ class Parea:
         parea_logger.set_client(self._client)
 
     def completion(self, data: Completion) -> CompletionResponse:
-        data.inference_id = get_current_trace_id() or None
+        inference_id = str(uuid4())
+        data.inference_id = inference_id
         r = self._client.request(
             "POST",
             COMPLETION_ENDPOINT,
             data=asdict(data),
         )
+        if parent_trace_id := get_current_trace_id():
+            trace_data.get()[parent_trace_id].children.append(inference_id)
+            default_logger(parent_trace_id)
         return CompletionResponse(**r.json())
 
     async def acompletion(self, data: Completion) -> CompletionResponse:
-        data.inference_id = get_current_trace_id()
+        inference_id = str(uuid4())
+        data.inference_id = inference_id
         r = await self._client.request_async(
             "POST",
             COMPLETION_ENDPOINT,
             data=asdict(data),
         )
+        if parent_trace_id := get_current_trace_id():
+            trace_data.get()[parent_trace_id].children.append(inference_id)
+            default_logger(parent_trace_id)
         return CompletionResponse(**r.json())
 
     def get_prompt(self, data: UseDeployedPrompt) -> UseDeployedPromptResponse:
