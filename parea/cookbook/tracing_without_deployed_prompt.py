@@ -9,10 +9,10 @@ from parea.utils.trace_utils import get_current_trace_id, trace
 
 load_dotenv()
 
-p = Parea(api_key=os.getenv("PAREA_API_KEY"))
+p = Parea(api_key=os.getenv("DEV_API_KEY"))
 
 
-@trace
+@trace  # <--- If you want to log the inputs to the LLM call you can optionally add a trace decorator here
 def call_llm(
     data: list[dict],
     model: str = "gpt-3.5-turbo",
@@ -31,7 +31,6 @@ def call_llm(
     )
 
 
-@trace
 def argument_generator(query: str, additional_description: str = "") -> str:
     return call_llm(
         [
@@ -44,7 +43,6 @@ def argument_generator(query: str, additional_description: str = "") -> str:
     ).content
 
 
-@trace
 def critic(argument: str) -> str:
     return call_llm(
         [
@@ -59,7 +57,6 @@ def critic(argument: str) -> str:
     ).content
 
 
-@trace
 def refiner(query: str, additional_description: str, current_arg: str, criticism: str) -> str:
     return call_llm(
         [
@@ -93,7 +90,6 @@ def argument_chain2(query: str, additional_description: str = "") -> tuple[str, 
     return refiner(query, additional_description, argument, criticism), trace_id
 
 
-@trace
 def refiner2(query: str, additional_description: str, current_arg: str, criticism: str) -> CompletionResponse:
     return call_llm(
         [

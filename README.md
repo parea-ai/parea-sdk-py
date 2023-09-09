@@ -82,61 +82,31 @@ async def main_async():
 
 ```python
 import os
-import time
 
 import openai
 from dotenv import load_dotenv
 
 from parea import Parea
-from parea.helpers import to_date_and_time_string, gen_trace_id
-from parea.parea_logger import parea_logger
-from parea.schemas.models import TraceLog, LLMInputs
 
 load_dotenv()
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
-p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
-# define your OpenAI call as you would normally
+p = Parea(api_key=os.getenv("DEV_API_KEY"))
+
 x = "Golang"
 y = "Fiber"
-inputs = {"x": x, "y": y}
-messages = [
-  {"role": "user", "content": f"Write a hello world program using {x} and the {y} framework."},
-]
+messages = [{
+  "role": "user",
+  "content": f"Write a hello world program using {x} and the {y} framework."
+}]
 model = "gpt-3.5-turbo"
-model_params = {
-  "temperature": 0.7,
-  "top_p": 1.0,
-}
-model_config = {"model": model, "messages": messages, "model_params": model_params}
-start_time = time.time()
-completion = openai.ChatCompletion.create(model=model, messages=messages, **model_params)
-output = completion.choices[0].message["content"]
-end_time = time.time()
-
-# the TraceLog schema
-log_request = TraceLog(
-  trace_id=gen_trace_id(),
-  start_timestamp=to_date_and_time_string(start_time),
-  end_timestamp=to_date_and_time_string(end_time),
-  status="success",
-  trace_name="Test Log",
-  inputs=inputs,
-  configuration=LLMInputs(**model_config),
-  output=output,
-  input_tokens=completion.usage["prompt_tokens"],
-  output_tokens=completion.usage["completion_tokens"],
-  total_tokens=completion.usage["total_tokens"],
-)
+temperature = 0.0
 
 
+# define your OpenAI call as you would normally and we'll automatically log the results
 def main():
-  parea_logger.record_log(data=log_request)
-
-
-async def main_async():
-  await parea_logger.arecord_log(data=log_request)
+  openai.ChatCompletion.create(model=model, temperature=temperature, messages=messages).choices[0].message["content"]
 ```
 
 ### Open source community features
