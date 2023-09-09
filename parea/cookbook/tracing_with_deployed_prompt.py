@@ -1,6 +1,6 @@
-import os
 from typing import Tuple
 
+import os
 from datetime import datetime
 
 from dotenv import load_dotenv
@@ -11,7 +11,7 @@ from parea.utils.trace_utils import get_current_trace_id, trace
 
 load_dotenv()
 
-p = Parea(api_key=os.getenv('PAREA_API_KEY'))
+p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
 
 def deployed_argument_generator(query: str, additional_description: str = "") -> str:
