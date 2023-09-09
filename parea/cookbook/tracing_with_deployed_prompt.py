@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from typing import Tuple
 
 from dotenv import load_dotenv
 
@@ -9,13 +10,13 @@ from parea.utils.trace_utils import get_current_trace_id, trace
 
 load_dotenv()
 
-p = Parea(api_key=os.getenv("PAREA_API_KEY"))
+p = Parea(api_key="pai-c8dff73cbeca3160e5ebe0b4f51ee1d4ed2f7270d4a149817c8fcb8e8313ca5c")
 
 
 def deployed_argument_generator(query: str, additional_description: str = "") -> str:
     return p.completion(
         Completion(
-            deployment_id="p-Ar-Oi14-nBxHUiradyql9",
+            deployment_id="p-RG8d9rfJc_0cctwfpb_n6",
             llm_inputs={
                 "additional_description": additional_description,
                 "date": f"{datetime.now()}",
@@ -28,7 +29,7 @@ def deployed_argument_generator(query: str, additional_description: str = "") ->
 def deployed_critic(argument: str) -> str:
     return p.completion(
         Completion(
-            deployment_id="p-W2yPy93tAczYrxkipjli6",
+            deployment_id="p-fXgZytT3dJjXD_71TDR4s",
             llm_inputs={"argument": argument},
         )
     ).content
@@ -37,7 +38,7 @@ def deployed_critic(argument: str) -> str:
 def deployed_refiner(query: str, additional_description: str, current_arg: str, criticism: str) -> str:
     return p.completion(
         Completion(
-            deployment_id="p-8Er1Xo0GDGF2xtpmMOpbn",
+            deployment_id="p--G2s9okMTvBEh3d8YqLY2",
             llm_inputs={
                 "additional_description": additional_description,
                 "date": f"{datetime.now()}",
@@ -52,7 +53,7 @@ def deployed_refiner(query: str, additional_description: str, current_arg: str, 
 def deployed_refiner2(query: str, additional_description: str, current_arg: str, criticism: str) -> CompletionResponse:
     return p.completion(
         Completion(
-            deployment_id="p-8Er1Xo0GDGF2xtpmMOpbn",
+            deployment_id="p--G2s9okMTvBEh3d8YqLY2",
             llm_inputs={
                 "additional_description": additional_description,
                 "date": f"{datetime.now()}",
@@ -69,6 +70,14 @@ def deployed_argument_chain(query: str, additional_description: str = "") -> str
     argument = deployed_argument_generator(query, additional_description)
     criticism = deployed_critic(argument)
     return deployed_refiner(query, additional_description, argument, criticism)
+
+
+@trace
+def deployed_argument_chain2(query: str, additional_description: str = "") -> Tuple[str, str]:
+    trace_id = get_current_trace_id()
+    argument = deployed_argument_generator(query, additional_description)
+    criticism = deployed_critic(argument)
+    return deployed_refiner(query, additional_description, argument, criticism), trace_id
 
 
 @trace(
@@ -88,11 +97,10 @@ if __name__ == "__main__":
     )
     print(result1)
 
-    result2 = deployed_argument_chain(
+    result2, trace_id2 = deployed_argument_chain2(
         "Whether wine is good for you.",
         additional_description="Provide a concise, few sentence argument on why wine is good for you.",
     )
-    trace_id2 = get_current_trace_id()
     print(result2)
     p.record_feedback(
         FeedbackRequest(

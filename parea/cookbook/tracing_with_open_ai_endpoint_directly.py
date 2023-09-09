@@ -17,6 +17,7 @@ p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
 @trace
 def argument_chain(query: str, additional_description: str = "") -> str:
+    trace_id = get_current_trace_id()
     argument = (
         openai.ChatCompletion.create(
             model="gpt-3.5-turbo-0613",
@@ -75,15 +76,14 @@ The current time is {datetime.now()}""",
         .message["content"]
     )
 
-    return refined_argument
+    return refined_argument, trace_id
 
 
 if __name__ == "__main__":
-    result = argument_chain(
+    result, trace_id = argument_chain(
         "Whether sparkling water is good for you.",
         additional_description="Provide a concise, few sentence argument on why sparkling water is good for you.",
     )
-    trace_id = get_current_trace_id()
     print(result)
     p.record_feedback(
         FeedbackRequest(
