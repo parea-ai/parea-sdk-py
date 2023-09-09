@@ -1,4 +1,4 @@
-from typing import Any, Optional, Tuple
+from typing import Any, List, Optional, Tuple, Union
 
 import contextvars
 import inspect
@@ -8,11 +8,10 @@ import threading
 import time
 from collections import ChainMap
 from functools import wraps
-from uuid import uuid4
 
 from attrs import asdict
 
-from parea.helpers import to_date_and_time_string
+from parea.helpers import gen_trace_id, to_date_and_time_string
 from parea.parea_logger import parea_logger
 from parea.schemas.models import CompletionResponse, TraceLog
 
@@ -57,9 +56,9 @@ def trace(
     target: Optional[str] = None,
     end_user_identifier: Optional[str] = None,
 ):
-    def init_trace(func_name, args, kwargs, func) -> Tuple[str, float]:
+    def init_trace(func_name, args, kwargs, func) -> tuple[str, float]:
         start_time = time.time()
-        trace_id = str(uuid4())
+        trace_id = gen_trace_id()
         trace_context.get().append(trace_id)
 
         sig = inspect.signature(func)
@@ -95,9 +94,10 @@ def trace(
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
             trace_id, start_time = init_trace(func.__name__, args, kwargs, func)
+            output_as_list = check_multiple_return_values(func)
             try:
                 result = await func(*args, **kwargs)
-                output = asdict(result) if isinstance(result, CompletionResponse) else result
+                output = make_output(result, output_as_list)
                 trace_data.get()[trace_id].output = json.dumps(output)
             except Exception as e:
                 logger.exception(f"Error occurred in function {func.__name__}, {e}")
@@ -111,9 +111,10 @@ def trace(
         @wraps(func)
         def wrapper(*args, **kwargs):
             trace_id, start_time = init_trace(func.__name__, args, kwargs, func)
+            output_as_list = check_multiple_return_values(func)
             try:
                 result = func(*args, **kwargs)
-                output = asdict(result) if isinstance(result, CompletionResponse) else result
+                output = make_output(result, output_as_list)
                 trace_data.get()[trace_id].output = json.dumps(output)
             except Exception as e:
                 logger.exception(f"Error occurred in function {func.__name__}, {e}")
@@ -143,3 +144,20 @@ def default_logger(trace_id: str):
         kwargs={"data": trace_data.get()[trace_id]},
     )
     logging_thread.start()
+
+
+def check_multiple_return_values(func) -> bool:
+    specs = inspect.getfullargspec(func)
+    try:
+        r = specs.annotations.get("return", None)
+        if r and r.__origin__ == tuple:
+            return len(r.__args__) > 1
+    except Exception:
+        return False
+
+
+def make_output(result, islist) -> Union[list[Any], Any]:
+    if islist:
+        return [asdict(r) if isinstance(r, CompletionResponse) else r for r in result]
+    else:
+        return asdict(result) if isinstance(result, CompletionResponse) else result

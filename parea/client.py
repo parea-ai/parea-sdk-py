@@ -1,10 +1,10 @@
 import asyncio
 import time
-from uuid import uuid4
 
 from attrs import asdict, define, field
 
 from parea.api_client import HTTPClient
+from parea.helpers import gen_trace_id
 from parea.parea_logger import parea_logger
 from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, UseDeployedPrompt, UseDeployedPromptResponse
 from parea.utils.trace_utils import default_logger, get_current_trace_id, trace_data
@@ -24,7 +24,7 @@ class Parea:
         parea_logger.set_client(self._client)
 
     def completion(self, data: Completion) -> CompletionResponse:
-        inference_id = str(uuid4())
+        inference_id = gen_trace_id()
         data.inference_id = inference_id
         r = self._client.request(
             "POST",
@@ -37,7 +37,7 @@ class Parea:
         return CompletionResponse(**r.json())
 
     async def acompletion(self, data: Completion) -> CompletionResponse:
-        inference_id = str(uuid4())
+        inference_id = gen_trace_id()
         data.inference_id = inference_id
         r = await self._client.request_async(
             "POST",

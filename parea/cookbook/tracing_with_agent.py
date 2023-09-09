@@ -1,15 +1,17 @@
 import os
 import random
+import time
 
 from dotenv import load_dotenv
 
 from parea import Parea
+from parea.helpers import to_date_and_time_string
 from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, LLMInputs, Message, ModelParams, Role
 from parea.utils.trace_utils import get_current_trace_id, trace
 
 load_dotenv()
 
-p = Parea(api_key=os.getenv("PAREA_API_KEY"))
+p = Parea(api_key=os.getenv("DEV_API_KEY"))
 
 # Parea SDK makes it easy to use different LLMs with the same apis structure and standardized request/response schemas.
 LLM_OPTIONS = [("gpt-3.5-turbo", "openai"), ("gpt-4", "openai"), ("claude-instant-1", "anthropic"), ("claude-2", "anthropic")]
@@ -84,7 +86,7 @@ def generate_tasks(main_objective: str, expounded_initial_task: list[dict[str, s
     return new_tasks_list
 
 
-@trace
+@trace(name=f"run_agent-{to_date_and_time_string(time.time())}")  # You can provide a custom name other than the function name
 def run_agent(main_objective: str, initial_task: str = "") -> tuple[list[dict[str, str]], str]:
     trace_id = get_current_trace_id()
     generated_tasks = []
