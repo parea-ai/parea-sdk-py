@@ -1,5 +1,5 @@
+import time
 import uuid
-from datetime import datetime
 
 
 def gen_trace_id() -> str:
@@ -8,5 +8,4 @@ def gen_trace_id() -> str:
 
 
 def to_date_and_time_string(timestamp: float) -> str:
-    """Convert a timestamp to a date and time string"""
-    return datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S %Z").strip()
+    return time.strftime("%Y-%m-%d %H:%M:%S %Z", time.localtime(timestamp))
