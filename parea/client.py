@@ -6,12 +6,14 @@ from attrs import asdict, define, field
 
 from parea.api_client import HTTPClient
 from parea.parea_logger import parea_logger
-from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, UseDeployedPrompt, UseDeployedPromptResponse
+from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, UseDeployedPrompt, \
+    UseDeployedPromptResponse, CacheRequest
 from parea.utils.trace_utils import default_logger, get_current_trace_id, trace_data
 
 COMPLETION_ENDPOINT = "/completion"
 DEPLOYED_PROMPT_ENDPOINT = "/deployed-prompt"
 RECORD_FEEDBACK_ENDPOINT = "/feedback"
+GET_CACHE_ENDPOINT = "/get_cache"
 
 
 @define
@@ -80,3 +82,19 @@ class Parea:
             RECORD_FEEDBACK_ENDPOINT,
             data=asdict(data),
         )
+
+    def get_cache(self, data: CacheRequest) -> CompletionResponse:
+        r = self._client.request(
+            "POST",
+            GET_CACHE_ENDPOINT,
+            data=asdict(data),
+        )
+        return CompletionResponse(**r.json())
+
+    async def aget_cache(self, data: CacheRequest) -> CompletionResponse:
+        r = await self._client.request_async(
+            "POST",
+            GET_CACHE_ENDPOINT,
+            data=asdict(data),
+        )
+        return CompletionResponse(**r.json())
