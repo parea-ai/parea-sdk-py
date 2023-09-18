@@ -7,10 +7,9 @@ from attrs import asdict, define, field
 
 from parea.api_client import HTTPClient
 from parea.parea_logger import parea_logger
-from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, UseDeployedPrompt, \
-    UseDeployedPromptResponse, CacheRequest, TraceLog
+from parea.schemas.models import CacheRequest, Completion, CompletionResponse, FeedbackRequest, TraceLog, UseDeployedPrompt, UseDeployedPromptResponse
 from parea.utils.trace_utils import default_logger, get_current_trace_id, trace_data
-from parea.wrapper import Wrapper, OpenAIWrapper
+from parea.wrapper import OpenAIWrapper, Wrapper
 
 COMPLETION_ENDPOINT = "/completion"
 DEPLOYED_PROMPT_ENDPOINT = "/deployed-prompt"
@@ -107,7 +106,7 @@ class Parea:
 _initialized_parea_wrapper = False
 
 
-def init(api_key: str = os.getenv('PAREA_API_KEY'), debug_with_cache: bool = False) -> None:
+def init(api_key: str = os.getenv("PAREA_API_KEY"), debug_with_cache: bool = False) -> None:
     Parea(api_key=api_key, debug_with_cache=debug_with_cache)
 
 

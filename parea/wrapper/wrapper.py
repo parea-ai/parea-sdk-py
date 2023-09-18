@@ -10,7 +10,7 @@ from parea.utils.trace_utils import default_logger, to_date_and_time_string, tra
 
 
 class Wrapper:
-    _parea_client: 'Parea' = None  # type: ignore
+    _parea_client: "Parea" = None  # type: ignore
 
     def __init__(
         self,
@@ -33,8 +33,7 @@ class Wrapper:
         for func_name in func_names:
             func_name_parts = func_name.split(".")
             original = functools.reduce(getattr, func_name_parts, module)
-            setattr(module if len(func_name_parts) == 1 else functools.reduce(getattr, func_name_parts[:-1], module),
-                    func_name_parts[-1], self._wrapped_func(original))
+            setattr(module if len(func_name_parts) == 1 else functools.reduce(getattr, func_name_parts[:-1], module), func_name_parts[-1], self._wrapped_func(original))
 
     def _wrapped_func(self, original_func: Callable) -> Callable:
         unwrapped_func = original_func

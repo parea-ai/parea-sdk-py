@@ -6,7 +6,7 @@ import openai
 from openai.openai_object import OpenAIObject
 from openai.util import convert_to_openai_object
 
-from ..schemas.models import LLMInputs, ModelParams, CacheRequest, TraceLog
+from ..schemas.models import CacheRequest, LLMInputs, ModelParams, TraceLog
 from ..utils.trace_utils import trace_data
 from .wrapper import Wrapper
 
@@ -157,11 +157,13 @@ class OpenAIWrapper:
         return convert_to_openai_object(
             {
                 "object": "chat.completion",
-                "model": cache_response.configuration['model'],
-                "choices": [{
-                    "index": 0,
-                    "message": message,
-                }],
+                "model": cache_response.configuration["model"],
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": message,
+                    }
+                ],
                 "usage": {
                     "prompt_tokens": cache_response.input_tokens,
                     "completion_tokens": cache_response.output_tokens,
