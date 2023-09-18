@@ -10,16 +10,31 @@ from parea.utils.trace_utils import default_logger, to_date_and_time_string, tra
 
 
 class Wrapper:
-    def __init__(self, module: Any, func_names: List[str], resolver: Callable, log: Callable = default_logger) -> None:
+    _parea_client: 'Parea' = None  # type: ignore
+
+    def __init__(
+        self,
+        module: Any,
+        func_names: List[str],
+        resolver: Callable,
+        debug_with_cache: bool,
+        convert_kwargs_to_cache_request: Callable,
+        convert_cache_to_response: Callable,
+        log: Callable = default_logger,
+    ) -> None:
         self.resolver = resolver
         self.log = log
         self.wrap_functions(module, func_names)
+        self.debug_with_cache = debug_with_cache
+        self.convert_kwargs_to_cache_request = convert_kwargs_to_cache_request
+        self.convert_cache_to_response = convert_cache_to_response
 
     def wrap_functions(self, module: Any, func_names: List[str]):
         for func_name in func_names:
             func_name_parts = func_name.split(".")
             original = functools.reduce(getattr, func_name_parts, module)
-            setattr(module if len(func_name_parts) == 1 else functools.reduce(getattr, func_name_parts[:-1], module), func_name_parts[-1], self._wrapped_func(original))
+            setattr(module if len(func_name_parts) == 1 else functools.reduce(getattr, func_name_parts[:-1], module),
+                    func_name_parts[-1], self._wrapped_func(original))
 
     def _wrapped_func(self, original_func: Callable) -> Callable:
         unwrapped_func = original_func
@@ -73,14 +88,21 @@ class Wrapper:
             trace_id, start_time = self._init_trace()
             response = None
             error = None
+            cache_hit = False
             try:
-                response = await orig_func(*args, **kwargs)
+                if self.debug_with_cache:
+                    cache = await self._parea_client.aget_cache(self.convert_kwargs_to_cache_request(args, kwargs))
+                    if cache.cache_hit:
+                        response = self.convert_cache_to_response(cache)
+                        cache_hit = True
+                if response is None:
+                    response = await orig_func(*args, **kwargs)
                 return response
             except Exception as e:
                 error = str(e)
                 raise
             finally:
-                self._cleanup_trace(trace_id, start_time, error, response, args, kwargs)
+                self._cleanup_trace(trace_id, start_time, error, response, cache_hit, args, kwargs)
 
         return wrapper
 
@@ -89,21 +111,29 @@ class Wrapper:
             trace_id, start_time = self._init_trace()
             response = None
             error = None
+            cache_hit = False
             try:
-                response = orig_func(*args, **kwargs)
+                if self.debug_with_cache:
+                    cache = self._parea_client.get_cache(self.convert_kwargs_to_cache_request(args, kwargs))
+                    if cache.cache_hit:
+                        response = self.convert_cache_to_response(cache)
+                        cache_hit = True
+                if response is None:
+                    response = orig_func(*args, **kwargs)
                 return response
             except Exception as e:
                 error = str(e)
                 raise e
             finally:
-                self._cleanup_trace(trace_id, start_time, error, response, args, kwargs)
+                self._cleanup_trace(trace_id, start_time, error, response, cache_hit, args, kwargs)
 
         return wrapper
 
-    def _cleanup_trace(self, trace_id: str, start_time: float, error: str, response: Any, args, kwargs):
+    def _cleanup_trace(self, trace_id: str, start_time: float, error: str, response: Any, cache_hit, args, kwargs):
         end_time = time.time()
         trace_data.get()[trace_id].end_timestamp = to_date_and_time_string(end_time)
         trace_data.get()[trace_id].latency = end_time - start_time
+        trace_data.get()[trace_id].cache_hit = cache_hit
 
         if error:
             trace_data.get()[trace_id].error = error

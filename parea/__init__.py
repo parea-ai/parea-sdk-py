@@ -8,11 +8,9 @@
     To install the official [Python SDK](https://pypi.org/project/parea/),
     run the following command:  ```bash pip install parea ```.
 """
-
 from importlib import metadata as importlib_metadata
 
-import parea.wrapper  # noqa: F401
-from parea.client import Parea
+from parea.client import Parea, init
 
 
 def get_version() -> str:

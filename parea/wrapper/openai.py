@@ -4,8 +4,9 @@ import json
 
 import openai
 from openai.openai_object import OpenAIObject
+from openai.util import convert_to_openai_object
 
-from ..schemas.models import LLMInputs, ModelParams
+from ..schemas.models import LLMInputs, ModelParams, CacheRequest, TraceLog
 from ..utils.trace_utils import trace_data
 from .wrapper import Wrapper
 
@@ -47,6 +48,17 @@ MODEL_COST_MAPPING: Dict[str, float] = {
 class OpenAIWrapper:
     original_methods = {"ChatCompletion.create": openai.ChatCompletion.create, "ChatCompletion.acreate": openai.ChatCompletion.acreate}
 
+    def init(self, log: Callable, debug_with_cache: bool = False):
+        Wrapper(
+            resolver=self.resolver,
+            log=log,
+            module=openai,
+            func_names=list(self.original_methods.keys()),
+            debug_with_cache=debug_with_cache,
+            convert_kwargs_to_cache_request=self.convert_kwargs_to_cache_request,
+            convert_cache_to_response=self.convert_cache_to_response,
+        )
+
     def resolver(self, trace_id: str, _args: Sequence[Any], kwargs: Dict[str, Any], response: Optional[Any]):
         if response:
             usage = response["usage"]
@@ -55,10 +67,26 @@ class OpenAIWrapper:
             output = None
             usage = {}
 
-        model = kwargs.get("model", None)
+        llm_configuration = self._kwargs_to_llm_configuration(kwargs)
+        model = llm_configuration.model
 
-        llm_inputs = LLMInputs(
-            model=model,
+        model_rate = self.get_model_cost(model)
+        model_completion_rate = self.get_model_cost(model, is_completion=True)
+        completion_cost = model_completion_rate * (usage.get("completion_tokens", 0) / 1000)
+        prompt_cost = model_rate * (usage.get("prompt_tokens", 0) / 1000)
+        total_cost = sum([prompt_cost, completion_cost])
+
+        trace_data.get()[trace_id].configuration = llm_configuration
+        trace_data.get()[trace_id].input_tokens = usage.get("prompt_tokens", 0)
+        trace_data.get()[trace_id].output_tokens = usage.get("completion_tokens", 0)
+        trace_data.get()[trace_id].total_tokens = usage.get("total_tokens", 0)
+        trace_data.get()[trace_id].cost = total_cost
+        trace_data.get()[trace_id].output = output
+
+    @staticmethod
+    def _kwargs_to_llm_configuration(kwargs):
+        return LLMInputs(
+            model=kwargs.get("model", None),
             provider="openai",
             messages=kwargs.get("messages", None),
             functions=kwargs.get("functions", None),
@@ -71,22 +99,6 @@ class OpenAIWrapper:
                 presence_penalty=kwargs.get("presence_penalty", 0.0),
             ),
         )
-
-        model_rate = self.get_model_cost(model)
-        model_completion_rate = self.get_model_cost(model, is_completion=True)
-        completion_cost = model_completion_rate * (usage.get("completion_tokens", 0) / 1000)
-        prompt_cost = model_rate * (usage.get("prompt_tokens", 0) / 1000)
-        total_cost = sum([prompt_cost, completion_cost])
-
-        trace_data.get()[trace_id].configuration = llm_inputs
-        trace_data.get()[trace_id].input_tokens = usage.get("prompt_tokens", 0)
-        trace_data.get()[trace_id].output_tokens = usage.get("completion_tokens", 0)
-        trace_data.get()[trace_id].total_tokens = usage.get("total_tokens", 0)
-        trace_data.get()[trace_id].cost = total_cost
-        trace_data.get()[trace_id].output = output
-
-    def init(self, log: Callable):
-        Wrapper(resolver=self.resolver, log=log, module=openai, func_names=list(OpenAIWrapper.original_methods.keys()))
 
     @staticmethod
     def _get_output(result) -> str:
@@ -119,3 +131,41 @@ class OpenAIWrapper:
             raise ValueError(msg)
 
         return cost
+
+    @staticmethod
+    def convert_kwargs_to_cache_request(_args: Sequence[Any], kwargs: Dict[str, Any]) -> CacheRequest:
+        return CacheRequest(
+            configuration=OpenAIWrapper._kwargs_to_llm_configuration(kwargs),
+        )
+
+    @staticmethod
+    def convert_cache_to_response(cache_response: TraceLog) -> OpenAIObject:
+        content = cache_response.output
+        try:
+            function_call = json.loads(content.replace("```", ""))
+            message = {
+                "role": "assistant",
+                "content": None,
+                "function_call": function_call,
+            }
+        except json.JSONDecodeError:
+            message = {
+                "role": "assistant",
+                "content": content,
+            }
+
+        return convert_to_openai_object(
+            {
+                "object": "chat.completion",
+                "model": cache_response.configuration['model'],
+                "choices": [{
+                    "index": 0,
+                    "message": message,
+                }],
+                "usage": {
+                    "prompt_tokens": cache_response.input_tokens,
+                    "completion_tokens": cache_response.output_tokens,
+                    "total_tokens": cache_response.total_tokens,
+                },
+            }
+        )

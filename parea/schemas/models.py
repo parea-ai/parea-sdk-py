@@ -150,5 +150,4 @@ class TraceLogTree(TraceLog):
 
 @define
 class CacheRequest:
-    llm_inputs: Optional[dict[str, Any]] = None
-    llm_configuration: LLMInputs = LLMInputs()
+    configuration: LLMInputs = LLMInputs()

@@ -1,10 +1,11 @@
 import os
 from datetime import datetime
+from typing import Tuple
 
 import openai
 from dotenv import load_dotenv
 
-from parea import Parea
+from parea import Parea, init  # noqa
 from parea.schemas.models import FeedbackRequest
 from parea.utils.trace_utils import get_current_trace_id, trace
 
@@ -12,11 +13,12 @@ load_dotenv()
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-p = Parea(api_key=os.getenv("PAREA_API_KEY"))
+p = Parea(api_key=os.getenv("PAREA_API_KEY"), debug_with_cache=True)
+# init(api_key=os.getenv("PAREA_API_KEY"), debug_with_cache=True)  # use this if you don't want to use the parea client
 
 
 @trace
-def argument_chain(query: str, additional_description: str = "") -> str:
+def argument_chain(query: str, additional_description: str = "") -> Tuple[str, str]:
     trace_id = get_current_trace_id()
     argument = (
         openai.ChatCompletion.create(
@@ -26,7 +28,7 @@ def argument_chain(query: str, additional_description: str = "") -> str:
                 {
                     "role": "system",
                     "content": f"""You are a debater making an argument on a topic. {additional_description}.
-The current time is {datetime.now()}""",
+The current time is {datetime.now().strftime("%Y-%m-%d")}.""",
                 },
                 {"role": "user", "content": f"The discussion topic is {query}"},
             ],
@@ -61,7 +63,7 @@ Provide a concise summary of your feedback.""",
                 {
                     "role": "system",
                     "content": f"""You are a debater making an argument on a topic. {additional_description}.
-The current time is {datetime.now()}""",
+The current time is {datetime.now().strftime("%Y-%m-%d")}""",
                 },
                 {"role": "user", "content": f"""The discussion topic is {query}"""},
                 {"role": "assistant", "content": argument},
