@@ -146,3 +146,8 @@ class TraceLog:
 @define
 class TraceLogTree(TraceLog):
     children: Optional[list[TraceLog]] = None
+
+
+@define
+class CacheRequest:
+    configuration: LLMInputs = LLMInputs()

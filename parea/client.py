@@ -1,13 +1,18 @@
 import asyncio
+import os
 import time
+from typing import Callable
 
 from attrs import asdict, define, field
 
 from parea.api_client import HTTPClient
+from parea.cache.cache import Cache
+from parea.cache.redis import RedisLRUCache
 from parea.helpers import gen_trace_id
 from parea.parea_logger import parea_logger
 from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, UseDeployedPrompt, UseDeployedPromptResponse
 from parea.utils.trace_utils import default_logger, get_current_trace_id, trace_data
+from parea.wrapper import OpenAIWrapper
 
 COMPLETION_ENDPOINT = "/completion"
 DEPLOYED_PROMPT_ENDPOINT = "/deployed-prompt"
@@ -18,10 +23,13 @@ RECORD_FEEDBACK_ENDPOINT = "/feedback"
 class Parea:
     api_key: str = field(init=True, default="")
     _client: HTTPClient = field(init=False, default=HTTPClient())
+    cache: Cache = field(init=True, default=RedisLRUCache())
 
     def __attrs_post_init__(self):
         self._client.set_api_key(self.api_key)
         parea_logger.set_client(self._client)
+        log = default_logger if self.api_key else lambda *args, **kwargs: None
+        _init_parea_wrapper(log, self.cache)
 
     def completion(self, data: Completion) -> CompletionResponse:
         inference_id = gen_trace_id()
@@ -80,3 +88,18 @@ class Parea:
             RECORD_FEEDBACK_ENDPOINT,
             data=asdict(data),
         )
+
+
+_initialized_parea_wrapper = False
+
+
+def init(api_key: str = os.getenv("PAREA_API_KEY"), cache: Cache = RedisLRUCache()) -> None:
+    Parea(api_key=api_key, cache=cache)
+
+
+def _init_parea_wrapper(log: Callable = None, cache: Cache = None):
+    global _initialized_parea_wrapper
+    if _initialized_parea_wrapper:
+        return
+    OpenAIWrapper().init(log=log, cache=cache)
+    _initialized_parea_wrapper = True

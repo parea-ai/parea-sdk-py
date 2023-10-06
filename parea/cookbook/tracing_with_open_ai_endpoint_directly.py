@@ -26,7 +26,7 @@ def argumentor(query: str, additional_description: str = "") -> str:
             {
                 "role": "system",
                 "content": f"""You are a debater making an argument on a topic. {additional_description}.
-                The current time is {datetime.now()}""",
+                The current time is {datetime.now().strftime("%Y-%m-%d")}""",
             },
             {"role": "user", "content": f"The discussion topic is {query}"},
         ]
@@ -55,7 +55,7 @@ def refiner(query: str, additional_description: str, argument: str, criticism: s
             {
                 "role": "system",
                 "content": f"""You are a debater making an argument on a topic. {additional_description}.
-                The current time is {datetime.now()}""",
+                The current time is {datetime.now().strftime("%Y-%m-%d")}""",
             },
             {"role": "user", "content": f"""The discussion topic is {query}"""},
             {"role": "assistant", "content": argument},
@@ -83,9 +83,9 @@ if __name__ == "__main__":
         additional_description="Provide a concise, few sentence argument on why sparkling wine is good for you.",
     )
     print(result)
-    p.record_feedback(
-        FeedbackRequest(
-            trace_id=trace_id,
-            score=0.7,  # 0.0 (bad) to 1.0 (good)
-        )
-    )
+    # # p.record_feedback(
+    # #     FeedbackRequest(
+    # #         trace_id=trace_id,
+    # #         score=0.7,  # 0.0 (bad) to 1.0 (good)
+    # #     )
+    # # )
