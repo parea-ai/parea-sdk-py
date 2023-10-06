@@ -1,13 +1,14 @@
+from typing import Optional
+
 import json
 import logging
 import os
-from typing import Optional
 
 import redis
 from attr import asdict
 
 from parea.cache.cache import Cache
-from parea.schemas.models import TraceLog, CacheRequest
+from parea.schemas.models import CacheRequest, TraceLog
 
 logger = logging.getLogger()
 
@@ -16,11 +17,7 @@ class RedisLRUCache(Cache):
     """A Redis-based LRU cache for caching both normal and streaming responses."""
 
     def __init__(
-        self,
-        host: str = os.getenv('REDIS_HOST', 'localhost'),
-        port: int = int(os.getenv('REDIS_PORT', 6379)),
-        password: str = os.getenv('REDIS_PASSWORT', None),
-        ttl=3600 * 6
+        self, host: str = os.getenv("REDIS_HOST", "localhost"), port: int = int(os.getenv("REDIS_PORT", 6379)), password: str = os.getenv("REDIS_PASSWORT", None), ttl=3600 * 6
     ):
         """
         Initialize the cache.

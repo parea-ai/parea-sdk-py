@@ -1,7 +1,8 @@
+from typing import Callable
+
 import asyncio
 import os
 import time
-from typing import Callable
 
 from attrs import asdict, define, field
 

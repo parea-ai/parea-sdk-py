@@ -47,10 +47,7 @@ MODEL_COST_MAPPING: Dict[str, float] = {
 
 
 class OpenAIWrapper:
-    original_methods = {
-        "ChatCompletion.create": openai.ChatCompletion.create,
-        "ChatCompletion.acreate": openai.ChatCompletion.acreate
-    }
+    original_methods = {"ChatCompletion.create": openai.ChatCompletion.create, "ChatCompletion.acreate": openai.ChatCompletion.acreate}
 
     def init(self, log: Callable, cache: Cache = None):
         Wrapper(

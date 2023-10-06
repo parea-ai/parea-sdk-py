@@ -1,5 +1,6 @@
-from abc import ABC
 from typing import Optional
+
+from abc import ABC
 
 from parea.schemas.models import CacheRequest, TraceLog
 
