@@ -5,7 +5,6 @@ import openai
 from dotenv import load_dotenv
 
 from parea import Parea
-from parea.schemas.models import FeedbackRequest
 from parea.utils.trace_utils import get_current_trace_id, trace
 
 load_dotenv()

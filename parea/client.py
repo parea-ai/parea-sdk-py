@@ -10,10 +10,11 @@ from parea.api_client import HTTPClient
 from parea.cache.cache import Cache
 from parea.cache.redis import RedisLRUCache
 from parea.helpers import gen_trace_id
-from parea.parea_logger import parea_logger
-from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, UseDeployedPrompt, UseDeployedPromptResponse
-from parea.utils.trace_utils import default_logger, get_current_trace_id, trace_data
+from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, UseDeployedPrompt, \
+    UseDeployedPromptResponse
+from parea.utils.trace_utils import get_current_trace_id, trace_data, logger_record_log, logger_all_possible
 from parea.wrapper import OpenAIWrapper
+from parea.parea_logger import parea_logger
 
 COMPLETION_ENDPOINT = "/completion"
 DEPLOYED_PROMPT_ENDPOINT = "/deployed-prompt"
@@ -28,9 +29,11 @@ class Parea:
 
     def __attrs_post_init__(self):
         self._client.set_api_key(self.api_key)
-        parea_logger.set_client(self._client)
-        log = default_logger if self.api_key else lambda *args, **kwargs: None
-        _init_parea_wrapper(log, self.cache)
+        if self.api_key:
+            parea_logger.set_client(self._client)
+        if isinstance(self.cache, RedisLRUCache):
+            parea_logger.set_redis_lru_cache(self.cache)
+        _init_parea_wrapper(logger_all_possible, self.cache)
 
     def completion(self, data: Completion) -> CompletionResponse:
         inference_id = gen_trace_id()
@@ -42,7 +45,7 @@ class Parea:
         )
         if parent_trace_id := get_current_trace_id():
             trace_data.get()[parent_trace_id].children.append(inference_id)
-            default_logger(parent_trace_id)
+            logger_record_log(parent_trace_id)
         return CompletionResponse(**r.json())
 
     async def acompletion(self, data: Completion) -> CompletionResponse:
@@ -55,7 +58,7 @@ class Parea:
         )
         if parent_trace_id := get_current_trace_id():
             trace_data.get()[parent_trace_id].children.append(inference_id)
-            default_logger(parent_trace_id)
+            logger_record_log(parent_trace_id)
         return CompletionResponse(**r.json())
 
     def get_prompt(self, data: UseDeployedPrompt) -> UseDeployedPromptResponse:

@@ -1,10 +1,10 @@
-from typing import Any, List, Optional, Tuple, Union
+import threading
+from typing import Any, Optional, Union
 
 import contextvars
 import inspect
 import json
 import logging
-import threading
 import time
 from collections import ChainMap
 from functools import wraps
@@ -87,7 +87,7 @@ def trace(
         end_time = time.time()
         trace_data.get()[trace_id].end_timestamp = to_date_and_time_string(end_time)
         trace_data.get()[trace_id].latency = end_time - start_time
-        default_logger(trace_id)
+        logger_all_possible(trace_id)
         trace_context.get().pop()
 
     def decorator(func):
@@ -138,14 +138,6 @@ def trace(
     return decorator
 
 
-def default_logger(trace_id: str):
-    logging_thread = threading.Thread(
-        target=parea_logger.record_log,
-        kwargs={"data": trace_data.get()[trace_id]},
-    )
-    logging_thread.start()
-
-
 def check_multiple_return_values(func) -> bool:
     specs = inspect.getfullargspec(func)
     try:
@@ -161,3 +153,19 @@ def make_output(result, islist) -> Union[list[Any], Any]:
         return [asdict(r) if isinstance(r, CompletionResponse) else r for r in result]
     else:
         return asdict(result) if isinstance(result, CompletionResponse) else result
+
+
+def logger_record_log(trace_id: str):
+    logging_thread = threading.Thread(
+        target=parea_logger.record_log,
+        kwargs={"data": trace_data.get()[trace_id]},
+    )
+    logging_thread.start()
+
+
+def logger_all_possible(trace_id: str):
+    logging_thread = threading.Thread(
+        target=parea_logger.default_log,
+        kwargs={"data": trace_data.get()[trace_id]},
+    )
+    logging_thread.start()

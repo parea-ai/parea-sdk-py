@@ -4,7 +4,14 @@ import os
 import csv
 import argparse
 import sys
-from importlib import machinery, util
+import time
+from importlib import util
+from typing import List
+
+from attr import fields_dict, asdict
+
+from parea.cache.redis import RedisLRUCache
+from parea.schemas.models import TraceLog
 
 
 def load_from_path(module_path, attr_name):
@@ -28,7 +35,6 @@ def load_from_path(module_path, attr_name):
     return fn
 
 
-
 def read_input_file(file_path):
     with open(file_path, 'r') as file:
         reader = csv.reader(file)
@@ -46,10 +52,22 @@ if __name__ == "__main__":
 
     data_inputs = read_input_file(args.inputs)
 
+    redis_logs_key = f'parea-trace-logs-{int(time.time())}'
+    os.putenv('_redis_logs_key', redis_logs_key)
+
     with concurrent.futures.ProcessPoolExecutor() as executor:
         results = list(executor.map(fn, data_inputs))
 
-    for i, result in enumerate(results):
-        print(f'input: {data_inputs[i]}')
-        print(f'result: {result}')
-        print()
+    redis_cache = RedisLRUCache(key_logs=redis_logs_key)
+
+    trace_logs: List[TraceLog] = redis_cache.read_logs()
+
+    # write to csv
+    with open(f'trace_logs-{int(time.time())}.csv', 'w', newline='') as file:
+        # write header
+        columns = fields_dict(TraceLog).keys()
+        writer = csv.DictWriter(file, fieldnames=columns)
+        writer.writeheader()
+        # write rows
+        for trace_log in trace_logs:
+            writer.writerow(asdict(trace_log))

@@ -143,5 +143,6 @@ class Wrapper:
 
         if not error and self.cache:
             self.cache.set(self.convert_kwargs_to_cache_request(args, kwargs), trace_data.get()[trace_id])
+
         self.log(trace_id)
         trace_context.get().pop()
