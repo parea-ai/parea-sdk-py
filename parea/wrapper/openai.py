@@ -99,7 +99,8 @@ class OpenAIWrapper:
         for chunk in response:
             update_dict = chunk.choices[0].delta._previous
             for key, val in update_dict.items():
-                message[key] += val
+                if isinstance(val, str):
+                    message[key] += val
             yield chunk
 
         trace_data.get()[trace_id].output = OpenAIWrapper._get_output(message)
@@ -115,7 +116,8 @@ class OpenAIWrapper:
         async for chunk in response:
             update_dict = chunk.choices[0].delta._previous
             for key, val in update_dict.items():
-                message[key] += val
+                if isinstance(val, str):
+                    message[key] += val
             yield chunk
 
         trace_data.get()[trace_id].output = OpenAIWrapper._get_output(message)
