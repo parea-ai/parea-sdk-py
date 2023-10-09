@@ -1,10 +1,10 @@
-import time
-import uuid
-from typing import Optional, List
+from typing import List, Optional
 
 import json
 import logging
 import os
+import time
+import uuid
 
 import redis
 from attr import asdict
@@ -27,7 +27,12 @@ class RedisLRUCache(Cache):
     """A Redis-based LRU cache for caching both normal and streaming responses."""
 
     def __init__(
-        self, key_logs: str = os.getenv('_redis_logs_key', f'trace-logs-{time.time()}'), host: str = os.getenv("REDIS_HOST", "localhost"), port: int = int(os.getenv("REDIS_PORT", 6379)), password: str = os.getenv("REDIS_PASSWORT", None), ttl=3600 * 6
+        self,
+        key_logs: str = os.getenv("_redis_logs_key", f"trace-logs-{time.time()}"),
+        host: str = os.getenv("REDIS_HOST", "localhost"),
+        port: int = int(os.getenv("REDIS_PORT", 6379)),
+        password: str = os.getenv("REDIS_PASSWORT", None),
+        ttl=3600 * 6,
     ):
         """
         Initialize the cache.

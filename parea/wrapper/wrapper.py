@@ -1,4 +1,4 @@
-from typing import Any, Callable, List, Tuple, Iterator, AsyncIterator
+from typing import Any, AsyncIterator, Callable, Iterator, List, Tuple
 
 import functools
 import inspect

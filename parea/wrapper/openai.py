@@ -1,7 +1,7 @@
-from collections import defaultdict
-from typing import Any, Callable, Dict, Optional, Sequence, Iterator
+from typing import Any, Callable, Dict, Iterator, Optional, Sequence
 
 import json
+from collections import defaultdict
 
 import openai
 from openai.openai_object import OpenAIObject
@@ -141,14 +141,16 @@ class OpenAIWrapper:
     @staticmethod
     def _get_output(result: Any) -> str:
         if not isinstance(result, OpenAIObject):
-            result = convert_to_openai_object({
-                "choices": [
-                    {
-                        "index": 0,
-                        "message": result,
-                    }
-                ]
-            })
+            result = convert_to_openai_object(
+                {
+                    "choices": [
+                        {
+                            "index": 0,
+                            "message": result,
+                        }
+                    ]
+                }
+            )
         response_message = result.choices[0].message
         if response_message.get("function_call", None):
             completion = OpenAIWrapper._format_function_call(response_message)

@@ -10,11 +10,10 @@ from parea.api_client import HTTPClient
 from parea.cache.cache import Cache
 from parea.cache.redis import RedisLRUCache
 from parea.helpers import gen_trace_id
-from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, UseDeployedPrompt, \
-    UseDeployedPromptResponse
-from parea.utils.trace_utils import get_current_trace_id, trace_data, logger_record_log, logger_all_possible
-from parea.wrapper import OpenAIWrapper
 from parea.parea_logger import parea_logger
+from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, UseDeployedPrompt, UseDeployedPromptResponse
+from parea.utils.trace_utils import get_current_trace_id, logger_all_possible, logger_record_log, trace_data
+from parea.wrapper import OpenAIWrapper
 
 COMPLETION_ENDPOINT = "/completion"
 DEPLOYED_PROMPT_ENDPOINT = "/deployed-prompt"
