@@ -1,4 +1,4 @@
-from typing import Any, Callable, List, Tuple, Iterator
+from typing import Any, Callable, List, Tuple, Iterator, AsyncIterator
 
 import functools
 import inspect
@@ -91,9 +91,10 @@ class Wrapper:
             response = None
             error = None
             cache_hit = False
+            cache_key = self.convert_kwargs_to_cache_request(args, kwargs)
             try:
                 if self.cache:
-                    cache_result = await self.cache.aget(self.convert_kwargs_to_cache_request(args, kwargs))
+                    cache_result = await self.cache.aget(cache_key)
                     if cache_result is not None:
                         response = self.convert_cache_to_response(cache_result)
                         cache_hit = True
@@ -101,6 +102,7 @@ class Wrapper:
                     response = await orig_func(*args, **kwargs)
             except Exception as e:
                 error = str(e)
+                await self.cache.ainvalidate(cache_key)
                 raise
             finally:
                 return await self._acleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
@@ -113,9 +115,10 @@ class Wrapper:
             response = None
             error = None
             cache_hit = False
+            cache_key = self.convert_kwargs_to_cache_request(args, kwargs)
             try:
                 if self.cache:
-                    cache_result = self.cache.get(self.convert_kwargs_to_cache_request(args, kwargs))
+                    cache_result = self.cache.get(cache_key)
                     if cache_result is not None:
                         response = self.convert_cache_to_response(cache_result)
                         cache_hit = True
@@ -123,6 +126,8 @@ class Wrapper:
                     response = orig_func(*args, **kwargs)
             except Exception as e:
                 error = str(e)
+                if self.cache:
+                    self.cache.invalidate(cache_key)
                 raise e
             finally:
                 return self._cleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
@@ -164,8 +169,8 @@ class Wrapper:
     async def _acleanup_trace(self, trace_id: str, start_time: float, error: str, cache_hit, args, kwargs, response):
         final_log = self._cleanup_trace_core(trace_id, start_time, error, cache_hit, args, kwargs, response)
 
-        if isinstance(response, Iterator):
-            return await self.agen_resolver(trace_id, args, kwargs, response, final_log)
+        if isinstance(response, AsyncIterator):
+            return self.agen_resolver(trace_id, args, kwargs, response, final_log)
         else:
             self.resolver(trace_id, args, kwargs, response)
             final_log()
