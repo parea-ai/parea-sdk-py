@@ -1,4 +1,4 @@
-from typing import Any, Callable, List, Tuple
+from typing import Any, Callable, List, Tuple, Iterator
 
 import functools
 import inspect
@@ -16,12 +16,16 @@ class Wrapper:
         module: Any,
         func_names: List[str],
         resolver: Callable,
+        gen_resolver: Callable,
+        agen_resolver: Callable,
         cache: Cache,
         convert_kwargs_to_cache_request: Callable,
         convert_cache_to_response: Callable,
         log: Callable,
     ) -> None:
         self.resolver = resolver
+        self.gen_resolver = gen_resolver
+        self.agen_resolver = agen_resolver
         self.log = log
         self.wrap_functions(module, func_names)
         self.cache = cache
@@ -95,12 +99,11 @@ class Wrapper:
                         cache_hit = True
                 if response is None:
                     response = await orig_func(*args, **kwargs)
-                return response
             except Exception as e:
                 error = str(e)
                 raise
             finally:
-                self._cleanup_trace(trace_id, start_time, error, response, cache_hit, args, kwargs)
+                return await self._acleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
 
         return wrapper
 
@@ -118,19 +121,15 @@ class Wrapper:
                         cache_hit = True
                 if response is None:
                     response = orig_func(*args, **kwargs)
-                return response
             except Exception as e:
                 error = str(e)
                 raise e
             finally:
-                self._cleanup_trace(trace_id, start_time, error, response, cache_hit, args, kwargs)
+                return self._cleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
 
         return wrapper
 
-    def _cleanup_trace(self, trace_id: str, start_time: float, error: str, response: Any, cache_hit, args, kwargs):
-        end_time = time.time()
-        trace_data.get()[trace_id].end_timestamp = to_date_and_time_string(end_time)
-        trace_data.get()[trace_id].latency = end_time - start_time
+    def _cleanup_trace_core(self, trace_id: str, start_time: float, error: str, cache_hit, args, kwargs, response):
         trace_data.get()[trace_id].cache_hit = cache_hit
 
         if error:
@@ -139,10 +138,35 @@ class Wrapper:
         else:
             trace_data.get()[trace_id].status = "success"
 
-        self.resolver(trace_id, args, kwargs, response)
+        def final_log():
+            end_time = time.time()
+            trace_data.get()[trace_id].end_timestamp = to_date_and_time_string(end_time)
+            trace_data.get()[trace_id].latency = end_time - start_time
 
-        if not error and self.cache:
-            self.cache.set(self.convert_kwargs_to_cache_request(args, kwargs), trace_data.get()[trace_id])
+            if not error and self.cache:
+                self.cache.set(self.convert_kwargs_to_cache_request(args, kwargs), trace_data.get()[trace_id])
 
-        self.log(trace_id)
-        trace_context.get().pop()
+            self.log(trace_id)
+            trace_context.get().pop()
+
+        return final_log
+
+    def _cleanup_trace(self, trace_id: str, start_time: float, error: str, cache_hit, args, kwargs, response):
+        final_log = self._cleanup_trace_core(trace_id, start_time, error, cache_hit, args, kwargs, response)
+
+        if isinstance(response, Iterator):
+            return self.gen_resolver(trace_id, args, kwargs, response, final_log)
+        else:
+            self.resolver(trace_id, args, kwargs, response)
+            final_log()
+            return response
+
+    async def _acleanup_trace(self, trace_id: str, start_time: float, error: str, cache_hit, args, kwargs, response):
+        final_log = self._cleanup_trace_core(trace_id, start_time, error, cache_hit, args, kwargs, response)
+
+        if isinstance(response, Iterator):
+            return await self.agen_resolver(trace_id, args, kwargs, response, final_log)
+        else:
+            self.resolver(trace_id, args, kwargs, response)
+            final_log()
+            return response

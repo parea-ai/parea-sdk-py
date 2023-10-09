@@ -1,4 +1,5 @@
-from typing import Any, Callable, Dict, Optional, Sequence
+from collections import defaultdict
+from typing import Any, Callable, Dict, Optional, Sequence, Iterator
 
 import json
 
@@ -52,6 +53,8 @@ class OpenAIWrapper:
     def init(self, log: Callable, cache: Cache = None):
         Wrapper(
             resolver=self.resolver,
+            gen_resolver=self.gen_resolver,
+            agen_resolver=self.agen_resolver,
             log=log,
             module=openai,
             func_names=list(self.original_methods.keys()),
@@ -60,19 +63,20 @@ class OpenAIWrapper:
             convert_cache_to_response=self.convert_cache_to_response,
         )
 
-    def resolver(self, trace_id: str, _args: Sequence[Any], kwargs: Dict[str, Any], response: Optional[Any]):
+    @staticmethod
+    def resolver(trace_id: str, _args: Sequence[Any], kwargs: Dict[str, Any], response: Optional[Any]) -> Optional[Any]:
         if response:
             usage = response["usage"]
-            output = self._get_output(response)
+            output = OpenAIWrapper._get_output(response)
         else:
             output = None
             usage = {}
 
-        llm_configuration = self._kwargs_to_llm_configuration(kwargs)
+        llm_configuration = OpenAIWrapper._kwargs_to_llm_configuration(kwargs)
         model = llm_configuration.model
 
-        model_rate = self.get_model_cost(model)
-        model_completion_rate = self.get_model_cost(model, is_completion=True)
+        model_rate = OpenAIWrapper.get_model_cost(model)
+        model_completion_rate = OpenAIWrapper.get_model_cost(model, is_completion=True)
         completion_cost = model_completion_rate * (usage.get("completion_tokens", 0) / 1000)
         prompt_cost = model_rate * (usage.get("prompt_tokens", 0) / 1000)
         total_cost = sum([prompt_cost, completion_cost])
@@ -83,6 +87,39 @@ class OpenAIWrapper:
         trace_data.get()[trace_id].total_tokens = usage.get("total_tokens", 0)
         trace_data.get()[trace_id].cost = total_cost
         trace_data.get()[trace_id].output = output
+        return response
+
+    @staticmethod
+    def gen_resolver(trace_id: str, _args: Sequence[Any], kwargs: Dict[str, Any], response: Iterator[Any], final_log) -> Iterator[Any]:
+        llm_configuration = OpenAIWrapper._kwargs_to_llm_configuration(kwargs)
+        trace_data.get()[trace_id].configuration = llm_configuration
+
+        message = defaultdict(str)
+        for chunk in response:
+            update_dict = chunk.choices[0].delta._previous
+            for key, val in update_dict.items():
+                message[key] += val
+            yield chunk
+
+        trace_data.get()[trace_id].output = OpenAIWrapper._get_output(message)
+
+        final_log()
+
+    @staticmethod
+    async def agen_resolver(trace_id: str, _args: Sequence[Any], kwargs: Dict[str, Any], response: Iterator[Any], final_log) -> Iterator[Any]:
+        llm_configuration = OpenAIWrapper._kwargs_to_llm_configuration(kwargs)
+        trace_data.get()[trace_id].configuration = llm_configuration
+
+        message = defaultdict(str)
+        async for chunk in response:
+            update_dict = chunk.choices[0].delta._previous
+            for key, val in update_dict.items():
+                message[key] += val
+            yield chunk
+
+        trace_data.get()[trace_id].output = OpenAIWrapper._get_output(message)
+
+        final_log()
 
     @staticmethod
     def _kwargs_to_llm_configuration(kwargs):
@@ -102,7 +139,16 @@ class OpenAIWrapper:
         )
 
     @staticmethod
-    def _get_output(result) -> str:
+    def _get_output(result: Any) -> str:
+        if not isinstance(result, OpenAIObject):
+            result = convert_to_openai_object({
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": result,
+                    }
+                ]
+            })
         response_message = result.choices[0].message
         if response_message.get("function_call", None):
             completion = OpenAIWrapper._format_function_call(response_message)
