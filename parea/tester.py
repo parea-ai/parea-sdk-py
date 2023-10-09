@@ -9,6 +9,7 @@ from importlib import util
 from typing import List
 
 from attr import fields_dict, asdict
+from tqdm import tqdm
 
 from parea.cache.redis import RedisLRUCache
 from parea.schemas.models import TraceLog
@@ -56,18 +57,24 @@ if __name__ == "__main__":
     os.putenv('_redis_logs_key', redis_logs_key)
 
     with concurrent.futures.ProcessPoolExecutor() as executor:
-        results = list(executor.map(fn, data_inputs))
+        futures = [executor.submit(fn, data_input) for data_input in data_inputs]
+        for f in tqdm(concurrent.futures.as_completed(futures), total=len(futures)):
+            pass
+        print(f"Done with {len(futures)} inputs")
 
-    redis_cache = RedisLRUCache(key_logs=redis_logs_key)
+        redis_cache = RedisLRUCache(key_logs=redis_logs_key)
 
-    trace_logs: List[TraceLog] = redis_cache.read_logs()
+        trace_logs: List[TraceLog] = redis_cache.read_logs()
 
-    # write to csv
-    with open(f'trace_logs-{int(time.time())}.csv', 'w', newline='') as file:
-        # write header
-        columns = fields_dict(TraceLog).keys()
-        writer = csv.DictWriter(file, fieldnames=columns)
-        writer.writeheader()
-        # write rows
-        for trace_log in trace_logs:
-            writer.writerow(asdict(trace_log))
+        # write to csv
+        path_csv = f'trace_logs-{int(time.time())}.csv'
+        with open(path_csv, 'w', newline='') as file:
+            # write header
+            columns = fields_dict(TraceLog).keys()
+            writer = csv.DictWriter(file, fieldnames=columns)
+            writer.writeheader()
+            # write rows
+            for trace_log in trace_logs:
+                writer.writerow(asdict(trace_log))
+
+        print(f'Wrote CSV of results to: {path_csv}')
