@@ -21,6 +21,7 @@ class Wrapper:
         cache: Cache,
         convert_kwargs_to_cache_request: Callable,
         convert_cache_to_response: Callable,
+        aconvert_cache_to_response: Callable,
         log: Callable,
     ) -> None:
         self.resolver = resolver
@@ -31,6 +32,7 @@ class Wrapper:
         self.cache = cache
         self.convert_kwargs_to_cache_request = convert_kwargs_to_cache_request
         self.convert_cache_to_response = convert_cache_to_response
+        self.aconvert_cache_to_response = aconvert_cache_to_response
 
     def wrap_functions(self, module: Any, func_names: List[str]):
         for func_name in func_names:
@@ -96,13 +98,14 @@ class Wrapper:
                 if self.cache:
                     cache_result = await self.cache.aget(cache_key)
                     if cache_result is not None:
-                        response = self.convert_cache_to_response(cache_result)
+                        response = self.aconvert_cache_to_response(args, kwargs, cache_result)
                         cache_hit = True
                 if response is None:
                     response = await orig_func(*args, **kwargs)
             except Exception as e:
                 error = str(e)
-                await self.cache.ainvalidate(cache_key)
+                if self.cache:
+                    await self.cache.ainvalidate(cache_key)
                 raise
             finally:
                 return await self._acleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
@@ -120,7 +123,7 @@ class Wrapper:
                 if self.cache:
                     cache_result = self.cache.get(cache_key)
                     if cache_result is not None:
-                        response = self.convert_cache_to_response(cache_result)
+                        response = self.convert_cache_to_response(args, kwargs, cache_result)
                         cache_hit = True
                 if response is None:
                     response = orig_func(*args, **kwargs)

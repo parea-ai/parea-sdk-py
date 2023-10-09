@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, Iterator, Optional, Sequence
+from typing import Any, Callable, Dict, Iterator, Optional, Sequence, Union, AsyncIterator
 
 import json
 from collections import defaultdict
@@ -61,6 +61,7 @@ class OpenAIWrapper:
             cache=cache,
             convert_kwargs_to_cache_request=self.convert_kwargs_to_cache_request,
             convert_cache_to_response=self.convert_cache_to_response,
+            aconvert_cache_to_response=self.aconvert_cache_to_response,
         )
 
     @staticmethod
@@ -140,7 +141,7 @@ class OpenAIWrapper:
 
     @staticmethod
     def _get_output(result: Any) -> str:
-        if not isinstance(result, OpenAIObject):
+        if not isinstance(result, OpenAIObject) and isinstance(result, dict):
             result = convert_to_openai_object(
                 {
                     "choices": [
@@ -188,7 +189,7 @@ class OpenAIWrapper:
         )
 
     @staticmethod
-    def convert_cache_to_response(cache_response: TraceLog) -> OpenAIObject:
+    def _convert_cache_to_response(_args: Sequence[Any], kwargs: Dict[str, Any], cache_response: TraceLog) -> OpenAIObject:
         content = cache_response.output
         try:
             function_call = json.loads(content)
@@ -203,6 +204,8 @@ class OpenAIWrapper:
                 "content": content,
             }
 
+        message_field = 'delta' if kwargs.get('stream', False) else 'message'
+
         return convert_to_openai_object(
             {
                 "object": "chat.completion",
@@ -210,7 +213,7 @@ class OpenAIWrapper:
                 "choices": [
                     {
                         "index": 0,
-                        "message": message,
+                        message_field: message,
                     }
                 ],
                 "usage": {
@@ -220,3 +223,24 @@ class OpenAIWrapper:
                 },
             }
         )
+
+    @staticmethod
+    def convert_cache_to_response(_args: Sequence[Any], kwargs: Dict[str, Any], cache_response: TraceLog) -> Union[OpenAIObject, Iterator[OpenAIObject]]:
+        response = OpenAIWrapper._convert_cache_to_response(_args, kwargs, cache_response)
+        if kwargs.get("stream", False):
+            return iter([response])
+        else:
+            return response
+
+    @staticmethod
+    def aconvert_cache_to_response(_args: Sequence[Any], kwargs: Dict[str, Any], cache_response: TraceLog) -> Union[OpenAIObject, AsyncIterator[OpenAIObject]]:
+        response = OpenAIWrapper._convert_cache_to_response(_args, kwargs, cache_response)
+        if kwargs.get("stream", False):
+            def aiterator(iterable):
+                async def gen():
+                    for item in iterable:
+                        yield item
+                return gen()
+            return aiterator([response])
+        else:
+            return response
