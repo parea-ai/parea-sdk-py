@@ -1,11 +1,9 @@
-import asyncio
-import inspect
-from typing import List
-
 import argparse
+import asyncio
 import concurrent
 import csv
 import importlib
+import inspect
 import os
 import sys
 import time
@@ -39,7 +37,7 @@ def load_from_path(module_path, attr_name):
     return fn
 
 
-def read_input_file(file_path) -> List[dict]:
+def read_input_file(file_path) -> list[dict]:
     with open(file_path) as file:
         reader = csv.DictReader(file)
         inputs = list(reader)
