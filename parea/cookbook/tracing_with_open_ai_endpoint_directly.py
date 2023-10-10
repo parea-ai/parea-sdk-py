@@ -12,7 +12,7 @@ load_dotenv()
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-p = Parea(api_key=os.getenv("DEV_API_KEY"))
+p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
 
 def call_llm(data: list[dict], model: str = "gpt-3.5-turbo", temperature: float = 0.0) -> str:
@@ -26,7 +26,7 @@ def argumentor(query: str, additional_description: str = "") -> str:
             {
                 "role": "system",
                 "content": f"""You are a debater making an argument on a topic. {additional_description}.
-                The current time is {datetime.now()}""",
+                The current time is {datetime.now().strftime("%Y-%m-%d")}""",
             },
             {"role": "user", "content": f"The discussion topic is {query}"},
         ]
@@ -55,7 +55,7 @@ def refiner(query: str, additional_description: str, argument: str, criticism: s
             {
                 "role": "system",
                 "content": f"""You are a debater making an argument on a topic. {additional_description}.
-                The current time is {datetime.now()}""",
+                The current time is {datetime.now().strftime("%Y-%m-%d")}""",
             },
             {"role": "user", "content": f"""The discussion topic is {query}"""},
             {"role": "assistant", "content": argument},

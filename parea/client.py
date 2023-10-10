@@ -1,13 +1,19 @@
+from typing import Callable
+
 import asyncio
+import os
 import time
 
 from attrs import asdict, define, field
 
 from parea.api_client import HTTPClient
+from parea.cache.cache import Cache
+from parea.cache.redis import RedisCache
 from parea.helpers import gen_trace_id
 from parea.parea_logger import parea_logger
 from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, UseDeployedPrompt, UseDeployedPromptResponse
-from parea.utils.trace_utils import default_logger, get_current_trace_id, trace_data
+from parea.utils.trace_utils import get_current_trace_id, logger_all_possible, logger_record_log, trace_data
+from parea.wrapper import OpenAIWrapper
 
 COMPLETION_ENDPOINT = "/completion"
 DEPLOYED_PROMPT_ENDPOINT = "/deployed-prompt"
@@ -18,10 +24,15 @@ RECORD_FEEDBACK_ENDPOINT = "/feedback"
 class Parea:
     api_key: str = field(init=True, default="")
     _client: HTTPClient = field(init=False, default=HTTPClient())
+    cache: Cache = field(init=True, default=RedisCache())
 
     def __attrs_post_init__(self):
         self._client.set_api_key(self.api_key)
-        parea_logger.set_client(self._client)
+        if self.api_key:
+            parea_logger.set_client(self._client)
+        if isinstance(self.cache, RedisCache):
+            parea_logger.set_redis_lru_cache(self.cache)
+        _init_parea_wrapper(logger_all_possible, self.cache)
 
     def completion(self, data: Completion) -> CompletionResponse:
         inference_id = gen_trace_id()
@@ -33,7 +44,7 @@ class Parea:
         )
         if parent_trace_id := get_current_trace_id():
             trace_data.get()[parent_trace_id].children.append(inference_id)
-            default_logger(parent_trace_id)
+            logger_record_log(parent_trace_id)
         return CompletionResponse(**r.json())
 
     async def acompletion(self, data: Completion) -> CompletionResponse:
@@ -46,7 +57,7 @@ class Parea:
         )
         if parent_trace_id := get_current_trace_id():
             trace_data.get()[parent_trace_id].children.append(inference_id)
-            default_logger(parent_trace_id)
+            logger_record_log(parent_trace_id)
         return CompletionResponse(**r.json())
 
     def get_prompt(self, data: UseDeployedPrompt) -> UseDeployedPromptResponse:
@@ -80,3 +91,18 @@ class Parea:
             RECORD_FEEDBACK_ENDPOINT,
             data=asdict(data),
         )
+
+
+_initialized_parea_wrapper = False
+
+
+def init(api_key: str = os.getenv("PAREA_API_KEY"), cache: Cache = RedisCache()) -> None:
+    Parea(api_key=api_key, cache=cache)
+
+
+def _init_parea_wrapper(log: Callable = None, cache: Cache = None):
+    global _initialized_parea_wrapper
+    if _initialized_parea_wrapper:
+        return
+    OpenAIWrapper().init(log=log, cache=cache)
+    _initialized_parea_wrapper = True

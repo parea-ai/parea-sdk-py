@@ -1,19 +1,39 @@
-from typing import Any, Callable, List, Tuple
+from typing import Any, AsyncIterator, Callable, Iterator, List, Tuple
 
 import functools
 import inspect
 import time
 from uuid import uuid4
 
+from parea.cache.cache import Cache
+from parea.helpers import date_and_time_string_to_timestamp
 from parea.schemas.models import TraceLog
-from parea.utils.trace_utils import default_logger, to_date_and_time_string, trace_context, trace_data
+from parea.utils.trace_utils import to_date_and_time_string, trace_context, trace_data
 
 
 class Wrapper:
-    def __init__(self, module: Any, func_names: List[str], resolver: Callable, log: Callable = default_logger) -> None:
+    def __init__(
+        self,
+        module: Any,
+        func_names: List[str],
+        resolver: Callable,
+        gen_resolver: Callable,
+        agen_resolver: Callable,
+        cache: Cache,
+        convert_kwargs_to_cache_request: Callable,
+        convert_cache_to_response: Callable,
+        aconvert_cache_to_response: Callable,
+        log: Callable,
+    ) -> None:
         self.resolver = resolver
+        self.gen_resolver = gen_resolver
+        self.agen_resolver = agen_resolver
         self.log = log
         self.wrap_functions(module, func_names)
+        self.cache = cache
+        self.convert_kwargs_to_cache_request = convert_kwargs_to_cache_request
+        self.convert_cache_to_response = convert_cache_to_response
+        self.aconvert_cache_to_response = aconvert_cache_to_response
 
     def wrap_functions(self, module: Any, func_names: List[str]):
         for func_name in func_names:
@@ -73,14 +93,23 @@ class Wrapper:
             trace_id, start_time = self._init_trace()
             response = None
             error = None
+            cache_hit = False
+            cache_key = self.convert_kwargs_to_cache_request(args, kwargs)
             try:
-                response = await orig_func(*args, **kwargs)
-                return response
+                if self.cache:
+                    cache_result = await self.cache.aget(cache_key)
+                    if cache_result is not None:
+                        response = self.aconvert_cache_to_response(args, kwargs, cache_result)
+                        cache_hit = True
+                if response is None:
+                    response = await orig_func(*args, **kwargs)
             except Exception as e:
                 error = str(e)
+                if self.cache:
+                    await self.cache.ainvalidate(cache_key)
                 raise
             finally:
-                self._cleanup_trace(trace_id, start_time, error, response, args, kwargs)
+                return await self._acleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
 
         return wrapper
 
@@ -89,21 +118,28 @@ class Wrapper:
             trace_id, start_time = self._init_trace()
             response = None
             error = None
+            cache_hit = False
+            cache_key = self.convert_kwargs_to_cache_request(args, kwargs)
             try:
-                response = orig_func(*args, **kwargs)
-                return response
+                if self.cache:
+                    cache_result = self.cache.get(cache_key)
+                    if cache_result is not None:
+                        response = self.convert_cache_to_response(args, kwargs, cache_result)
+                        cache_hit = True
+                if response is None:
+                    response = orig_func(*args, **kwargs)
             except Exception as e:
                 error = str(e)
+                if self.cache:
+                    self.cache.invalidate(cache_key)
                 raise e
             finally:
-                self._cleanup_trace(trace_id, start_time, error, response, args, kwargs)
+                return self._cleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
 
         return wrapper
 
-    def _cleanup_trace(self, trace_id: str, start_time: float, error: str, response: Any, args, kwargs):
-        end_time = time.time()
-        trace_data.get()[trace_id].end_timestamp = to_date_and_time_string(end_time)
-        trace_data.get()[trace_id].latency = end_time - start_time
+    def _cleanup_trace_core(self, trace_id: str, start_time: float, error: str, cache_hit, args, kwargs):
+        trace_data.get()[trace_id].cache_hit = cache_hit
 
         if error:
             trace_data.get()[trace_id].error = error
@@ -111,7 +147,41 @@ class Wrapper:
         else:
             trace_data.get()[trace_id].status = "success"
 
-        self.resolver(trace_id, args, kwargs, response)
+        def final_log():
+            end_time = time.time()
+            trace_data.get()[trace_id].end_timestamp = to_date_and_time_string(end_time)
+            trace_data.get()[trace_id].latency = end_time - start_time
 
-        self.log(trace_id)
-        trace_context.get().pop()
+            parent_id = trace_context.get()[-2]
+            trace_data.get()[parent_id].end_timestamp = to_date_and_time_string(end_time)
+            start_time_parent = date_and_time_string_to_timestamp(trace_data.get()[parent_id].start_timestamp)
+            trace_data.get()[parent_id].latency = end_time - start_time_parent
+
+            if not error and self.cache:
+                self.cache.set(self.convert_kwargs_to_cache_request(args, kwargs), trace_data.get()[trace_id])
+
+            self.log(trace_id)
+            self.log(parent_id)
+            trace_context.get().pop()
+
+        return final_log
+
+    def _cleanup_trace(self, trace_id: str, start_time: float, error: str, cache_hit, args, kwargs, response):
+        final_log = self._cleanup_trace_core(trace_id, start_time, error, cache_hit, args, kwargs)
+
+        if isinstance(response, Iterator):
+            return self.gen_resolver(trace_id, args, kwargs, response, final_log)
+        else:
+            self.resolver(trace_id, args, kwargs, response)
+            final_log()
+            return response
+
+    async def _acleanup_trace(self, trace_id: str, start_time: float, error: str, cache_hit, args, kwargs, response):
+        final_log = self._cleanup_trace_core(trace_id, start_time, error, cache_hit, args, kwargs)
+
+        if isinstance(response, AsyncIterator):
+            return self.agen_resolver(trace_id, args, kwargs, response, final_log)
+        else:
+            self.resolver(trace_id, args, kwargs, response)
+            final_log()
+            return response
