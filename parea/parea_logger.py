@@ -9,8 +9,8 @@ LOG_ENDPOINT = "/trace_log"
 
 @define
 class PareaLogger:
-    _client: HTTPClient = field(init=False)
-    _redis_lru_cache: RedisLRUCache = field(init=False)
+    _client: HTTPClient = field(init=False, default=None)
+    _redis_lru_cache: RedisLRUCache = field(init=False, default=None)
 
     def set_client(self, client: HTTPClient) -> None:
         self._client = client
