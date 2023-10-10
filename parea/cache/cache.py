@@ -16,6 +16,8 @@ class Cache(ABC):
         Returns:
             Optional[TraceLog]: The cached response, or None if the key was not found.
 
+        # noqa: DAR202
+
         Raises:
             NotImplementedError: This method must be overridden in a subclass.
         """
@@ -30,6 +32,8 @@ class Cache(ABC):
 
         Returns:
             Optional[TraceLog]: The cached response, or None if the key was not found.
+
+        # noqa: DAR202
 
         Raises:
             NotImplementedError: This method must be overridden in a subclass.
