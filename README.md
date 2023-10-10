@@ -29,7 +29,7 @@ poetry add parea-ai
 ## Debugging Chains & Agents
 
 You can iterate on your chains & agents much faster by using a local cache. This will allow you to make changes to your
-code & prompts without waiting for all previous, valid completions. Simply add these two lines to the beginning your code and start
+code & prompts without waiting for all previous, valid LLM responses. Simply add these two lines to the beginning your code and start
 [a local redis cache](https://redis.io/docs/getting-started/install-stack/):
 
 ```python
