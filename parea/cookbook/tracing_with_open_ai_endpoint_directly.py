@@ -5,6 +5,7 @@ import openai
 from dotenv import load_dotenv
 
 from parea import Parea
+from parea.schemas.models import FeedbackRequest
 from parea.utils.trace_utils import get_current_trace_id, trace
 
 load_dotenv()
@@ -82,9 +83,9 @@ if __name__ == "__main__":
         additional_description="Provide a concise, few sentence argument on why sparkling wine is good for you.",
     )
     print(result)
-    # # p.record_feedback(
-    # #     FeedbackRequest(
-    # #         trace_id=trace_id,
-    # #         score=0.7,  # 0.0 (bad) to 1.0 (good)
-    # #     )
-    # # )
+    p.record_feedback(
+        FeedbackRequest(
+            trace_id=trace_id,
+            score=0.7,  # 0.0 (bad) to 1.0 (good)
+        )
+    )
