@@ -1,3 +1,5 @@
+import asyncio
+import inspect
 from typing import List
 
 import argparse
@@ -44,6 +46,10 @@ def read_input_file(file_path) -> List[dict]:
     return inputs
 
 
+def async_wrapper(fn, **kwargs):
+    return asyncio.run(fn(**kwargs))
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--user_func", help="User function to test e.g., path/to/user_code.py:argument_chain", type=str)
@@ -58,7 +64,10 @@ if __name__ == "__main__":
     os.putenv("_parea_redis_logs_key", redis_logs_key)
 
     with concurrent.futures.ProcessPoolExecutor() as executor:
-        futures = [executor.submit(fn, **data_input) for data_input in data_inputs]
+        if inspect.iscoroutinefunction(fn):
+            futures = [executor.submit(async_wrapper, fn, **data_input) for data_input in data_inputs]
+        else:
+            futures = [executor.submit(fn, **data_input) for data_input in data_inputs]
         for f in tqdm(concurrent.futures.as_completed(futures), total=len(futures)):
             pass
         print(f"Done with {len(futures)} inputs")
