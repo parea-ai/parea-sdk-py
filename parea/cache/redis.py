@@ -38,6 +38,10 @@ class RedisCache(Cache):
         Initialize the cache.
 
         Args:
+            key_logs (str): The Redis key for the logs.
+            host (str): The Redis host.
+            port (int): The Redis port.
+            password (str): The Redis password.
             ttl (int): The default TTL for cache entries, in seconds.
         """
         self.r = redis.Redis(
@@ -74,7 +78,7 @@ class RedisCache(Cache):
         Invalidate a key in the cache.
 
         Args:
-            key (str): The cache key.
+            key (CacheRequest): The cache key.
         """
         try:
             self.r.delete(json.dumps(asdict(key)))

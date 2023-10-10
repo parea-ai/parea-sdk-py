@@ -6,7 +6,7 @@ from parea.schemas.models import CacheRequest, TraceLog
 
 
 class Cache(ABC):
-    def get(self, key: CacheRequest) -> Optional[TraceLog]:
+    def get(self, key: CacheRequest) -> Optional[TraceLog]:  # noqa: DAR401, DAR202
         """
         Get a normal response from the cache.
 
@@ -18,7 +18,7 @@ class Cache(ABC):
         """
         raise NotImplementedError
 
-    async def aget(self, key: CacheRequest) -> Optional[TraceLog]:
+    async def aget(self, key: CacheRequest) -> Optional[TraceLog]:  # noqa: DAR401, DAR202
         """
         Get a normal response from the cache.
 
@@ -30,7 +30,7 @@ class Cache(ABC):
         """
         raise NotImplementedError
 
-    def set(self, key: CacheRequest, value: TraceLog):
+    def set(self, key: CacheRequest, value: TraceLog):  # noqa: DAR401
         """
         Set a normal response in the cache.
 
@@ -40,7 +40,7 @@ class Cache(ABC):
         """
         raise NotImplementedError
 
-    async def aset(self, key: CacheRequest, value: TraceLog):
+    async def aset(self, key: CacheRequest, value: TraceLog):  # noqa: DAR401
         """
         Set a normal response in the cache.
 
@@ -50,7 +50,7 @@ class Cache(ABC):
         """
         raise NotImplementedError
 
-    def invalidate(self, key: CacheRequest):
+    def invalidate(self, key: CacheRequest):  # noqa: DAR401
         """
         Invalidate a key in the cache.
 
@@ -59,7 +59,7 @@ class Cache(ABC):
         """
         raise NotImplementedError
 
-    async def ainvalidate(self, key: CacheRequest):
+    async def ainvalidate(self, key: CacheRequest):  # noqa: DAR401
         """
         Invalidate a key in the cache.
 
