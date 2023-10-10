@@ -16,7 +16,8 @@ class Cache(ABC):
         Returns:
             Optional[TraceLog]: The cached response, or None if the key was not found.
 
-        # noqa: DAR202, DAR401
+        # noqa: DAR202
+        # noqa: DAR401
         """
         raise NotImplementedError
 
@@ -30,7 +31,8 @@ class Cache(ABC):
         Returns:
             Optional[TraceLog]: The cached response, or None if the key was not found.
 
-        # noqa: DAR202, DAR401
+        # noqa: DAR202
+        # noqa: DAR401
         """
         raise NotImplementedError
 
