@@ -193,18 +193,16 @@ class OpenAIWrapper:
     @staticmethod
     def _convert_cache_to_response(_args: Sequence[Any], kwargs: Dict[str, Any], cache_response: TraceLog) -> OpenAIObject:
         content = cache_response.output
+        message = {"role": "assistant"}
         try:
             function_call = json.loads(content)
-            message = {
-                "role": "assistant",
-                "content": None,
-                "function_call": function_call,
-            }
+            if isinstance(function_call, dict) and "name" in function_call and "arguments" in function_call and len(function_call) == 2:
+                message["function_call"] = function_call
+                message["content"] = None
+            else:
+                message["content"] = content
         except json.JSONDecodeError:
-            message = {
-                "role": "assistant",
-                "content": content,
-            }
+            message["content"] = content
 
         message_field = 'delta' if kwargs.get('stream', False) else 'message'
 
