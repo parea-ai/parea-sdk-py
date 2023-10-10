@@ -26,7 +26,45 @@ or install with `Poetry`
 poetry add parea-ai
 ```
 
-## Getting Started
+## Debugging Chains & Agents
+
+You can iterate on your chains & agents much faster by using a local cache. This will allow you to make changes to your
+code & prompts without waiting for all previous, valid completions. Simply add these two lines to the beginning your code and start
+[a local redis cache](https://redis.io/docs/getting-started/install-stack/):
+
+```python
+from parea import init
+
+init()
+```
+
+Above will use the default redis cache at `localhost:6379` with no password. You can also specify your redis database by:
+
+```python
+from parea import init, RedisCache
+
+cache = RedisCache(
+    host=os.getenv("REDIS_HOST", "localhost"),  # default value
+    port=int(os.getenv("REDIS_PORT", 6379)),    # default value
+    password=os.getenv("REDIS_PASSWORT", None)  # default value
+)
+init(cache=cache)                               # default value
+```
+
+### Automatically log all your LLM call traces
+
+You can automatically log all your LLM traces to the Parea dashboard by setting the `PAREA_API_KEY` environment variable or specifying it in the `init` function.
+This will help you debug issues your customers are facing by stepping through the LLM call traces and recreating the issue
+in your local setup & code.
+
+```python
+from parea import init
+
+init(api_key=os.getenv("PAREA_API_KEY"))  # default value
+```
+
+
+## Use a deployed prompt
 
 ```python
 import os
@@ -78,7 +116,7 @@ async def main_async():
   print(deployed_prompt)
 ```    
 
-### Logging results from LLM providers
+### Logging results from LLM providers [Example]
 
 ```python
 import os

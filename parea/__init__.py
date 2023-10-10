@@ -12,6 +12,7 @@
 from importlib import metadata as importlib_metadata
 
 from parea.client import Parea, init
+from parea.cache import RedisCache
 
 
 def get_version() -> str:
