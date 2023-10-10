@@ -6,6 +6,7 @@ import time
 from uuid import uuid4
 
 from parea.cache.cache import Cache
+from parea.helpers import date_and_time_string_to_timestamp
 from parea.schemas.models import TraceLog
 from parea.utils.trace_utils import to_date_and_time_string, trace_context, trace_data
 
@@ -151,10 +152,16 @@ class Wrapper:
             trace_data.get()[trace_id].end_timestamp = to_date_and_time_string(end_time)
             trace_data.get()[trace_id].latency = end_time - start_time
 
+            parent_id = trace_context.get()[-2]
+            trace_data.get()[parent_id].end_timestamp = to_date_and_time_string(end_time)
+            start_time_parent = date_and_time_string_to_timestamp(trace_data.get()[parent_id].start_timestamp)
+            trace_data.get()[parent_id].latency = end_time - start_time_parent
+
             if not error and self.cache:
                 self.cache.set(self.convert_kwargs_to_cache_request(args, kwargs), trace_data.get()[trace_id])
 
             self.log(trace_id)
+            self.log(parent_id)
             trace_context.get().pop()
 
         return final_log
