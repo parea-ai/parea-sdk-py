@@ -48,15 +48,18 @@ def async_wrapper(fn, **kwargs):
     return asyncio.run(fn(**kwargs))
 
 
-if __name__ == "__main__":
+def run_benchmark(args):
     parser = argparse.ArgumentParser()
     parser.add_argument("--user_func", help="User function to test e.g., path/to/user_code.py:argument_chain", type=str)
     parser.add_argument("--inputs", help="Path to the input CSV file", type=str)
-    args = parser.parse_args()
+    parser.add_argument('--redis_host', help='Redis host', type=str, default=os.getenv("REDIS_HOST", "localhost"))
+    parser.add_argument('--redis_port', help='Redis port', type=int, default=int(os.getenv("REDIS_PORT", 6379)))
+    parser.add_argument('--redis_password', help='Redis password', type=str, default=None)
+    parsed_args = parser.parse_args(args)
 
-    fn = load_from_path(*args.user_func.rsplit(":", 1))
+    fn = load_from_path(*parsed_args.user_func.rsplit(":", 1))
 
-    data_inputs = read_input_file(args.inputs)
+    data_inputs = read_input_file(parsed_args.inputs)
 
     redis_logs_key = f"parea-trace-logs-{int(time.time())}"
     os.putenv("_parea_redis_logs_key", redis_logs_key)

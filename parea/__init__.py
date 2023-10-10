@@ -8,9 +8,10 @@
     To install the official [Python SDK](https://pypi.org/project/parea/),
     run the following command:  ```bash pip install parea ```.
 """
-
+import sys
 from importlib import metadata as importlib_metadata
 
+from parea.benchmark import run_benchmark
 from parea.cache import RedisCache
 from parea.client import Parea, init
 
@@ -23,3 +24,11 @@ def get_version() -> str:
 
 
 version: str = get_version()
+
+
+def main():
+    args = sys.argv[1:]
+    if args[0] == "benchmark":
+        run_benchmark(args[1:])
+    else:
+        print(f"Unknown command: '{args[0]}'")
