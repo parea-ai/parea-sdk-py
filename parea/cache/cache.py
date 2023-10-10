@@ -16,10 +16,7 @@ class Cache(ABC):
         Returns:
             Optional[TraceLog]: The cached response, or None if the key was not found.
 
-        # noqa: DAR202
-
-        Raises:
-            NotImplementedError: This method must be overridden in a subclass.
+        # noqa: DAR202, DAR401
         """
         raise NotImplementedError
 
@@ -33,10 +30,7 @@ class Cache(ABC):
         Returns:
             Optional[TraceLog]: The cached response, or None if the key was not found.
 
-        # noqa: DAR202
-
-        Raises:
-            NotImplementedError: This method must be overridden in a subclass.
+        # noqa: DAR202, DAR401
         """
         raise NotImplementedError
 
@@ -48,8 +42,7 @@ class Cache(ABC):
             key (CacheRequest): The cache key.
             value (TraceLog): The response to cache.
 
-        Raises:
-            NotImplementedError: This method must be overridden in a subclass.
+        # noqa: DAR401
         """
         raise NotImplementedError
 
@@ -61,8 +54,7 @@ class Cache(ABC):
             key (CacheRequest): The cache key.
             value (TraceLog): The response to cache.
 
-        Raises:
-            NotImplementedError: This method must be overridden in a subclass.
+        # noqa: DAR401
         """
         raise NotImplementedError
 
@@ -73,8 +65,7 @@ class Cache(ABC):
         Args:
             key (CacheRequest): The cache key.
 
-        Raises:
-            NotImplementedError: This method must be overridden in a subclass.
+        # noqa: DAR401
         """
         raise NotImplementedError
 
@@ -85,7 +76,6 @@ class Cache(ABC):
         Args:
             key (CacheRequest): The cache key.
 
-        Raises:
-            NotImplementedError: This method must be overridden in a subclass.
+        # noqa: DAR401
         """
         raise NotImplementedError
