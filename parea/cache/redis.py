@@ -23,12 +23,12 @@ def is_uuid(value: str) -> bool:
     return True
 
 
-class RedisLRUCache(Cache):
-    """A Redis-based LRU cache for caching both normal and streaming responses."""
+class RedisCache(Cache):
+    """A Redis-based cache for caching LLM responses."""
 
     def __init__(
         self,
-        key_logs: str = os.getenv("_redis_logs_key", f"trace-logs-{time.time()}"),
+        key_logs: str = os.getenv("_parea_redis_logs_key", f"trace-logs-{time.time()}"),
         host: str = os.getenv("REDIS_HOST", "localhost"),
         port: int = int(os.getenv("REDIS_PORT", 6379)),
         password: str = os.getenv("REDIS_PASSWORT", None),

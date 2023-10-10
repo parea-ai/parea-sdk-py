@@ -12,7 +12,7 @@ from importlib import util
 from attr import asdict, fields_dict
 from tqdm import tqdm
 
-from parea.cache.redis import RedisLRUCache
+from parea.cache.redis import RedisCache
 from parea.schemas.models import TraceLog
 
 
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     data_inputs = read_input_file(args.inputs)
 
     redis_logs_key = f"parea-trace-logs-{int(time.time())}"
-    os.putenv("_redis_logs_key", redis_logs_key)
+    os.putenv("_parea_redis_logs_key", redis_logs_key)
 
     with concurrent.futures.ProcessPoolExecutor() as executor:
         futures = [executor.submit(fn, data_input) for data_input in data_inputs]
@@ -63,7 +63,7 @@ if __name__ == "__main__":
             pass
         print(f"Done with {len(futures)} inputs")
 
-        redis_cache = RedisLRUCache(key_logs=redis_logs_key)
+        redis_cache = RedisCache(key_logs=redis_logs_key)
 
         trace_logs: list[TraceLog] = redis_cache.read_logs()
 

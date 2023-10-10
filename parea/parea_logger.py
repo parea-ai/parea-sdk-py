@@ -1,7 +1,7 @@
 from attrs import asdict, define, field
 
 from parea.api_client import HTTPClient
-from parea.cache.redis import RedisLRUCache
+from parea.cache.redis import RedisCache
 from parea.schemas.models import TraceLog
 
 LOG_ENDPOINT = "/trace_log"
@@ -10,12 +10,12 @@ LOG_ENDPOINT = "/trace_log"
 @define
 class PareaLogger:
     _client: HTTPClient = field(init=False, default=None)
-    _redis_lru_cache: RedisLRUCache = field(init=False, default=None)
+    _redis_lru_cache: RedisCache = field(init=False, default=None)
 
     def set_client(self, client: HTTPClient) -> None:
         self._client = client
 
-    def set_redis_lru_cache(self, cache: RedisLRUCache) -> None:
+    def set_redis_lru_cache(self, cache: RedisCache) -> None:
         self._redis_lru_cache = cache
 
     def record_log(self, data: TraceLog) -> None:

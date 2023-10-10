@@ -8,7 +8,7 @@ from attrs import asdict, define, field
 
 from parea.api_client import HTTPClient
 from parea.cache.cache import Cache
-from parea.cache.redis import RedisLRUCache
+from parea.cache.redis import RedisCache
 from parea.helpers import gen_trace_id
 from parea.parea_logger import parea_logger
 from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, UseDeployedPrompt, UseDeployedPromptResponse
@@ -24,13 +24,13 @@ RECORD_FEEDBACK_ENDPOINT = "/feedback"
 class Parea:
     api_key: str = field(init=True, default="")
     _client: HTTPClient = field(init=False, default=HTTPClient())
-    cache: Cache = field(init=True, default=RedisLRUCache())
+    cache: Cache = field(init=True, default=RedisCache())
 
     def __attrs_post_init__(self):
         self._client.set_api_key(self.api_key)
         if self.api_key:
             parea_logger.set_client(self._client)
-        if isinstance(self.cache, RedisLRUCache):
+        if isinstance(self.cache, RedisCache):
             parea_logger.set_redis_lru_cache(self.cache)
         _init_parea_wrapper(logger_all_possible, self.cache)
 
@@ -96,7 +96,7 @@ class Parea:
 _initialized_parea_wrapper = False
 
 
-def init(api_key: str = os.getenv("PAREA_API_KEY"), cache: Cache = RedisLRUCache()) -> None:
+def init(api_key: str = os.getenv("PAREA_API_KEY"), cache: Cache = RedisCache()) -> None:
     Parea(api_key=api_key, cache=cache)
 
 
