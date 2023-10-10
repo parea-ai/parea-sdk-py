@@ -99,8 +99,8 @@ class OpenAIWrapper:
         for chunk in response:
             update_dict = chunk.choices[0].delta._previous
             for key, val in update_dict.items():
-                if isinstance(val, str):
-                    message[key] += val
+                if val is not None:
+                    message[key] += str(val)
             yield chunk
 
         trace_data.get()[trace_id].output = OpenAIWrapper._get_output(message)
@@ -108,7 +108,7 @@ class OpenAIWrapper:
         final_log()
 
     @staticmethod
-    async def agen_resolver(trace_id: str, _args: Sequence[Any], kwargs: Dict[str, Any], response: Iterator[Any], final_log) -> Iterator[Any]:
+    async def agen_resolver(trace_id: str, _args: Sequence[Any], kwargs: Dict[str, Any], response: AsyncIterator[Any], final_log) -> AsyncIterator[Any]:
         llm_configuration = OpenAIWrapper._kwargs_to_llm_configuration(kwargs)
         trace_data.get()[trace_id].configuration = llm_configuration
 
@@ -116,8 +116,8 @@ class OpenAIWrapper:
         async for chunk in response:
             update_dict = chunk.choices[0].delta._previous
             for key, val in update_dict.items():
-                if isinstance(val, str):
-                    message[key] += val
+                if val is not None:
+                    message[key] += str(val)
             yield chunk
 
         trace_data.get()[trace_id].output = OpenAIWrapper._get_output(message)

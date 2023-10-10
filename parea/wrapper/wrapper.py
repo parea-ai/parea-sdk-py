@@ -137,7 +137,7 @@ class Wrapper:
 
         return wrapper
 
-    def _cleanup_trace_core(self, trace_id: str, start_time: float, error: str, cache_hit, args, kwargs, response):
+    def _cleanup_trace_core(self, trace_id: str, start_time: float, error: str, cache_hit, args, kwargs):
         trace_data.get()[trace_id].cache_hit = cache_hit
 
         if error:
@@ -160,7 +160,7 @@ class Wrapper:
         return final_log
 
     def _cleanup_trace(self, trace_id: str, start_time: float, error: str, cache_hit, args, kwargs, response):
-        final_log = self._cleanup_trace_core(trace_id, start_time, error, cache_hit, args, kwargs, response)
+        final_log = self._cleanup_trace_core(trace_id, start_time, error, cache_hit, args, kwargs)
 
         if isinstance(response, Iterator):
             return self.gen_resolver(trace_id, args, kwargs, response, final_log)
@@ -170,7 +170,7 @@ class Wrapper:
             return response
 
     async def _acleanup_trace(self, trace_id: str, start_time: float, error: str, cache_hit, args, kwargs, response):
-        final_log = self._cleanup_trace_core(trace_id, start_time, error, cache_hit, args, kwargs, response)
+        final_log = self._cleanup_trace_core(trace_id, start_time, error, cache_hit, args, kwargs)
 
         if isinstance(response, AsyncIterator):
             return self.agen_resolver(trace_id, args, kwargs, response, final_log)
