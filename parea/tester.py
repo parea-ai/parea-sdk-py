@@ -37,9 +37,9 @@ def load_from_path(module_path, attr_name):
     return fn
 
 
-def read_input_file(file_path):
+def read_input_file(file_path) -> List[dict]:
     with open(file_path) as file:
-        reader = csv.reader(file)
+        reader = csv.DictReader(file)
         inputs = list(reader)
     return inputs
 
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     os.putenv("_parea_redis_logs_key", redis_logs_key)
 
     with concurrent.futures.ProcessPoolExecutor() as executor:
-        futures = [executor.submit(fn, data_input) for data_input in data_inputs]
+        futures = [executor.submit(fn, **data_input) for data_input in data_inputs]
         for f in tqdm(concurrent.futures.as_completed(futures), total=len(futures)):
             pass
         print(f"Done with {len(futures)} inputs")
