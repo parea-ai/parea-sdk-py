@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, Iterator, Optional, Sequence, Union, AsyncIterator
+from typing import Any, AsyncIterator, Callable, Dict, Iterator, Optional, Sequence, Union
 
 import json
 from collections import defaultdict
@@ -204,7 +204,7 @@ class OpenAIWrapper:
         except json.JSONDecodeError:
             message["content"] = content
 
-        message_field = 'delta' if kwargs.get('stream', False) else 'message'
+        message_field = "delta" if kwargs.get("stream", False) else "message"
 
         return convert_to_openai_object(
             {
@@ -236,11 +236,14 @@ class OpenAIWrapper:
     def aconvert_cache_to_response(_args: Sequence[Any], kwargs: Dict[str, Any], cache_response: TraceLog) -> Union[OpenAIObject, AsyncIterator[OpenAIObject]]:
         response = OpenAIWrapper._convert_cache_to_response(_args, kwargs, cache_response)
         if kwargs.get("stream", False):
+
             def aiterator(iterable):
                 async def gen():
                     for item in iterable:
                         yield item
+
                 return gen()
+
             return aiterator([response])
         else:
             return response
