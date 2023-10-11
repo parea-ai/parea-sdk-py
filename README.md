@@ -53,6 +53,19 @@ init(cache=cache)
 
 If you set `cache = None` for `init`, no cache will be used.
 
+### Benchmark your LLM app across many inputs
+
+You can benchmark your LLM app across many inputs by using the `benchmark` command. This will run your the entry point 
+of your app with the specified inputs and create a report with the results.
+
+```bash
+parea benchmark --func app:main --csv_path benchmark.csv
+```
+
+The CSV file will be used to fill in the arguments to your function. The report will be a CSV file of all the traces. If you
+set your Parea API key, the traces will also be logged to the Parea dashboard. Note, for this feature you need to have a 
+redis cache running. Please, raise a GitHub issue if you would like to use this feature without a redis cache.
+
 ### Automatically log all your LLM call traces
 
 You can automatically log all your LLM traces to the Parea dashboard by setting the `PAREA_API_KEY` environment variable or specifying it in the `init` function.
