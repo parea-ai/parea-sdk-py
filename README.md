@@ -33,9 +33,9 @@ code & prompts without waiting for all previous, valid LLM responses. Simply add
 [a local redis cache](https://redis.io/docs/getting-started/install-stack/):
 
 ```python
-from parea import init
+from parea import init, RedisCache
 
-init()
+init(cache=RedisCache())
 ```
 
 Above will use the default redis cache at `localhost:6379` with no password. You can also specify your redis database by:
@@ -44,12 +44,14 @@ Above will use the default redis cache at `localhost:6379` with no password. You
 from parea import init, RedisCache
 
 cache = RedisCache(
-    host=os.getenv("REDIS_HOST", "localhost"),  # default value
-    port=int(os.getenv("REDIS_PORT", 6379)),    # default value
-    password=os.getenv("REDIS_PASSWORT", None)  # default value
+  host=os.getenv("REDIS_HOST", "localhost"),  # default value
+  port=int(os.getenv("REDIS_PORT", 6379)),    # default value
+  password=os.getenv("REDIS_PASSWORT", None)  # default value
 )
-init(cache=cache)                               # default value
+init(cache=cache)
 ```
+
+If you set `cache = None` for `init`, no cache will be used.
 
 ### Automatically log all your LLM call traces
 
@@ -60,7 +62,10 @@ in your local setup & code.
 ```python
 from parea import init
 
-init(api_key=os.getenv("PAREA_API_KEY"))  # default value
+init(
+  api_key=os.getenv("PAREA_API_KEY"),  # default value
+  cache=...
+)
 ```
 
 
