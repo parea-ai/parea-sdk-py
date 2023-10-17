@@ -1,4 +1,4 @@
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, Callable
 
 import contextvars
 import inspect
@@ -13,7 +13,7 @@ from attrs import asdict
 
 from parea.helpers import gen_trace_id, to_date_and_time_string
 from parea.parea_logger import parea_logger
-from parea.schemas.models import CompletionResponse, TraceLog
+from parea.schemas.models import CompletionResponse, TraceLog, NamedEvaluationScore
 
 logger = logging.getLogger()
 
@@ -55,6 +55,8 @@ def trace(
     metadata: Optional[dict[str, Any]] = None,
     target: Optional[str] = None,
     end_user_identifier: Optional[str] = None,
+    eval_funcs: Optional[list[Callable]] = None,
+    access_output_of_func: Optional[Callable] = None,
 ):
     def init_trace(func_name, args, kwargs, func) -> tuple[str, float]:
         start_time = time.time()
@@ -87,7 +89,7 @@ def trace(
         end_time = time.time()
         trace_data.get()[trace_id].end_timestamp = to_date_and_time_string(end_time)
         trace_data.get()[trace_id].latency = end_time - start_time
-        logger_all_possible(trace_id)
+        thread_eval_funcs_then_log(trace_id, eval_funcs, access_output_of_func)
         trace_context.get().pop()
 
     def decorator(func):
@@ -98,7 +100,8 @@ def trace(
             try:
                 result = await func(*args, **kwargs)
                 output = make_output(result, output_as_list)
-                trace_data.get()[trace_id].output = json.dumps(output)
+                trace_data.get()[trace_id].output = output if isinstance(output, str) else json.dumps(output)
+                trace_data.get()[trace_id].status = "success"
             except Exception as e:
                 logger.exception(f"Error occurred in function {func.__name__}, {e}")
                 trace_data.get()[trace_id].error = str(e)
@@ -115,7 +118,8 @@ def trace(
             try:
                 result = func(*args, **kwargs)
                 output = make_output(result, output_as_list)
-                trace_data.get()[trace_id].output = json.dumps(output)
+                trace_data.get()[trace_id].output = output if isinstance(output, str) else json.dumps(output)
+                trace_data.get()[trace_id].status = "success"
             except Exception as e:
                 logger.exception(f"Error occurred in function {func.__name__}, {e}")
                 trace_data.get()[trace_id].error = str(e)
@@ -167,5 +171,34 @@ def logger_all_possible(trace_id: str):
     logging_thread = threading.Thread(
         target=parea_logger.default_log,
         kwargs={"data": trace_data.get()[trace_id]},
+    )
+    logging_thread.start()
+
+
+def call_eval_funcs_then_log(trace_id: str, eval_funcs: list[Callable] = None, access_output_of_func: Callable = None):
+    data = trace_data.get()[trace_id]
+    try:
+        inputs = data.inputs
+        output = data.output
+        if access_output_of_func:
+            output = access_output_of_func(output)
+        target = data.target
+        if eval_funcs and data.status == "success":
+            data.named_evaluation_scores = []
+            for func in eval_funcs:
+                try:
+                    score = func(inputs=inputs, output=output, target=target)
+                    data.named_evaluation_scores.append(NamedEvaluationScore(name=func.__name__, score=score))
+                except Exception as e:
+                    logger.exception(f"Error occurred calling evaluation function '{func.__name__}', {e}", exc_info=e)
+    except Exception as e:
+        logger.exception(f"Error occurred in when trying to evaluate output, {e}", exc_info=e)
+    parea_logger.default_log(data=data)
+
+
+def thread_eval_funcs_then_log(trace_id: str, eval_funcs: list[Callable] = None, access_output_of_func: Callable = None):
+    logging_thread = threading.Thread(
+        target=call_eval_funcs_then_log,
+        kwargs={"trace_id": trace_id, "eval_funcs": eval_funcs, "access_output_of_func": access_output_of_func},
     )
     logging_thread.start()

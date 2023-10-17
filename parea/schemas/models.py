@@ -110,6 +110,12 @@ class FeedbackRequest:
 
 
 @define
+class NamedEvaluationScore:
+    name: str
+    score: float = field(validator=[validators.ge(0), validators.le(1)])
+
+
+@define
 class TraceLog:
     trace_id: str
     start_timestamp: str
@@ -119,7 +125,6 @@ class TraceLog:
     error: Optional[str] = None
     status: Optional[str] = None
     deployment_id: Optional[str] = None
-    evaluation_metric_ids: Optional[list[int]] = None
     cache_hit: bool = False
     configuration: LLMInputs = LLMInputs()
     latency: Optional[float] = 0.0
@@ -127,6 +132,8 @@ class TraceLog:
     output_tokens: Optional[int] = 0
     total_tokens: Optional[int] = 0
     cost: Optional[float] = 0.0
+    evaluation_metric_ids: Optional[list[int]] = None
+    named_evaluation_scores: Optional[list[NamedEvaluationScore]] = None
     feedback_score: Optional[float] = None
 
     # info filled from decorator
