@@ -1,4 +1,4 @@
-from typing import Any, Optional, Union, Callable
+from typing import Any, Callable, Optional, Union
 
 import contextvars
 import inspect
@@ -13,7 +13,7 @@ from attrs import asdict
 
 from parea.helpers import gen_trace_id, to_date_and_time_string
 from parea.parea_logger import parea_logger
-from parea.schemas.models import CompletionResponse, TraceLog, NamedEvaluationScore
+from parea.schemas.models import CompletionResponse, NamedEvaluationScore, TraceLog
 
 logger = logging.getLogger()
 

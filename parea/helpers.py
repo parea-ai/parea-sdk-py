@@ -1,9 +1,8 @@
 import csv
 import time
 import uuid
-from typing import List
 
-from attr import fields_dict, asdict
+from attr import asdict, fields_dict
 
 from parea.schemas.models import TraceLog
 
@@ -21,7 +20,7 @@ def date_and_time_string_to_timestamp(date_and_time_string: str) -> float:
     return time.mktime(time.strptime(date_and_time_string, "%Y-%m-%d %H:%M:%S %Z"))
 
 
-def write_trace_logs_to_csv(path_csv: str, trace_logs: List[TraceLog]):
+def write_trace_logs_to_csv(path_csv: str, trace_logs: list[TraceLog]):
     with open(path_csv, "w", newline="") as file:
         # write header
         columns = fields_dict(TraceLog).keys()

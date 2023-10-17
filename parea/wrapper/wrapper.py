@@ -8,7 +8,7 @@ from uuid import uuid4
 from parea.cache.cache import Cache
 from parea.helpers import date_and_time_string_to_timestamp
 from parea.schemas.models import TraceLog
-from parea.utils.trace_utils import to_date_and_time_string, trace_context, trace_data, call_eval_funcs_then_log
+from parea.utils.trace_utils import call_eval_funcs_then_log, to_date_and_time_string, trace_context, trace_data
 from parea.wrapper.utils import skip_decorator_if_func_in_stack
 
 

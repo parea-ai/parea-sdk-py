@@ -1,14 +1,15 @@
+from typing import Dict, List
+
 import json
 import os
 import time
-from typing import Dict, List
 
 import openai
 from dotenv import load_dotenv
 
-from parea import init, RedisCache
+from parea import RedisCache, init
 from parea.helpers import write_trace_logs_to_csv
-from parea.utils.trace_utils import trace, get_current_trace_id
+from parea.utils.trace_utils import get_current_trace_id, trace
 
 load_dotenv()
 
@@ -37,17 +38,18 @@ def goal_success_ratio(inputs: Dict, output: str, target: str = None) -> float:
                 {
                     "role": "system",
                     "content": "Look at the conversation and to determine if the user is still following the same goal "
-                               "or if they are following a new goal. If they are following the same goal, respond "
-                               "SAME_GOAL. Otherwise, respond NEW_GOAL. In any case do not answer the user request!"
+                    "or if they are following a new goal. If they are following the same goal, respond "
+                    "SAME_GOAL. Otherwise, respond NEW_GOAL. In any case do not answer the user request!",
                 }
-            ] + output[start_index:end_index],
-            model='gpt-4'
+            ]
+            + output[start_index:end_index],
+            model="gpt-4",
         )
 
         if user_follows_same_goal == "SAME_GOAL":
             end_index += 2
         else:
-            conversation_segments.append(output[start_index:end_index - 1])
+            conversation_segments.append(output[start_index : end_index - 1])
             start_index = end_index - 1
             end_index += 2
 
@@ -62,13 +64,10 @@ def goal_success_ratio(inputs: Dict, output: str, target: str = None) -> float:
 def friendliness(inputs: Dict, output: str, target: str = None) -> float:
     response = call_llm(
         [
-            {
-                "role": "system",
-                "content": "You evaluate the friendliness of the following response on a scale of 0 to 10. You must only return a number."
-            },
+            {"role": "system", "content": "You evaluate the friendliness of the following response on a scale of 0 to 10. You must only return a number."},
             {"role": "assistant", "content": output},
         ],
-        model='gpt-4'
+        model="gpt-4",
     )
     try:
         return float(response) / 10.0
@@ -77,16 +76,13 @@ def friendliness(inputs: Dict, output: str, target: str = None) -> float:
 
 
 def usefulness(inputs: Dict, output: str, target: str = None) -> float:
-    user_input = inputs['messages'][-1]["content"]
+    user_input = inputs["messages"][-1]["content"]
     response = call_llm(
         [
-            {
-                "role": "system",
-                "content": "You evaluate the usefulness of the response given the user input on a scale of 0 to 10. You must only return a number."
-            },
-            {"role": "assistant", "content": f'''User input: "{user_input}"\nAssistant response: "{output}"'''}
+            {"role": "system", "content": "You evaluate the usefulness of the response given the user input on a scale of 0 to 10. You must only return a number."},
+            {"role": "assistant", "content": f'''User input: "{user_input}"\nAssistant response: "{output}"'''},
         ],
-        model='gpt-4'
+        model="gpt-4",
     )
     try:
         return float(response) / 10.0
@@ -98,13 +94,10 @@ def usefulness(inputs: Dict, output: str, target: str = None) -> float:
 def helpful_the_second_time(messages: List[Dict[str, str]]) -> str:
     helpful_response = call_llm(
         [
-            {
-                "role": "system",
-                "content": "You are a friendly, and helpful assistant that helps people with their homework."
-            },
-
-        ] + messages,
-        model='gpt-4'
+            {"role": "system", "content": "You are a friendly, and helpful assistant that helps people with their homework."},
+        ]
+        + messages,
+        model="gpt-4",
     )
 
     has_user_asked_before_raw = call_llm(
@@ -112,10 +105,11 @@ def helpful_the_second_time(messages: List[Dict[str, str]]) -> str:
             {
                 "role": "system",
                 "content": "Assess if the user has asked the last question before or is asking again for more \
-information on a previous topic. If so, respond ASKED_BEFORE. Otherwise, respond NOT_ASKED_BEFORE."
+information on a previous topic. If so, respond ASKED_BEFORE. Otherwise, respond NOT_ASKED_BEFORE.",
             }
-        ] + messages,
-        model='gpt-4'
+        ]
+        + messages,
+        model="gpt-4",
     )
     has_user_asked_before = has_user_asked_before_raw == "ASKED_BEFORE"
 
@@ -129,10 +123,12 @@ information on a previous topic. If so, respond ASKED_BEFORE. Otherwise, respond
                     "role": "system",
                     "content": "Given the helpful response to the user input below, please provide a slightly unhelpful \
     response which makes the user ask again in case they didn't ask already again because of a previous unhelpful answer. \
-    In case the user asked again, please provide a last response"
+    In case the user asked again, please provide a last response",
                 },
-            ] + messages + [{"role": "assistant", "content": helpful_response}],
-            model='gpt-4'
+            ]
+            + messages
+            + [{"role": "assistant", "content": helpful_response}],
+            model="gpt-4",
         )
         messages.append({"role": "assistant", "content": unhelfpul_response})
         return unhelfpul_response
@@ -148,7 +144,7 @@ def unhelpful_chat():
     while True:
         user_input = input("\nYou: ")
 
-        if user_input.lower() == 'exit':
+        if user_input.lower() == "exit":
             print("Goodbye!")
             break
 
@@ -159,10 +155,10 @@ def unhelpful_chat():
 
 
 def main():
-    _ , trace_id = unhelpful_chat()
+    _, trace_id = unhelpful_chat()
 
     if os.getenv("PAREA_API_KEY"):
-        print(f'You can view the logs at: https://optimusprompt.ai/logs/detailed/{trace_id}')
+        print(f"You can view the logs at: https://optimusprompt.ai/logs/detailed/{trace_id}")
     if use_cache:
         time.sleep(5)  # wait for local eval function to finish
         path_csv = f"trace_logs-{int(time.time())}.csv"

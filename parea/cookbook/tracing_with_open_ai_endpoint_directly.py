@@ -1,7 +1,8 @@
+from typing import Dict, Optional
+
 import os
 import random
 from datetime import datetime
-from typing import Dict, Optional
 
 import openai
 from dotenv import load_dotenv

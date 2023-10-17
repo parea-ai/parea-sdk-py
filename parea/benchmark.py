@@ -74,9 +74,7 @@ def run_benchmark(args):
             pass
         print(f"Done with {len(futures)} inputs")
 
-        redis_cache = RedisCache(
-            key_logs=redis_logs_key, host=args.redis_host, port=args.redis_port, password=args.redis_password
-        )
+        redis_cache = RedisCache(key_logs=redis_logs_key, host=args.redis_host, port=args.redis_port, password=args.redis_password)
 
         # write to csv
         path_csv = f"trace_logs-{int(time.time())}.csv"
