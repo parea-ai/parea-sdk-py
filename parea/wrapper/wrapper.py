@@ -8,7 +8,8 @@ from uuid import uuid4
 from parea.cache.cache import Cache
 from parea.helpers import date_and_time_string_to_timestamp
 from parea.schemas.models import TraceLog
-from parea.utils.trace_utils import to_date_and_time_string, trace_context, trace_data
+from parea.utils.trace_utils import to_date_and_time_string, trace_context, trace_data, call_eval_funcs_then_log
+from parea.wrapper.utils import skip_decorator_if_func_in_stack
 
 
 class Wrapper:
@@ -88,6 +89,7 @@ class Wrapper:
 
         return trace_id, start_time
 
+    @skip_decorator_if_func_in_stack(call_eval_funcs_then_log)
     def async_decorator(self, orig_func: Callable) -> Callable:
         async def wrapper(*args, **kwargs):
             trace_id, start_time = self._init_trace()
@@ -113,6 +115,7 @@ class Wrapper:
 
         return wrapper
 
+    @skip_decorator_if_func_in_stack(call_eval_funcs_then_log)
     def sync_decorator(self, orig_func: Callable) -> Callable:
         def wrapper(*args, **kwargs):
             trace_id, start_time = self._init_trace()
