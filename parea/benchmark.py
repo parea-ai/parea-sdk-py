@@ -13,6 +13,7 @@ from attr import asdict, fields_dict
 from tqdm import tqdm
 
 from parea.cache.redis import RedisCache
+from parea.helpers import write_trace_logs_to_csv
 from parea.schemas.models import TraceLog
 
 
@@ -73,19 +74,12 @@ def run_benchmark(args):
             pass
         print(f"Done with {len(futures)} inputs")
 
-        redis_cache = RedisCache(key_logs=redis_logs_key)
-
-        trace_logs: list[TraceLog] = redis_cache.read_logs()
+        redis_cache = RedisCache(
+            key_logs=redis_logs_key, host=args.redis_host, port=args.redis_port, password=args.redis_password
+        )
 
         # write to csv
         path_csv = f"trace_logs-{int(time.time())}.csv"
-        with open(path_csv, "w", newline="") as file:
-            # write header
-            columns = fields_dict(TraceLog).keys()
-            writer = csv.DictWriter(file, fieldnames=columns)
-            writer.writeheader()
-            # write rows
-            for trace_log in trace_logs:
-                writer.writerow(asdict(trace_log))
-
+        trace_logs: list[TraceLog] = redis_cache.read_logs()
+        write_trace_logs_to_csv(path_csv, trace_logs)
         print(f"Wrote CSV of results to: {path_csv}")

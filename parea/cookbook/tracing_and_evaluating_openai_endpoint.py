@@ -1,17 +1,22 @@
 import os
+import time
 from typing import Dict, List
 
 import openai
 from dotenv import load_dotenv
 
-from parea import init
-from parea.utils.trace_utils import trace
+from parea import init, RedisCache
+from parea.helpers import write_trace_logs_to_csv
+from parea.utils.trace_utils import trace, get_current_trace_id
 
 load_dotenv()
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-init(api_key=os.getenv("PAREA_API_KEY"))
+
+use_cache = True
+cache = RedisCache() if use_cache else None
+init(api_key=os.getenv("PAREA_API_KEY"), cache=cache)
 
 
 def call_llm(data: list[dict], model: str = "gpt-3.5-turbo", temperature: float = 0.0) -> str:
@@ -101,6 +106,8 @@ information on a previous topic. If so, respond ASKED_BEFORE. Otherwise, respond
 def unhelpful_chat():
     print("Welcome to the chat! Type 'exit' to end the session.")
 
+    trace_id = get_current_trace_id()
+
     messages = []
     while True:
         user_input = input("\nYou: ")
@@ -112,8 +119,22 @@ def unhelpful_chat():
         messages.append({"role": "user", "content": user_input})
         print("Bot:", helpful_the_second_time(messages))
 
-    return messages
+    return messages, trace_id
+
+
+def main():
+    _ , trace_id = unhelpful_chat()
+
+    time.sleep(0.2)
+
+    if use_cache:
+        path_csv = f"trace_logs-{int(time.time())}.csv"
+        trace_logs = cache.read_logs()
+        write_trace_logs_to_csv(path_csv, trace_logs)
+        print(f"CSV-file of results: {path_csv}")
+    if os.getenv("PAREA_API_KEY"):
+        print(f'You can view the logs at: https://optimusprompt.ai/logs/detailed/{trace_id}')
 
 
 if __name__ == "__main__":
-    unhelpful_chat()
+    main()
