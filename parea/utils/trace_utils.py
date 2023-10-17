@@ -180,10 +180,12 @@ def call_eval_funcs_then_log(trace_id: str, eval_funcs: list[Callable] = None, a
     try:
         inputs = data.inputs
         output = data.output
-        if access_output_of_func:
-            output = access_output_of_func(output)
         target = data.target
         if eval_funcs and data.status == "success":
+            if access_output_of_func:
+                output = json.loads(output)
+                output = access_output_of_func(output)
+                output = json.dumps(output)
             data.scores = []
             for func in eval_funcs:
                 try:

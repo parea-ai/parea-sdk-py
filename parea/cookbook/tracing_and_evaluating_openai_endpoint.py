@@ -1,3 +1,4 @@
+import json
 import os
 import time
 from typing import Dict, List
@@ -21,6 +22,41 @@ init(api_key=os.getenv("PAREA_API_KEY"), cache=cache)
 
 def call_llm(data: list[dict], model: str = "gpt-3.5-turbo", temperature: float = 0.0) -> str:
     return openai.ChatCompletion.create(model=model, temperature=temperature, messages=data).choices[0].message["content"]
+
+
+def goal_success_ratio(inputs: Dict, output: str, target: str = None) -> float:
+    """Returns the average amount of turns the user had to converse with the AI to reach their goals."""
+    output = json.loads(output)
+    # need to determine where does a new goal start
+    conversation_segments = []
+    start_index = 0
+    end_index = 3
+    while end_index < len(output):
+        user_follows_same_goal = call_llm(
+            [
+                {
+                    "role": "system",
+                    "content": "Look at the conversation and to determine if the user is still following the same goal "
+                               "or if they are following a new goal. If they are following the same goal, respond "
+                               "SAME_GOAL. Otherwise, respond NEW_GOAL. In any case do not answer the user request!"
+                }
+            ] + output[start_index:end_index],
+            model='gpt-4'
+        )
+
+        if user_follows_same_goal == "SAME_GOAL":
+            end_index += 2
+        else:
+            conversation_segments.append(output[start_index:end_index - 1])
+            start_index = end_index - 1
+            end_index += 2
+
+    if start_index < len(output):
+        conversation_segments.append(output[start_index:])
+
+    # for now assume that the user reached their goal in every segment
+    # so we can return the average amount of turns the user had to converse with the AI to reach their goals
+    return sum([2 / len(segment) for segment in conversation_segments]) / len(conversation_segments)
 
 
 def friendliness(inputs: Dict, output: str, target: str = None) -> float:
@@ -102,7 +138,7 @@ information on a previous topic. If so, respond ASKED_BEFORE. Otherwise, respond
         return unhelfpul_response
 
 
-@trace
+@trace(eval_funcs=[goal_success_ratio], access_output_of_func=lambda x: x[0])
 def unhelpful_chat():
     print("Welcome to the chat! Type 'exit' to end the session.")
 
@@ -125,15 +161,14 @@ def unhelpful_chat():
 def main():
     _ , trace_id = unhelpful_chat()
 
-    time.sleep(0.2)
-
+    if os.getenv("PAREA_API_KEY"):
+        print(f'You can view the logs at: https://optimusprompt.ai/logs/detailed/{trace_id}')
     if use_cache:
+        time.sleep(5)  # wait for local eval function to finish
         path_csv = f"trace_logs-{int(time.time())}.csv"
         trace_logs = cache.read_logs()
         write_trace_logs_to_csv(path_csv, trace_logs)
         print(f"CSV-file of results: {path_csv}")
-    if os.getenv("PAREA_API_KEY"):
-        print(f'You can view the logs at: https://optimusprompt.ai/logs/detailed/{trace_id}')
 
 
 if __name__ == "__main__":
