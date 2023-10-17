@@ -50,8 +50,8 @@ def async_wrapper(fn, **kwargs):
 
 def run_benchmark(args):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--func", help="Function to test e.g., path/to/my_code.py:argument_chain", type=str)
-    parser.add_argument("--csv_path", help="Path to the input CSV file", type=str)
+    parser.add_argument("--func", help="Function to test e.g., path/to/my_code.py:argument_chain", type=str, required=True)
+    parser.add_argument("--csv_path", help="Path to the input CSV file", type=str, required=True)
     parser.add_argument("--redis_host", help="Redis host", type=str, default=os.getenv("REDIS_HOST", "localhost"))
     parser.add_argument("--redis_port", help="Redis port", type=int, default=int(os.getenv("REDIS_PORT", 6379)))
     parser.add_argument("--redis_password", help="Redis password", type=str, default=None)
@@ -69,7 +69,7 @@ def run_benchmark(args):
             futures = [executor.submit(async_wrapper, fn, **data_input) for data_input in data_inputs]
         else:
             futures = [executor.submit(fn, **data_input) for data_input in data_inputs]
-        for f in tqdm(concurrent.futures.as_completed(futures), total=len(futures)):
+        for _ in tqdm(concurrent.futures.as_completed(futures), total=len(futures)):
             pass
         print(f"Done with {len(futures)} inputs")
 
