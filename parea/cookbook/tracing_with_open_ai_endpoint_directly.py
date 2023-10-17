@@ -1,5 +1,7 @@
 import os
+import random
 from datetime import datetime
+from typing import Dict, Optional
 
 import openai
 from dotenv import load_dotenv
@@ -19,7 +21,12 @@ def call_llm(data: list[dict], model: str = "gpt-3.5-turbo", temperature: float 
     return openai.ChatCompletion.create(model=model, temperature=temperature, messages=data).choices[0].message["content"]
 
 
-@trace
+def random_eval(inputs: Dict[str, str], output, target: Optional[str] = None) -> float:
+    # return random number between 0 and 1
+    return random.random()
+
+
+@trace(eval_funcs=[random_eval])
 def argumentor(query: str, additional_description: str = "") -> str:
     return call_llm(
         [

@@ -133,7 +133,7 @@ class TraceLog:
     total_tokens: Optional[int] = 0
     cost: Optional[float] = 0.0
     evaluation_metric_ids: Optional[list[int]] = None
-    named_evaluation_scores: Optional[list[NamedEvaluationScore]] = None
+    scores: Optional[list[NamedEvaluationScore]] = None
     feedback_score: Optional[float] = None
 
     # info filled from decorator
