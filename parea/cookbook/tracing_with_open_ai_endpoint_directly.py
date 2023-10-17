@@ -55,7 +55,7 @@ def critic(argument: str) -> str:
     )
 
 
-@trace
+@trace(eval_funcs=[random_eval])
 def refiner(query: str, additional_description: str, argument: str, criticism: str) -> str:
     return call_llm(
         [
@@ -75,7 +75,7 @@ def refiner(query: str, additional_description: str, argument: str, criticism: s
     )
 
 
-@trace
+@trace(eval_funcs=[random_eval], access_output_of_func=lambda x: x[0])
 def argument_chain(query: str, additional_description: str = "") -> tuple[str, str]:
     trace_id = get_current_trace_id()
     argument = argumentor(query, additional_description)
