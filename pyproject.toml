@@ -40,7 +40,7 @@ poetry-plugin-dotenv = "^0.5.1"
 pyupgrade = "^3.9.0"
 jupyter = "^1.0.0"
 contextvars = "^2.4"
-openai = "^0.27.8"
+openai = ">=0.27.8,<0.29.0"
 redis = "^5.0.1"
 
 [tool.poetry.dev-dependencies]
