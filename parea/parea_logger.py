@@ -10,13 +10,13 @@ LOG_ENDPOINT = "/trace_log"
 @define
 class PareaLogger:
     _client: HTTPClient = field(init=False, default=None)
-    _redis_lru_cache: RedisCache = field(init=False, default=None)
+    _redis_cache: RedisCache = field(init=False, default=None)
 
     def set_client(self, client: HTTPClient) -> None:
         self._client = client
 
-    def set_redis_lru_cache(self, cache: RedisCache) -> None:
-        self._redis_lru_cache = cache
+    def set_redis_cache(self, cache: RedisCache) -> None:
+        self._redis_cache = cache
 
     def record_log(self, data: TraceLog) -> None:
         self._client.request(
@@ -33,10 +33,10 @@ class PareaLogger:
         )
 
     def write_log(self, data: TraceLog) -> None:
-        self._redis_lru_cache.log(data)
+        self._redis_cache.log(data)
 
     def default_log(self, data: TraceLog) -> None:
-        if self._redis_lru_cache:
+        if self._redis_cache:
             self.write_log(data)
         if self._client:
             self.record_log(data)

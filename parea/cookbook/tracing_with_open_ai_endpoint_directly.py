@@ -1,4 +1,7 @@
+from typing import Dict, Optional
+
 import os
+import random
 from datetime import datetime
 
 import openai
@@ -19,7 +22,12 @@ def call_llm(data: list[dict], model: str = "gpt-3.5-turbo", temperature: float 
     return openai.ChatCompletion.create(model=model, temperature=temperature, messages=data).choices[0].message["content"]
 
 
-@trace
+def random_eval(inputs: Dict[str, str], output, target: Optional[str] = None) -> float:
+    # return random number between 0 and 1
+    return random.random()
+
+
+@trace(eval_funcs=[random_eval])
 def argumentor(query: str, additional_description: str = "") -> str:
     return call_llm(
         [
@@ -48,7 +56,7 @@ def critic(argument: str) -> str:
     )
 
 
-@trace
+@trace(eval_funcs=[random_eval])
 def refiner(query: str, additional_description: str, argument: str, criticism: str) -> str:
     return call_llm(
         [
@@ -68,7 +76,7 @@ def refiner(query: str, additional_description: str, argument: str, criticism: s
     )
 
 
-@trace
+@trace(eval_funcs=[random_eval], access_output_of_func=lambda x: x[0])
 def argument_chain(query: str, additional_description: str = "") -> tuple[str, str]:
     trace_id = get_current_trace_id()
     argument = argumentor(query, additional_description)

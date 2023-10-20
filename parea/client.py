@@ -31,7 +31,7 @@ class Parea:
         if self.api_key:
             parea_logger.set_client(self._client)
         if isinstance(self.cache, RedisCache):
-            parea_logger.set_redis_lru_cache(self.cache)
+            parea_logger.set_redis_cache(self.cache)
         _init_parea_wrapper(logger_all_possible, self.cache)
 
     def completion(self, data: Completion) -> CompletionResponse:
