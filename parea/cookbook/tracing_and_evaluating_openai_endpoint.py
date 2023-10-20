@@ -171,7 +171,7 @@ def main():
                 parent_trace = trace_log
                 break
         if parent_trace:
-            print(f'Overall score(s):\n{json.dumps(parent_trace.scores)}')
+            print(f"Overall score(s):\n{json.dumps(parent_trace.scores)}")
 
 
 if __name__ == "__main__":
