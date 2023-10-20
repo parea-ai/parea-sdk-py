@@ -94,6 +94,7 @@ class Wrapper:
         async def wrapper(*args, **kwargs):
             trace_id, start_time = self._init_trace()
             response = None
+            exception = None
             error = None
             cache_hit = False
             cache_key = self.convert_kwargs_to_cache_request(args, kwargs)
@@ -106,12 +107,16 @@ class Wrapper:
                 if response is None:
                     response = await orig_func(*args, **kwargs)
             except Exception as e:
+                exception = e
                 error = str(e)
                 if self.cache:
                     await self.cache.ainvalidate(cache_key)
-                raise
             finally:
-                return await self._acleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
+                if exception is not None:
+                    self._cleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
+                    raise exception
+                else:
+                    return self._cleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
 
         return wrapper
 
@@ -123,6 +128,7 @@ class Wrapper:
             error = None
             cache_hit = False
             cache_key = self.convert_kwargs_to_cache_request(args, kwargs)
+            exception = None
             try:
                 if self.cache:
                     cache_result = self.cache.get(cache_key)
@@ -132,12 +138,16 @@ class Wrapper:
                 if response is None:
                     response = orig_func(*args, **kwargs)
             except Exception as e:
+                exception = e
                 error = str(e)
                 if self.cache:
                     self.cache.invalidate(cache_key)
-                raise e
             finally:
-                return self._cleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
+                if exception is not None:
+                    self._cleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
+                    raise exception
+                else:
+                    return self._cleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
 
         return wrapper
 
