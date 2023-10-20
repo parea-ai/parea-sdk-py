@@ -165,6 +165,13 @@ def main():
         trace_logs = cache.read_logs()
         write_trace_logs_to_csv(path_csv, trace_logs)
         print(f"CSV-file of results: {path_csv}")
+        parent_trace = None
+        for trace_log in trace_logs:
+            if trace_log.trace_id == trace_id:
+                parent_trace = trace_log
+                break
+        if parent_trace:
+            print(f'Overall score(s):\n{json.dumps(parent_trace.scores)}')
 
 
 if __name__ == "__main__":

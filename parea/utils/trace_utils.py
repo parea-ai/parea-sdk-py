@@ -55,6 +55,7 @@ def trace(
     metadata: Optional[dict[str, Any]] = None,
     target: Optional[str] = None,
     end_user_identifier: Optional[str] = None,
+    eval_funcs_names: Optional[list[str]] = None,
     eval_funcs: Optional[list[Callable]] = None,
     access_output_of_func: Optional[Callable] = None,
 ):
@@ -102,6 +103,7 @@ def trace(
                 output = make_output(result, output_as_list)
                 trace_data.get()[trace_id].output = output if isinstance(output, str) else json.dumps(output)
                 trace_data.get()[trace_id].status = "success"
+                trace_data.get()[trace_id].evaluation_metric_names = eval_funcs_names
             except Exception as e:
                 logger.exception(f"Error occurred in function {func.__name__}, {e}")
                 trace_data.get()[trace_id].error = str(e)
@@ -120,6 +122,7 @@ def trace(
                 output = make_output(result, output_as_list)
                 trace_data.get()[trace_id].output = output if isinstance(output, str) else json.dumps(output)
                 trace_data.get()[trace_id].status = "success"
+                trace_data.get()[trace_id].evaluation_metric_names = eval_funcs_names
             except Exception as e:
                 logger.exception(f"Error occurred in function {func.__name__}, {e}")
                 trace_data.get()[trace_id].error = str(e)
