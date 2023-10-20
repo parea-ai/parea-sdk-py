@@ -183,14 +183,14 @@ def call_eval_funcs_then_log(trace_id: str, eval_funcs: list[Callable] = None, a
     try:
         inputs = data.inputs
         target = data.target
-        if access_output_of_func:
-            output = json.loads(data.output)
-            output = access_output_of_func(output)
-            output_for_eval_metrics = json.dumps(output)
-        else:
-            output_for_eval_metrics = data.output
-        data.output_for_eval_metrics = output_for_eval_metrics
         if eval_funcs and data.status == "success":
+            if access_output_of_func:
+                output = json.loads(data.output)
+                output = access_output_of_func(output)
+                output_for_eval_metrics = json.dumps(output)
+            else:
+                output_for_eval_metrics = data.output
+            data.output_for_eval_metrics = output_for_eval_metrics
             data.scores = []
             for func in eval_funcs:
                 try:
