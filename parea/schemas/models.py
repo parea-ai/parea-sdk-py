@@ -132,6 +132,7 @@ class TraceLog:
     output_tokens: Optional[int] = 0
     total_tokens: Optional[int] = 0
     cost: Optional[float] = 0.0
+    output_for_eval_metrics: Optional[str] = None
     evaluation_metric_names: Optional[list[str]] = None
     scores: Optional[list[NamedEvaluationScore]] = None
     feedback_score: Optional[float] = None

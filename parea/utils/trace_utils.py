@@ -182,17 +182,19 @@ def call_eval_funcs_then_log(trace_id: str, eval_funcs: list[Callable] = None, a
     data = trace_data.get()[trace_id]
     try:
         inputs = data.inputs
-        output = data.output
         target = data.target
+        if access_output_of_func:
+            output = json.loads(data.output)
+            output = access_output_of_func(output)
+            output_for_eval_metrics = json.dumps(output)
+        else:
+            output_for_eval_metrics = data.output
+        data.output_for_eval_metrics = output_for_eval_metrics
         if eval_funcs and data.status == "success":
-            if access_output_of_func:
-                output = json.loads(output)
-                output = access_output_of_func(output)
-                output = json.dumps(output)
             data.scores = []
             for func in eval_funcs:
                 try:
-                    score = func(inputs=inputs, output=output, target=target)
+                    score = func(inputs=inputs, output=output_for_eval_metrics, target=target)
                     data.scores.append(NamedEvaluationScore(name=func.__name__, score=score))
                 except Exception as e:
                     logger.exception(f"Error occurred calling evaluation function '{func.__name__}', {e}", exc_info=e)
