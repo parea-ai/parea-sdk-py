@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Optional
 
 import contextvars
 import inspect
@@ -9,11 +9,10 @@ import time
 from collections import ChainMap
 from functools import wraps
 
-from attrs import asdict
-
 from parea.helpers import gen_trace_id, to_date_and_time_string
 from parea.parea_logger import parea_logger
-from parea.schemas.models import CompletionResponse, NamedEvaluationScore, TraceLog
+from parea.schemas.models import NamedEvaluationScore, TraceLog
+from parea.utils.universal_encoder import json_dumps
 
 logger = logging.getLogger()
 
@@ -100,8 +99,7 @@ def trace(
             output_as_list = check_multiple_return_values(func)
             try:
                 result = await func(*args, **kwargs)
-                output = make_output(result, output_as_list)
-                trace_data.get()[trace_id].output = output if isinstance(output, str) else json.dumps(output)
+                trace_data.get()[trace_id].output = make_output(result, output_as_list)
                 trace_data.get()[trace_id].status = "success"
                 trace_data.get()[trace_id].evaluation_metric_names = eval_funcs_names
             except Exception as e:
@@ -119,8 +117,7 @@ def trace(
             output_as_list = check_multiple_return_values(func)
             try:
                 result = func(*args, **kwargs)
-                output = make_output(result, output_as_list)
-                trace_data.get()[trace_id].output = output if isinstance(output, str) else json.dumps(output)
+                trace_data.get()[trace_id].output = make_output(result, output_as_list)
                 trace_data.get()[trace_id].status = "success"
                 trace_data.get()[trace_id].evaluation_metric_names = eval_funcs_names
             except Exception as e:
@@ -155,11 +152,12 @@ def check_multiple_return_values(func) -> bool:
         return False
 
 
-def make_output(result, islist) -> Union[list[Any], Any]:
+def make_output(result, islist) -> str:
     if islist:
-        return [asdict(r) if isinstance(r, CompletionResponse) else r for r in result]
+        json_list = [json_dumps(r) for r in result]
+        return json_dumps(json_list)
     else:
-        return asdict(result) if isinstance(result, CompletionResponse) else result
+        return json_dumps(result)
 
 
 def logger_record_log(trace_id: str):
@@ -187,7 +185,7 @@ def call_eval_funcs_then_log(trace_id: str, eval_funcs: list[Callable] = None, a
             if access_output_of_func:
                 output = json.loads(data.output)
                 output = access_output_of_func(output)
-                output_for_eval_metrics = json.dumps(output)
+                output_for_eval_metrics = json_dumps(output)
             else:
                 output_for_eval_metrics = data.output
             data.output_for_eval_metrics = output_for_eval_metrics
