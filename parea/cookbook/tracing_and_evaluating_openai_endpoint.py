@@ -135,7 +135,7 @@ information on a previous topic. If so, respond ASKED_BEFORE. Otherwise, respond
 
 
 @trace(eval_funcs=[goal_success_ratio], access_output_of_func=lambda x: x[0])
-def unhelpful_chat():
+def somewhat_helpful_chat():
     print("Welcome to the chat! Type 'exit' to end the session.")
 
     trace_id = get_current_trace_id()
@@ -155,7 +155,7 @@ def unhelpful_chat():
 
 
 def main():
-    _, trace_id = unhelpful_chat()
+    _, trace_id = somewhat_helpful_chat()
 
     if os.getenv("PAREA_API_KEY"):
         print(f"You can view the logs at: https://optimusprompt.ai/logs/detailed/{trace_id}")
