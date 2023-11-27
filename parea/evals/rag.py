@@ -2,8 +2,6 @@ import re
 from collections import Counter
 from typing import Optional, Callable, List
 
-import numpy as np
-
 from parea.evals.utils import sent_tokenize, safe_json_loads, call_openai, embed
 from parea.schemas.models import Log
 
@@ -250,6 +248,11 @@ Answer:
 
 def ragas_answer_relevancy_factor(question_field: str = 'question', n_generations: int = 3) -> Callable[[Log], float]:
     """Quantifies how much the generated answer relates to the query."""
+    try:
+        import numpy as np
+    except ImportError:
+        raise ImportError("Please install numpy to use this metric.")
+
     def ragas_answer_relevancy(log: Log) -> float:
         """Quantifies how much the generated answer relates to the query."""
         question = log.inputs[question_field]
@@ -290,6 +293,11 @@ def ragas_context_ranking_factory(
     ranking_measurement='average_precision'
 ) -> Callable[[Log], float]:
     """Quantifies if the retrieved context is ranked by their relevancy"""
+    try:
+        import numpy as np
+    except ImportError:
+        raise ImportError("Please install numpy to use this metric.")
+
     def ragas_context_ranking(log: Log) -> float:
         """Quantifies if the retrieved context is ranked by their relevancy"""
         contexts = [log.inputs[context_field] for context_field in context_fields]
