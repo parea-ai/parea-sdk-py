@@ -4,8 +4,14 @@ import json
 from collections import defaultdict
 
 import openai
-from openai.openai_object import OpenAIObject
-from openai.util import convert_to_openai_object
+from openai import __version__ as openai_version
+if openai_version.startswith("0."):
+    from openai.openai_object import OpenAIObject
+    from openai.util import convert_to_openai_object
+else:
+    from openai.types.chat import ChatCompletion as OpenAIObject
+    def convert_to_openai_object(**kwargs):
+        return OpenAIObject(**kwargs)
 
 from ..cache.cache import Cache
 from ..schemas.models import CacheRequest, LLMInputs, ModelParams, TraceLog
@@ -48,7 +54,10 @@ MODEL_COST_MAPPING: Dict[str, float] = {
 
 
 class OpenAIWrapper:
-    original_methods = {"ChatCompletion.create": openai.ChatCompletion.create, "ChatCompletion.acreate": openai.ChatCompletion.acreate}
+    if openai_version.startswith("0."):
+        original_methods = {"ChatCompletion.create": openai.ChatCompletion.create, "ChatCompletion.acreate": openai.ChatCompletion.acreate}
+    else:
+        original_methods = {"chat.completions.create": openai.chat.completions.create}
 
     def init(self, log: Callable, cache: Cache = None):
         Wrapper(
@@ -67,25 +76,36 @@ class OpenAIWrapper:
     @staticmethod
     def resolver(trace_id: str, _args: Sequence[Any], kwargs: Dict[str, Any], response: Optional[Any]) -> Optional[Any]:
         if response:
-            usage = response["usage"]
             output = OpenAIWrapper._get_output(response)
+            if openai_version.startswith("0."):
+                usage = response["usage"]
+                input_tokens = usage.get("prompt_tokens", 0)
+                output_tokens = usage.get("completion_tokens", 0)
+                total_tokens = usage.get("total_tokens", 0)
+            else:
+                usage = response.usage
+                input_tokens = usage.prompt_tokens
+                output_tokens = usage.completion_tokens
+                total_tokens = usage.total_tokens
         else:
             output = None
-            usage = {}
+            input_tokens = 0
+            output_tokens = 0
+            total_tokens = 0
 
         llm_configuration = OpenAIWrapper._kwargs_to_llm_configuration(kwargs)
         model = llm_configuration.model
 
         model_rate = OpenAIWrapper.get_model_cost(model)
         model_completion_rate = OpenAIWrapper.get_model_cost(model, is_completion=True)
-        completion_cost = model_completion_rate * (usage.get("completion_tokens", 0) / 1000)
-        prompt_cost = model_rate * (usage.get("prompt_tokens", 0) / 1000)
+        prompt_cost = model_rate * (input_tokens / 1000)
+        completion_cost = model_completion_rate * (output_tokens / 1000)
         total_cost = sum([prompt_cost, completion_cost])
 
         trace_data.get()[trace_id].configuration = llm_configuration
-        trace_data.get()[trace_id].input_tokens = usage.get("prompt_tokens", 0)
-        trace_data.get()[trace_id].output_tokens = usage.get("completion_tokens", 0)
-        trace_data.get()[trace_id].total_tokens = usage.get("total_tokens", 0)
+        trace_data.get()[trace_id].input_tokens = input_tokens
+        trace_data.get()[trace_id].output_tokens = output_tokens
+        trace_data.get()[trace_id].total_tokens = total_tokens
         trace_data.get()[trace_id].cost = total_cost
         trace_data.get()[trace_id].output = output
         return response
@@ -155,7 +175,7 @@ class OpenAIWrapper:
                 }
             )
         response_message = result.choices[0].message
-        if response_message.get("function_call", None):
+        if response_message.get("function_call", None) if openai_version.startswith("0.") else response_message.function_call:
             completion = OpenAIWrapper._format_function_call(response_message)
         else:
             completion = response_message.content.strip()

@@ -1,4 +1,4 @@
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, Dict, List
 
 from enum import Enum
 
@@ -18,6 +18,12 @@ class Message:
     content: str
     role: Role = Role.user
 
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "content": self.content,
+            "role": str(self.role),
+        }
+
 
 @define
 class ModelParams:
@@ -33,8 +39,8 @@ class LLMInputs:
     model: Optional[str] = None
     provider: Optional[str] = None
     model_params: Optional[ModelParams] = None
-    messages: Optional[list[Message]] = None
-    functions: Optional[list[Any]] = None
+    messages: Optional[List[Message]] = None
+    functions: Optional[List[Any]] = None
     function_call: Optional[Union[str, dict[str, str]]] = None
 
 
@@ -116,9 +122,22 @@ class NamedEvaluationScore:
 
 
 @define
-class TraceLog:
-    trace_id: str
-    start_timestamp: str
+class Log:
+    configuration: LLMInputs = LLMInputs()
+    inputs: Optional[Dict[str, str]] = None
+    output: Optional[str] = None
+    target: Optional[str] = None
+    latency: Optional[float] = 0.0
+    input_tokens: Optional[int] = 0
+    output_tokens: Optional[int] = 0
+    total_tokens: Optional[int] = 0
+    cost: Optional[float] = 0.0
+
+
+@define
+class TraceLog(Log):
+    trace_id: Optional[str] = field(default=None, validator=validators.instance_of(str))
+    start_timestamp: Optional[str] = field(default=None, validator=validators.instance_of(str))
     organization_id: Optional[str] = None
 
     # metrics filled from completion
@@ -126,29 +145,20 @@ class TraceLog:
     status: Optional[str] = None
     deployment_id: Optional[str] = None
     cache_hit: bool = False
-    configuration: LLMInputs = LLMInputs()
-    latency: Optional[float] = 0.0
-    input_tokens: Optional[int] = 0
-    output_tokens: Optional[int] = 0
-    total_tokens: Optional[int] = 0
-    cost: Optional[float] = 0.0
     output_for_eval_metrics: Optional[str] = None
-    evaluation_metric_names: Optional[list[str]] = None
-    scores: Optional[list[NamedEvaluationScore]] = None
+    evaluation_metric_names: Optional[List[str]] = None
+    scores: Optional[List[NamedEvaluationScore]] = None
     feedback_score: Optional[float] = None
 
     # info filled from decorator
     trace_name: Optional[str] = None
-    children: list[str] = field(factory=list)
+    children: List[str] = field(factory=list)
 
     # metrics filled from either decorator or completion
     end_timestamp: Optional[str] = None
     end_user_identifier: Optional[str] = None
     metadata: Optional[dict[str, Any]] = None
-    target: Optional[str] = None
-    tags: Optional[list[str]] = None
-    inputs: Optional[dict[str, str]] = None
-    output: Optional[str] = None
+    tags: Optional[List[str]] = None
 
 
 @define
