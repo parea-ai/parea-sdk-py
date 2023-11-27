@@ -5,13 +5,16 @@ from collections import defaultdict
 
 import openai
 from openai import __version__ as openai_version
+
 if openai_version.startswith("0."):
     from openai.openai_object import OpenAIObject
     from openai.util import convert_to_openai_object
 else:
     from openai.types.chat import ChatCompletion as OpenAIObject
+
     def convert_to_openai_object(**kwargs):
         return OpenAIObject(**kwargs)
+
 
 from ..cache.cache import Cache
 from ..schemas.models import CacheRequest, LLMInputs, ModelParams, TraceLog

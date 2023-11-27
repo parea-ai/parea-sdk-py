@@ -1,11 +1,11 @@
+from typing import Dict, List, Union
+
 import json
 import warnings
-from typing import List, Dict, Union
 
 import openai
-from openai import __version__ as openai_version
 import pysbd
-
+from openai import __version__ as openai_version
 
 seg = pysbd.Segmenter(language="en", clean=False)
 
@@ -61,7 +61,6 @@ def call_openai(messages, model, temperature=1.0, max_tokens=None, top_p=1.0, fr
 
 def embed(model, input) -> List[float]:
     if openai_version.startswith("0."):
-        return openai.Embedding.create(model=model, input=input, encoding_format='float')['embedding']
+        return openai.Embedding.create(model=model, input=input, encoding_format="float")["embedding"]
     else:
-        return openai.embeddings.create(model=model, input=input, encoding_format='float').embedding
-
+        return openai.embeddings.create(model=model, input=input, encoding_format="float").embedding

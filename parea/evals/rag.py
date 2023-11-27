@@ -1,13 +1,15 @@
+from typing import Callable, List, Optional
+
 import re
 from collections import Counter
-from typing import Optional, Callable, List
 
-from parea.evals.utils import sent_tokenize, safe_json_loads, call_openai, embed
+from parea.evals.utils import call_openai, embed, safe_json_loads, sent_tokenize
 from parea.schemas.models import Log
 
 
-def precision_response_context_factory(context_field: Optional[str] = 'context') -> Callable[[Log], float]:
+def precision_response_context_factory(context_field: Optional[str] = "context") -> Callable[[Log], float]:
     """Prop. of tokens in model generation which are also present in the retrieved context."""
+
     def precision_response_context(log: Log) -> float:
         """Prop. of tokens in model generation which are also present in the retrieved context."""
         context = log.inputs[context_field]
@@ -15,7 +17,7 @@ def precision_response_context_factory(context_field: Optional[str] = 'context')
         provider = log.configuration.provider
         model = log.configuration.model
 
-        if provider == 'openai':
+        if provider == "openai":
             import tiktoken
 
             encoding = tiktoken.encoding_for_model(model)
@@ -37,11 +39,12 @@ def precision_response_context_factory(context_field: Optional[str] = 'context')
 
 
 def llm_critique_faithfulness_factory(
-    question_field: Optional[str] = 'question',
-    context_field: Optional[str] = 'context',
-    model: Optional[str] = 'gpt-4',
+    question_field: Optional[str] = "question",
+    context_field: Optional[str] = "context",
+    model: Optional[str] = "gpt-4",
 ) -> Callable[[Log], float]:
     """Quantifies how much the generated answer can be inferred from the retrieved context."""
+
     def llm_critique_faithfulness(log: Log) -> float:
         question = log.inputs[question_field]
         evidence = log.inputs[context_field]
@@ -49,38 +52,33 @@ def llm_critique_faithfulness_factory(
         response = call_openai(
             model=model,
             messages=[
-                {
-                    "role": "system",
-                    "content": "You are CompareGPT, a machine to verify the groundedness of predictions. Answer with "
-                               "only yes/no."
-                },
+                {"role": "system", "content": "You are CompareGPT, a machine to verify the groundedness of predictions. Answer with " "only yes/no."},
                 {
                     "role": "user",
-                    "content":
-                        f'You are given a question, the corresponding evidence and a prediction from a model. Compare '
-                        f'the "Prediction" and the "Evidence" to determine whether all the information of the '
-                        f'prediction in present in the evidence or can be inferred from the evidence. You must answer '
-                        f'"no" if there are any specific details in the prediction that are not mentioned in the '
-                        f'evidence or cannot be inferred from the evidence.\n\n'
-                        f'Question: {question}\n\nPrediction: {output}\n\nEvidence: {evidence}\n\nCompareGPT response:'
-                }
+                    "content": f"You are given a question, the corresponding evidence and a prediction from a model. Compare "
+                    f'the "Prediction" and the "Evidence" to determine whether all the information of the '
+                    f"prediction in present in the evidence or can be inferred from the evidence. You must answer "
+                    f'"no" if there are any specific details in the prediction that are not mentioned in the '
+                    f"evidence or cannot be inferred from the evidence.\n\n"
+                    f"Question: {question}\n\nPrediction: {output}\n\nEvidence: {evidence}\n\nCompareGPT response:",
+                },
             ],
             temperature=0.0,
         )
-        return float('yes' in response.lower())
+        return float("yes" in response.lower())
 
     return llm_critique_faithfulness
 
 
 def recall_response(log: Log) -> float:
     """Prop. of tokens in target/reference answer which are also in model generation."""
-    target = log.inputs['target']
+    target = log.inputs["target"]
     output = log.output
 
     provider = log.configuration.provider
     model = log.configuration.model
 
-    if provider == 'openai':
+    if provider == "openai":
         import tiktoken
 
         encoding = tiktoken.encoding_for_model(model)
@@ -97,10 +95,11 @@ def recall_response(log: Log) -> float:
 
 
 def llm_critique_correctness_factory(
-    question_field: Optional[str] = 'question',
-    model: Optional[str] = 'gpt-4',
+    question_field: Optional[str] = "question",
+    model: Optional[str] = "gpt-4",
 ) -> Callable[[Log], float]:
     """Quantifies how much the generated answer matches the ground truth / target."""
+
     def llm_critique_correctness(log: Log) -> float:
         question = log.inputs[question_field]
         output = log.output
@@ -108,42 +107,35 @@ def llm_critique_correctness_factory(
         response = call_openai(
             model=model,
             messages=[
-                {
-                    "role": "system",
-                    "content": "You are CompareGPT, a machine to verify the groundedness of predictions. Answer with "
-                               "only yes/no."
-                },
+                {"role": "system", "content": "You are CompareGPT, a machine to verify the groundedness of predictions. Answer with " "only yes/no."},
                 {
                     "role": "user",
-                    "content":
-                        f'''You are given a question, the corresponding ground-truth answer and a prediction from a model. Compare the "Ground-truth answer" and the "Prediction" to determine whether the prediction correctly answers the question. All information in the ground-truth answer must be present in the prediction, including numbers and dates. You must answer "no" if there are any specific details in the ground-truth answer that are not mentioned in the prediction. There should be no contradicting statements in the prediction. The prediction may contain extra information. If the prediction states something as a possibility, treat it as a definitive answer.
+                    "content": f"""You are given a question, the corresponding ground-truth answer and a prediction from a model. Compare the "Ground-truth answer" and the "Prediction" to determine whether the prediction correctly answers the question. All information in the ground-truth answer must be present in the prediction, including numbers and dates. You must answer "no" if there are any specific details in the ground-truth answer that are not mentioned in the prediction. There should be no contradicting statements in the prediction. The prediction may contain extra information. If the prediction states something as a possibility, treat it as a definitive answer.
 
 Question: {question}
 Ground-truth answer: {target}
 Prediction: {output}
 
-CompareGPT response:'''
-                }
+CompareGPT response:""",
+                },
             ],
             temperature=0.0,
         )
-        return float('yes' in response.lower())
+        return float("yes" in response.lower())
 
     return llm_critique_correctness
 
 
-def ragas_context_relevancy_factory(
-    question_field: str = 'question',
-    context_fields: List[str] = ['context']
-) -> Callable[[Log], float]:
+def ragas_context_relevancy_factory(question_field: str = "question", context_fields: List[str] = ["context"]) -> Callable[[Log], float]:
     """Quantifies how much the retrieved context relates to the query."""
+
     def ragas_context_relevancy(log: Log) -> float:
         """Quantifies how much the retrieved context relates to the query."""
         question = log.inputs[question_field]
-        context = '\n'.join(log.inputs[context_field] for context_field in context_fields)
+        context = "\n".join(log.inputs[context_field] for context_field in context_fields)
 
         extracted_sentences = call_openai(
-            model='gpt-3.5-turbo-16k',
+            model="gpt-3.5-turbo-16k",
             messages=[
                 {
                     "role": "user",
@@ -152,12 +144,12 @@ Please extract relevant sentences from the provided context that is absolutely r
 
 question:{question}
 context:\n{context}
-candidate sentences:\n"""
+candidate sentences:\n""",
                 }
             ],
             temperature=0.0,
         ).strip()
-        if extracted_sentences.lower() == 'insufficient information':
+        if extracted_sentences.lower() == "insufficient information":
             return 0.0
         else:
             n_extracted_sentences = len(sent_tokenize(extracted_sentences))
@@ -167,19 +159,17 @@ candidate sentences:\n"""
     return ragas_context_relevancy
 
 
-def ragas_answer_context_faithfulness_factory(
-    question_field: str = 'question',
-    context_fields: List[str] = ['context']
-) -> Callable[[Log], float]:
+def ragas_answer_context_faithfulness_factory(question_field: str = "question", context_fields: List[str] = ["context"]) -> Callable[[Log], float]:
     """Quantifies how much the generated answer can be inferred from the retrieved context."""
+
     def ragas_answer_context_faithfulness(log: Log) -> float:
         """Quantifies how much the generated answer can be inferred from the retrieved context."""
         question = log.inputs[question_field]
-        context = '\n'.join(log.inputs[context_field] for context_field in context_fields)
+        context = "\n".join(log.inputs[context_field] for context_field in context_fields)
         output = log.output
 
         completion = call_openai(
-            model='gpt-3.5-turbo-16k',
+            model="gpt-3.5-turbo-16k",
             messages=[
                 {
                     "role": "user",
@@ -196,20 +186,21 @@ answer: They were from different countries.
 statements:\nShahul and Jithin were from different countries.
 question:{question}
 answer: {output}
-statements:\n"""
+statements:\n""",
                 }
             ],
             temperature=0.0,
         )
-        statements = completion.strip().split('\n')
-        statements_formatted = [f'{i+1}. {s.strip()}' for i, s in enumerate(statements)]
+        statements = completion.strip().split("\n")
+        statements_formatted = [f"{i+1}. {s.strip()}" for i, s in enumerate(statements)]
 
-        verdicts = call_openai(
-            model='gpt-3.5-turbo-16k',
-            messages=[
-                {
-                    "role": "user",
-                    "content": f"""\
+        verdicts = (
+            call_openai(
+                model="gpt-3.5-turbo-16k",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": f"""\
 Prompt: Natural language inference
 Consider the given context and following statements, then determine whether they are supported by the information present in the context.Provide a brief explanation for each statement before arriving at the verdict (Yes/No). Provide a final verdict for each statement in order at the end in the given format. Do not deviate from the specified format.
 
@@ -230,14 +221,17 @@ Final verdict for each statement in order: No. No. Yes. No. Yes.
 context:\n{context}
 statements:\n{statements_formatted}
 Answer:
-"""
-                }
-            ],
-            temperature=0.0,
-        ).lower().strip()
+""",
+                    }
+                ],
+                temperature=0.0,
+            )
+            .lower()
+            .strip()
+        )
         final_answer = "Final verdict for each statement in order:".lower()
         if final_answer in verdicts:
-            verdicts = verdicts[verdicts.find(final_answer) + len(final_answer):]
+            verdicts = verdicts[verdicts.find(final_answer) + len(final_answer) :]
             yes_count = sum(0 if "yes" in answer else 1 for answer in verdicts.strip().split(".") if answer != "")
             return yes_count / len(statements_formatted)
         else:
@@ -246,7 +240,7 @@ Answer:
     return ragas_answer_context_faithfulness
 
 
-def ragas_answer_relevancy_factor(question_field: str = 'question', n_generations: int = 3) -> Callable[[Log], float]:
+def ragas_answer_relevancy_factor(question_field: str = "question", n_generations: int = 3) -> Callable[[Log], float]:
     """Quantifies how much the generated answer relates to the query."""
     try:
         import numpy as np
@@ -259,7 +253,7 @@ def ragas_answer_relevancy_factor(question_field: str = 'question', n_generation
         output = log.output
 
         generated_questions = call_openai(
-            model='gpt-3.5-turbo-16k',
+            model="gpt-3.5-turbo-16k",
             messages=[
                 {
                     "role": "user",
@@ -270,11 +264,11 @@ Question: When is the scheduled launch date and time for the PSLV-C56 mission, a
 
 Answer: {output}
 Question:
-"""
+""",
                 }
             ],
             temperature=0.0,
-            n=n_generations
+            n=n_generations,
         )
         embedded_generated_questions = [embed(model="text-embedding-ada-002", input=q) for q in generated_questions]
         embedded_question = embed(model="text-embedding-ada-002", input=question)
@@ -287,11 +281,7 @@ Question:
     return ragas_answer_relevancy
 
 
-def ragas_context_ranking_factory(
-    question_field: str = 'question',
-    context_fields: List[str] = ['context'],
-    ranking_measurement='average_precision'
-) -> Callable[[Log], float]:
+def ragas_context_ranking_factory(question_field: str = "question", context_fields: List[str] = ["context"], ranking_measurement="average_precision") -> Callable[[Log], float]:
     """Quantifies if the retrieved context is ranked by their relevancy"""
     try:
         import numpy as np
@@ -306,7 +296,7 @@ def ragas_context_ranking_factory(
         verifications = []
         for context in contexts:
             response = call_openai(
-                model='gpt-3.5-turbo-16k',
+                model="gpt-3.5-turbo-16k",
                 messages=[
                     {
                         "role": "user",
@@ -335,21 +325,11 @@ verification:""",
             )
             verifications.append(response)
 
-        if ranking_measurement == 'average_precision':
+        if ranking_measurement == "average_precision":
             response = [safe_json_loads(item) for item in verifications]
-            response = [
-                int("yes" in resp.get("verdict", " ").lower())
-                if resp.get("verdict")
-                else np.nan
-                for resp in response
-            ]
+            response = [int("yes" in resp.get("verdict", " ").lower()) if resp.get("verdict") else np.nan for resp in response]
             denominator = sum(response) + 1e-10
-            numerator = sum(
-                [
-                    (sum(response[: i + 1]) / (i + 1)) * response[i]
-                    for i in range(len(response))
-                ]
-            )
+            numerator = sum([(sum(response[: i + 1]) / (i + 1)) * response[i] for i in range(len(response))])
             return numerator / denominator
         else:
             raise NotImplementedError
@@ -357,19 +337,17 @@ verification:""",
     return ragas_context_ranking
 
 
-def ragas_percent_target_supported_by_context_factory(
-    question_field: str = 'question',
-    context_fields: List[str] = ['context']
-) -> Callable[[Log], float]:
+def ragas_percent_target_supported_by_context_factory(question_field: str = "question", context_fields: List[str] = ["context"]) -> Callable[[Log], float]:
     """Quantifies how many sentences in the target/ground truth are supported by the retrieved context."""
+
     def ragas_percent_target_supported_by_context(log: Log) -> float:
         """Quantifies how many sentences in the target/ground truth are supported by the retrieved context."""
         question = log.inputs[question_field]
-        context = '\n'.join(log.inputs[context_field] for context_field in context_fields)
+        context = "\n".join(log.inputs[context_field] for context_field in context_fields)
         target = log.target
 
         classification = call_openai(
-            model='gpt-3.5-turbo-16k',
+            model="gpt-3.5-turbo-16k",
             messages=[
                 {
                     "role": "user",
@@ -421,7 +399,7 @@ question: {question}
 context: {context}
 answer: {target}
 classification:
-"""
+""",
                 }
             ],
             temperature=0.0,

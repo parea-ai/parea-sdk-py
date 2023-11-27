@@ -27,7 +27,7 @@ def goal_success_ratio(log: Log) -> float:
         if user_follows_same_goal == "SAME_GOAL":
             end_index += 2
         else:
-            conversation_segments.append(messages[start_index: end_index - 1])
+            conversation_segments.append(messages[start_index : end_index - 1])
             start_index = end_index - 1
             end_index += 2
 
