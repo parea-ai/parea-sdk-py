@@ -158,7 +158,7 @@ def main():
     _, trace_id = unhelpful_chat()
 
     if os.getenv("PAREA_API_KEY"):
-        print(f"You can view the logs at: https://optimusprompt.ai/logs/detailed/{trace_id}")
+        print(f"You can view the logs at: https://app.parea.ai/logs/detailed/{trace_id}")
     if use_cache:
         time.sleep(5)  # wait for local eval function to finish
         path_csv = f"trace_logs-{int(time.time())}.csv"
