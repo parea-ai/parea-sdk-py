@@ -44,8 +44,8 @@ class Wrapper:
 
     def _wrapped_func(self, original_func: Callable) -> Callable:
         unwrapped_func = original_func
-        while hasattr(original_func, "__wrapped__"):
-            unwrapped_func = original_func.__wrapped__
+        while hasattr(unwrapped_func, "__wrapped__"):
+            unwrapped_func = unwrapped_func.__wrapped__
         return self._get_decorator(unwrapped_func, original_func)
 
     def _get_decorator(self, unwrapped_func: Callable, original_func: Callable):
