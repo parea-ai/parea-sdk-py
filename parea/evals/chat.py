@@ -5,7 +5,7 @@ from parea.schemas.models import Log
 def goal_success_ratio(log: Log) -> float:
     """Returns the average amount of turns the user had to converse with the AI to reach their goals."""
     messages = [m.to_dict() for m in log.configuration.messages]
-    messages.append({'role': 'assistant', 'content': log.output})
+    messages.append({"role": "assistant", "content": log.output})
 
     # need to determine where does a new goal start
     conversation_segments = []
