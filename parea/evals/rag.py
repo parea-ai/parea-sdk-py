@@ -72,7 +72,7 @@ def llm_critique_faithfulness_factory(
 
 def recall_response(log: Log) -> float:
     """Prop. of tokens in target/reference answer which are also in model generation."""
-    target = log.inputs["target"]
+    target = log.target
     output = log.output
 
     provider = log.configuration.provider
@@ -240,7 +240,7 @@ Answer:
     return ragas_answer_context_faithfulness
 
 
-def ragas_answer_relevancy_factor(question_field: str = "question", n_generations: int = 3) -> Callable[[Log], float]:
+def ragas_answer_relevancy_factory(question_field: str = "question", n_generations: int = 3) -> Callable[[Log], float]:
     """Quantifies how much the generated answer relates to the query."""
     try:
         import numpy as np
@@ -290,8 +290,8 @@ def ragas_context_ranking_factory(question_field: str = "question", context_fiel
 
     def ragas_context_ranking(log: Log) -> float:
         """Quantifies if the retrieved context is ranked by their relevancy"""
-        contexts = [log.inputs[context_field] for context_field in context_fields]
         question = log.inputs[question_field]
+        contexts = [log.inputs[context_field] for context_field in context_fields]
 
         verifications = []
         for context in contexts:

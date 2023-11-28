@@ -10,11 +10,11 @@ one_score_pattern = re.compile("\[\[(\d+\.?\d*)\]\]")
 one_score_pattern_backup = re.compile("\[(\d+\.?\d*)\]")
 
 
-def judge_llm_factory(model: str) -> Callable[[Log], float]:
+def judge_llm_factory(model: str, question_field: str = "question") -> Callable[[Log], float]:
     """Measures the generated response quality by using a LLM on a scale of 1 to 10."""
 
     def _eval_judge_llm(log: Log) -> float:
-        question = log.inputs["question"]
+        question = log.inputs[question_field]
         output = log.output
         rating_response = call_openai(
             model=model,
@@ -50,11 +50,14 @@ def judge_llm_factory(model: str) -> Callable[[Log], float]:
 
 judge_llm_gpt4 = judge_llm_factory("gpt-4")
 
-judge_llm_gpt3t = judge_llm_factory("gpt-3.5-turbo")
+judge_llm_gpt3t = judge_llm_factory("gpt-3.5-turbo-16k")
 
 
 def self_check_gpt(log: Log) -> float:
     """Measures how consistent is the output of a model under resampling the response."""
+    if log.configuration is None or log.configuration.messages is None:
+        return 0.0
+
     messages = [m.to_dict() for m in log.configuration.messages]
 
     n_sampled_outputs = 5
@@ -72,6 +75,9 @@ def self_check_gpt(log: Log) -> float:
         sampled_outputs.append(response)
 
     sentences = sent_tokenize(log.output)
+
+    if len(sentences) == 0:
+        return 0.0
 
     sentences_scores = []
     for sentence in sentences:
@@ -105,7 +111,7 @@ def lm_vs_lm_factuality_factory(examiner_model: str = "gpt-3.5-turbo") -> Callab
         messages_examinee = [m.to_dict() for m in log.configuration.messages]
 
         # ask examiner for follow-up questions
-        setup_prompt = f"""Your goal is to try to verify the correctness of the following claim: {output}, based on the background information you will gather. To gather this, You will provide short questions whose purpose will be to verify the correctness of the claim, and I will reply to you with the answers to these. Hopefully, with the help of the background questions and their answers, you will be able to reach a conclusion as to whether the claim is correct or possibly incorrect. Please keep asking questions as long as you’re yet to be sure regarding the true veracity of the claim. Please start with the first questions."""
+        setup_prompt = f"""Your goal is to try to verify the correctness of the following claim: "{output}", based on the background information you will gather. To gather this, You will provide short questions whose purpose will be to verify the correctness of the claim, and I will reply to you with the answers to these. Hopefully, with the help of the background questions and their answers, you will be able to reach a conclusion as to whether the claim is correct or possibly incorrect. Please keep asking questions as long as you’re yet to be sure regarding the true veracity of the claim. Please start with the first questions."""
         messages_examiner = [{"role": "user", "content": setup_prompt}]
         follow_up_questions = call_openai(
             model=examiner_model,
@@ -113,6 +119,7 @@ def lm_vs_lm_factuality_factory(examiner_model: str = "gpt-3.5-turbo") -> Callab
             temperature=0.0,
         )
         messages_examiner += [{"role": "assistant", "content": follow_up_questions}]
+        n_rounds_follow_up_questions = 1
 
         follow_up_prompt = """(i) Do you have any follow-up questions? Please answer with Yes or No.
     (ii) What are the follow-up questions?"""
@@ -128,10 +135,13 @@ def lm_vs_lm_factuality_factory(examiner_model: str = "gpt-3.5-turbo") -> Callab
                 presence_penalty=log.configuration.model_params.presence_penalty,
                 max_tokens=log.configuration.model_params.max_length,
             )
-            messages_examiner += [
-                {"role": "assistant", "content": follow_up_answers},
-                {"role": "user", "content": follow_up_prompt},
-            ]
+            messages_examiner.append({"role": "assistant", "content": follow_up_answers})
+
+            if n_rounds_follow_up_questions > 3:
+                break
+            else:
+                messages_examiner.append({"role": "user", "content": follow_up_prompt})
+                n_rounds_follow_up_questions += 1
 
             examiner_response = call_openai(
                 model=examiner_model,
@@ -158,3 +168,8 @@ def lm_vs_lm_factuality_factory(examiner_model: str = "gpt-3.5-turbo") -> Callab
         return float("incorrect" not in examiner_response.lower())
 
     return lm_vs_lm_factuality
+
+
+lm_vs_lm_factuality_gpt4 = lm_vs_lm_factuality_factory("gpt-4")
+
+lm_vs_lm_factuality_gpt3t = lm_vs_lm_factuality_factory("gpt-3.5-turbo-16k")
