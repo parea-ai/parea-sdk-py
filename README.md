@@ -39,12 +39,12 @@ You can define evaluation functions locally or use the ones you have deployed to
 If you choose the latter option, the evaluation happens asynchronously and non-blocking.
 
 A fully locally working cookbook can be found [here](parea/cookbook/tracing_and_evaluating_openai_endpoint.py). 
-Alternatively, you can add the following code to your codebase to get started: 
+Alternatively, you can add the following code to your codebase to get started:
 
 ```python
 import os
 from parea import init, InMemoryCache
-from parea.schemas.models import Log
+from parea.schemas.log import Log
 from parea.utils.trace_utils import trace
 
 init(api_key=os.getenv("PAREA_API_KEY"), cache=InMemoryCache())  # use InMemoryCache if you don't have a Parea API key

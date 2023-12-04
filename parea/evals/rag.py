@@ -4,7 +4,7 @@ import re
 from collections import Counter
 
 from parea.evals.utils import call_openai, embed, safe_json_loads, sent_tokenize
-from parea.schemas.models import Log
+from parea.schemas.log import Log
 
 
 def precision_response_context_factory(context_field: Optional[str] = "context") -> Callable[[Log], float]:
