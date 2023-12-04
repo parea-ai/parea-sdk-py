@@ -14,7 +14,7 @@ def goal_success_ratio_factory(use_output: Optional[bool] = False, message_field
         message_field (Optional[str], optional): The name of the field in the log that contains the messages.
             Defaults to None. If None, the messages are taken from the configuration attribute.
 
-    # noqa: DAR202
+    # noqa: DAR201
     # noqa: DAR401
     """
     if use_output and message_field:

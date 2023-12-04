@@ -99,7 +99,5 @@ class Cache(ABC):
 
         Returns:
             List[TraceLog]: All logs in the cache.
-
-        # noqa: DAR401
         """
         raise NotImplementedError
