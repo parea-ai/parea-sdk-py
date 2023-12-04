@@ -8,7 +8,7 @@ import openai
 from attr import asdict
 from dotenv import load_dotenv
 
-from parea import init, InMemoryCache
+from parea import InMemoryCache, init
 from parea.evals.chat import goal_success_ratio_factory
 from parea.evals.utils import call_openai
 from parea.helpers import write_trace_logs_to_csv
@@ -41,7 +41,7 @@ def friendliness(log: Log) -> float:
 
 
 def usefulness(log: Log) -> float:
-    user_input = log.inputs['messages'][-1]['content']
+    user_input = log.inputs["messages"][-1]["content"]
     output = log.output
     response = call_openai(
         [

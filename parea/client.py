@@ -7,8 +7,8 @@ import time
 from attrs import asdict, define, field
 
 from parea.api_client import HTTPClient
+from parea.cache import InMemoryCache, RedisCache
 from parea.cache.cache import Cache
-from parea.cache import RedisCache, InMemoryCache
 from parea.helpers import gen_trace_id
 from parea.parea_logger import parea_logger
 from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, UseDeployedPrompt, UseDeployedPromptResponse

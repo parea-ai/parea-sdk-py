@@ -1,14 +1,12 @@
+from typing import Callable, Optional
+
 import json
-from typing import Optional, Callable
 
 from parea.evals.utils import call_openai
 from parea.schemas.models import Log
 
 
-def goal_success_ratio_factory(
-    use_output: Optional[bool] = False,
-    message_field: Optional[str] = None
-) -> Callable[[Log], float]:
+def goal_success_ratio_factory(use_output: Optional[bool] = False, message_field: Optional[str] = None) -> Callable[[Log], float]:
     """Factory function that returns a function that calculates the goal success ratio of a log.
 
     Args:
