@@ -7,8 +7,8 @@ import time
 from attrs import asdict, define, field
 
 from parea.api_client import HTTPClient
+from parea.cache import InMemoryCache, RedisCache
 from parea.cache.cache import Cache
-from parea.cache.redis import RedisCache
 from parea.helpers import gen_trace_id
 from parea.parea_logger import parea_logger
 from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, UseDeployedPrompt, UseDeployedPromptResponse
@@ -30,7 +30,7 @@ class Parea:
         self._client.set_api_key(self.api_key)
         if self.api_key:
             parea_logger.set_client(self._client)
-        if isinstance(self.cache, RedisCache):
+        if isinstance(self.cache, (RedisCache, InMemoryCache)):
             parea_logger.set_redis_cache(self.cache)
         _init_parea_wrapper(logger_all_possible, self.cache)
 

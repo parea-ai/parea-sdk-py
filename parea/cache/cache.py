@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from abc import ABC
 
@@ -77,6 +77,28 @@ class Cache(ABC):
 
         Args:
             key (CacheRequest): The cache key.
+
+        # noqa: DAR401
+        """
+        raise NotImplementedError
+
+    def log(self, value: TraceLog):
+        """
+        Log a response in the cache.
+
+        Args:
+            value (TraceLog): The response to log.
+
+        # noqa: DAR401
+        """
+        raise NotImplementedError
+
+    def read_logs(self) -> List[TraceLog]:
+        """
+        Read all logs from the cache.
+
+        Returns:
+            List[TraceLog]: All logs in the cache.
 
         # noqa: DAR401
         """

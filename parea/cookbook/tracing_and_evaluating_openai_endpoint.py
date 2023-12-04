@@ -5,10 +5,14 @@ import os
 import time
 
 import openai
+from attr import asdict
 from dotenv import load_dotenv
 
-from parea import RedisCache, init
+from parea import InMemoryCache, init
+from parea.evals.chat import goal_success_ratio_factory
+from parea.evals.utils import call_openai
 from parea.helpers import write_trace_logs_to_csv
+from parea.schemas.models import Log
 from parea.utils.trace_utils import get_current_trace_id, trace
 
 load_dotenv()
@@ -17,52 +21,13 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
 use_cache = True
-cache = RedisCache() if use_cache else None
+cache = InMemoryCache() if use_cache else None
 init(api_key=os.getenv("PAREA_API_KEY"), cache=cache)
 
 
-def call_llm(data: list[dict], model: str = "gpt-3.5-turbo", temperature: float = 0.0) -> str:
-    return openai.ChatCompletion.create(model=model, temperature=temperature, messages=data).choices[0].message["content"]
-
-
-def goal_success_ratio(inputs: Dict, output: str, target: str = None) -> float:
-    """Returns the average amount of turns the user had to converse with the AI to reach their goals."""
-    output = json.loads(output)
-    # need to determine where does a new goal start
-    conversation_segments = []
-    start_index = 0
-    end_index = 3
-    while end_index < len(output):
-        user_follows_same_goal = call_llm(
-            [
-                {
-                    "role": "system",
-                    "content": "Look at the conversation and to determine if the user is still following the same goal "
-                    "or if they are following a new goal. If they are following the same goal, respond "
-                    "SAME_GOAL. Otherwise, respond NEW_GOAL. In any case do not answer the user request!",
-                }
-            ]
-            + output[start_index:end_index],
-            model="gpt-4",
-        )
-
-        if user_follows_same_goal == "SAME_GOAL":
-            end_index += 2
-        else:
-            conversation_segments.append(output[start_index : end_index - 1])
-            start_index = end_index - 1
-            end_index += 2
-
-    if start_index < len(output):
-        conversation_segments.append(output[start_index:])
-
-    # for now assume that the user reached their goal in every segment
-    # so we can return the average amount of turns the user had to converse with the AI to reach their goals
-    return sum([2 / len(segment) for segment in conversation_segments]) / len(conversation_segments)
-
-
-def friendliness(inputs: Dict, output: str, target: str = None) -> float:
-    response = call_llm(
+def friendliness(log: Log) -> float:
+    output = log.output
+    response = call_openai(
         [
             {"role": "system", "content": "You evaluate the friendliness of the following response on a scale of 0 to 10. You must only return a number."},
             {"role": "assistant", "content": output},
@@ -75,9 +40,10 @@ def friendliness(inputs: Dict, output: str, target: str = None) -> float:
         return 0.0
 
 
-def usefulness(inputs: Dict, output: str, target: str = None) -> float:
-    user_input = inputs["messages"][-1]["content"]
-    response = call_llm(
+def usefulness(log: Log) -> float:
+    user_input = log.inputs["messages"][-1]["content"]
+    output = log.output
+    response = call_openai(
         [
             {"role": "system", "content": "You evaluate the usefulness of the response given the user input on a scale of 0 to 10. You must only return a number."},
             {"role": "assistant", "content": f'''User input: "{user_input}"\nAssistant response: "{output}"'''},
@@ -92,7 +58,7 @@ def usefulness(inputs: Dict, output: str, target: str = None) -> float:
 
 @trace(eval_funcs=[friendliness, usefulness])
 def helpful_the_second_time(messages: List[Dict[str, str]]) -> str:
-    helpful_response = call_llm(
+    helpful_response = call_openai(
         [
             {"role": "system", "content": "You are a friendly, and helpful assistant that helps people with their homework."},
         ]
@@ -100,7 +66,7 @@ def helpful_the_second_time(messages: List[Dict[str, str]]) -> str:
         model="gpt-4",
     )
 
-    has_user_asked_before_raw = call_llm(
+    has_user_asked_before_raw = call_openai(
         [
             {
                 "role": "system",
@@ -117,7 +83,7 @@ information on a previous topic. If so, respond ASKED_BEFORE. Otherwise, respond
         messages.append({"role": "assistant", "content": helpful_response})
         return helpful_response
     else:
-        unhelfpul_response = call_llm(
+        unhelfpul_response = call_openai(
             [
                 {
                     "role": "system",
@@ -134,9 +100,12 @@ information on a previous topic. If so, respond ASKED_BEFORE. Otherwise, respond
         return unhelfpul_response
 
 
+goal_success_ratio = goal_success_ratio_factory(use_output=True)
+
+
 @trace(eval_funcs=[goal_success_ratio], access_output_of_func=lambda x: x[0])
 def unhelpful_chat():
-    print("Welcome to the chat! Type 'exit' to end the session.")
+    print("\nWelcome to the somewhat helpful chat! Type 'exit' to end the session.")
 
     trace_id = get_current_trace_id()
 
@@ -164,14 +133,14 @@ def main():
         path_csv = f"trace_logs-{int(time.time())}.csv"
         trace_logs = cache.read_logs()
         write_trace_logs_to_csv(path_csv, trace_logs)
-        print(f"CSV-file of results: {path_csv}")
+        print(f"\nCSV-file of traces: {path_csv}")
         parent_trace = None
         for trace_log in trace_logs:
             if trace_log.trace_id == trace_id:
                 parent_trace = trace_log
                 break
         if parent_trace:
-            print(f"Overall score(s):\n{json.dumps(parent_trace.scores)}")
+            print(f"Overall score(s):\n{json.dumps(parent_trace.scores, default=asdict, indent=2)}")
 
 
 if __name__ == "__main__":

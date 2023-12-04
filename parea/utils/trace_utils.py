@@ -179,8 +179,6 @@ def logger_all_possible(trace_id: str):
 def call_eval_funcs_then_log(trace_id: str, eval_funcs: list[Callable] = None, access_output_of_func: Callable = None):
     data = trace_data.get()[trace_id]
     try:
-        inputs = data.inputs
-        target = data.target
         if eval_funcs and data.status == "success":
             if access_output_of_func:
                 output = json.loads(data.output)
@@ -188,14 +186,20 @@ def call_eval_funcs_then_log(trace_id: str, eval_funcs: list[Callable] = None, a
                 output_for_eval_metrics = json_dumps(output)
             else:
                 output_for_eval_metrics = data.output
+
             data.output_for_eval_metrics = output_for_eval_metrics
+            output_old = data.output
+            data.output = data.output_for_eval_metrics
             data.scores = []
+
             for func in eval_funcs:
                 try:
-                    score = func(inputs=inputs, output=output_for_eval_metrics, target=target)
+                    score = func(data)
                     data.scores.append(NamedEvaluationScore(name=func.__name__, score=score))
                 except Exception as e:
                     logger.exception(f"Error occurred calling evaluation function '{func.__name__}', {e}", exc_info=e)
+
+            data.output = output_old
     except Exception as e:
         logger.exception(f"Error occurred in when trying to evaluate output, {e}", exc_info=e)
     parea_logger.default_log(data=data)
