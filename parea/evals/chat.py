@@ -3,7 +3,7 @@ from typing import Callable, Optional
 import json
 
 from parea.evals.utils import call_openai
-from parea.schemas.models import Log
+from parea.schemas.log import Log
 
 
 def goal_success_ratio_factory(use_output: Optional[bool] = False, message_field: Optional[str] = None) -> Callable[[Log], float]:

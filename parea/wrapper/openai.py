@@ -17,7 +17,8 @@ else:
 
 
 from ..cache.cache import Cache
-from ..schemas.models import CacheRequest, LLMInputs, ModelParams, TraceLog
+from ..schemas.models import CacheRequest, TraceLog
+from ..schemas.log import ModelParams, LLMInputs
 from ..utils.trace_utils import trace_data
 from .wrapper import Wrapper
 
