@@ -12,7 +12,7 @@ import sys
 from importlib import metadata as importlib_metadata
 
 from parea.benchmark import run_benchmark
-from parea.cache import RedisCache
+from parea.cache import RedisCache, InMemoryCache
 from parea.client import Parea, init
 
 
