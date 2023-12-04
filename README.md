@@ -1,4 +1,4 @@
-# parea-sdk
+# Parea Python SDK
 
 <div align="center">
 
@@ -24,6 +24,39 @@ or install with `Poetry`
 
 ```bash
 poetry add parea-ai
+```
+
+## Evaluating Your LLM App
+
+You can evaluate any step of your LLM app by wrapping it with a decorator, called `trace`, and specifying the evaluation function(s).
+The scores associated with the traces will be logged to the Parea [dashboard](https://app.parea.ai/logs) and/or in a local CSV file if you don't have a Parea API key.
+
+Evaluation functions receive an argument `log` (of type [Log](parea/schemas/models.py)) and should return a 
+float between 0 (bad) and 1 (good) inclusive. You don't need to start from scratch, there are pre-defined evaluation functions for [general purpose](parea/evals/general.py), 
+[chat](parea/evals/chat.py), [RAG](parea/evals/rag.py), and [summarization](parea/evals/summary.py) apps :)
+
+You can define evaluation functions locally or use the ones you have deployed to Parea's [Test Hub](https://app.parea.ai/test-hub).
+If you choose the latter option, the evaluation happens asynchronously and non-blocking.
+
+A fully locally working cookbook can be found [here](parea/cookbook/tracing_and_evaluating_openai_endpoint.py). 
+Alternatively, you can add the following code to your codebase to get started: 
+
+```python
+import os
+from parea import init, InMemoryCache
+from parea.schemas.models import Log
+from parea.utils.trace_utils import trace
+
+init(api_key=os.getenv("PAREA_API_KEY"), cache=InMemoryCache())  # use InMemoryCache if you don't have a Parea API key
+
+
+def locally_defined_eval_function(log: Log) -> float:
+  ...
+
+
+@trace(eval_func_names=['deployed_eval_function_name'], eval_funcs=[locally_defined_eval_function])
+def function_to_evaluate(*args, **kwargs) -> ...:
+  ...
 ```
 
 ## Debugging Chains & Agents
