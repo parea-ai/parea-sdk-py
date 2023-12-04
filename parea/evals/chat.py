@@ -13,6 +13,9 @@ def goal_success_ratio_factory(use_output: Optional[bool] = False, message_field
         use_output (Optional[bool], optional): Whether to use the output of the log to access the messages. Defaults to False.
         message_field (Optional[str], optional): The name of the field in the log that contains the messages.
             Defaults to None. If None, the messages are taken from the configuration attribute.
+
+    # noqa: DAR202
+    # noqa: DAR401
     """
     if use_output and message_field:
         raise ValueError("Only one of use_output and message_field can be set.")
