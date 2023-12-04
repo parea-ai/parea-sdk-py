@@ -32,6 +32,13 @@ class PareaLogger:
             data=asdict(data),
         )
 
+    async def async_log(self, data: dict) -> None:
+        await self._client.request_async(
+            "POST",
+            LOG_ENDPOINT,
+            data=data,
+        )
+
     def write_log(self, data: TraceLog) -> None:
         self._redis_cache.log(data)
 
