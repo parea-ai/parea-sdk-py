@@ -1,5 +1,6 @@
+from typing import Any, Dict, List, Optional, Union
+
 from enum import Enum
-from typing import Optional, List, Any, Union, Dict
 
 from attr import define
 

@@ -1,6 +1,5 @@
 from typing import Any, List, Optional
 
-
 from attrs import define, field, validators
 
 from parea.schemas.log import LLMInputs, Log
