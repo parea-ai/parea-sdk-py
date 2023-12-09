@@ -1,7 +1,8 @@
-from typing import Any, AsyncIterator, Callable, Dict, Iterator, Optional, Sequence, Union
+from typing import Any, Callable, Dict, Optional, Union
 
 import json
 from collections import defaultdict
+from collections.abc import AsyncIterator, Iterator, Sequence
 
 import openai
 from openai import __version__ as openai_version
@@ -21,38 +22,87 @@ from ..schemas.models import CacheRequest, LLMInputs, ModelParams, TraceLog
 from ..utils.trace_utils import trace_data
 from .wrapper import Wrapper
 
-MODEL_COST_MAPPING: Dict[str, float] = {
-    "gpt-4": 0.03,
-    "gpt-4-0314": 0.03,
-    "gpt-4-0613": 0.03,
-    "gpt-4-completion": 0.06,
-    "gpt-4-0314-completion": 0.06,
-    "gpt-4-0613-completion": 0.06,
-    "gpt-4-32k": 0.06,
-    "gpt-4-32k-0314": 0.06,
-    "gpt-4-32k-0613": 0.06,
-    "gpt-4-32k-completion": 0.12,
-    "gpt-4-32k-0314-completion": 0.12,
-    "gpt-4-32k-0613-completion": 0.12,
-    "gpt-3.5-turbo": 0.0015,
-    "gpt-3.5-turbo-0301": 0.0015,
-    "gpt-3.5-turbo-0613": 0.0015,
-    "gpt-3.5-turbo-16k": 0.003,
-    "gpt-3.5-turbo-16k-0613": 0.003,
-    "gpt-3.5-turbo-completion": 0.002,
-    "gpt-3.5-turbo-0301-completion": 0.002,
-    "gpt-3.5-turbo-0613-completion": 0.004,
-    "gpt-3.5-turbo-16k-completion": 0.004,
-    "gpt-3.5-turbo-16k-0613-completion": 0.004,
-    "text-ada-001": 0.0004,
-    "ada": 0.0004,
-    "text-babbage-001": 0.0005,
-    "babbage": 0.0005,
-    "text-curie-001": 0.002,
-    "curie": 0.002,
-    "text-davinci-003": 0.02,
-    "text-davinci-002": 0.02,
-    "code-davinci-002": 0.02,
+OPENAI_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, int]]]] = {
+    "gpt-3.5-turbo": {
+        "prompt": 1.5,
+        "completion": 2.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
+    },
+    "gpt-3.5-turbo-0301": {
+        "prompt": 1.5,
+        "completion": 4.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
+    },
+    "gpt-3.5-turbo-0613": {
+        "prompt": 1.5,
+        "completion": 4.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
+    },
+    "gpt-3.5-turbo-16k": {
+        "prompt": 3.0,
+        "completion": 4.0,
+        "token_limit": {"max_completion_tokens": 16385, "max_prompt_tokens": 16385},
+    },
+    "gpt-3.5-turbo-16k-0301": {
+        "prompt": 3.0,
+        "completion": 4.0,
+        "token_limit": {"max_completion_tokens": 16385, "max_prompt_tokens": 16385},
+    },
+    "gpt-3.5-turbo-16k-0613": {
+        "prompt": 3.0,
+        "completion": 4.0,
+        "token_limit": {"max_completion_tokens": 16385, "max_prompt_tokens": 16385},
+    },
+    "gpt-3.5-turbo-1106": {
+        "prompt": 1.0,
+        "completion": 2.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
+    },
+    "gpt-3.5-turbo-instruct": {
+        "prompt": 1.5,
+        "completion": 4.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
+    },
+    "gpt-4": {
+        "prompt": 30.0,
+        "completion": 60.0,
+        "token_limit": {"max_completion_tokens": 8192, "max_prompt_tokens": 8192},
+    },
+    "gpt-4-0314": {
+        "prompt": 30.0,
+        "completion": 60.0,
+        "token_limit": {"max_completion_tokens": 8192, "max_prompt_tokens": 8192},
+    },
+    "gpt-4-0613": {
+        "prompt": 30.0,
+        "completion": 60.0,
+        "token_limit": {"max_completion_tokens": 8192, "max_prompt_tokens": 8192},
+    },
+    "gpt-4-32k": {
+        "prompt": 60.0,
+        "completion": 120.0,
+        "token_limit": {"max_completion_tokens": 32768, "max_prompt_tokens": 32768},
+    },
+    "gpt-4-32k-0314": {
+        "prompt": 60.0,
+        "completion": 120.0,
+        "token_limit": {"max_completion_tokens": 32768, "max_prompt_tokens": 32768},
+    },
+    "gpt-4-32k-0613": {
+        "prompt": 60.0,
+        "completion": 120.0,
+        "token_limit": {"max_completion_tokens": 32768, "max_prompt_tokens": 32768},
+    },
+    "gpt-4-vision-preview": {
+        "prompt": 30.0,
+        "completion": 60.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
+    "gpt-4-1106-preview": {
+        "prompt": 10.0,
+        "completion": 30.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
 }
 
 
@@ -77,7 +127,7 @@ class OpenAIWrapper:
         )
 
     @staticmethod
-    def resolver(trace_id: str, _args: Sequence[Any], kwargs: Dict[str, Any], response: Optional[Any]) -> Optional[Any]:
+    def resolver(trace_id: str, _args: Sequence[Any], kwargs: dict[str, Any], response: Optional[Any]) -> Optional[Any]:
         if response:
             output = OpenAIWrapper._get_output(response)
             if openai_version.startswith("0."):
@@ -101,8 +151,8 @@ class OpenAIWrapper:
 
         model_rate = OpenAIWrapper.get_model_cost(model)
         model_completion_rate = OpenAIWrapper.get_model_cost(model, is_completion=True)
-        prompt_cost = model_rate * (input_tokens / 1000)
-        completion_cost = model_completion_rate * (output_tokens / 1000)
+        prompt_cost = (model_rate / 1000) * (input_tokens / 1000)
+        completion_cost = (model_completion_rate / 1000) * (output_tokens / 1000)
         total_cost = sum([prompt_cost, completion_cost])
 
         trace_data.get()[trace_id].configuration = llm_configuration
@@ -114,7 +164,7 @@ class OpenAIWrapper:
         return response
 
     @staticmethod
-    def gen_resolver(trace_id: str, _args: Sequence[Any], kwargs: Dict[str, Any], response: Iterator[Any], final_log) -> Iterator[Any]:
+    def gen_resolver(trace_id: str, _args: Sequence[Any], kwargs: dict[str, Any], response: Iterator[Any], final_log) -> Iterator[Any]:
         llm_configuration = OpenAIWrapper._kwargs_to_llm_configuration(kwargs)
         trace_data.get()[trace_id].configuration = llm_configuration
 
@@ -131,7 +181,7 @@ class OpenAIWrapper:
         final_log()
 
     @staticmethod
-    async def agen_resolver(trace_id: str, _args: Sequence[Any], kwargs: Dict[str, Any], response: AsyncIterator[Any], final_log) -> AsyncIterator[Any]:
+    async def agen_resolver(trace_id: str, _args: Sequence[Any], kwargs: dict[str, Any], response: AsyncIterator[Any], final_log) -> AsyncIterator[Any]:
         llm_configuration = OpenAIWrapper._kwargs_to_llm_configuration(kwargs)
         trace_data.get()[trace_id].configuration = llm_configuration
 
@@ -196,25 +246,21 @@ class OpenAIWrapper:
     @staticmethod
     def get_model_cost(model_name: str, is_completion: bool = False) -> float:
         model_name = model_name.lower()
-
-        if model_name.startswith("gpt-4") and is_completion:
-            model_name += "-completion"
-
-        cost = MODEL_COST_MAPPING.get(model_name, None)
+        cost = OPENAI_MODEL_INFO.get(model_name, {}).get("completion" if is_completion else "prompt", None)
         if cost is None:
-            msg = f"Unknown model: {model_name}. " f"Please provide a valid OpenAI model name. " f"Known models are: {', '.join(MODEL_COST_MAPPING.keys())}"
+            msg = f"Unknown model: {model_name}. " f"Please provide a valid OpenAI model name. " f"Known models are: {', '.join(OPENAI_MODEL_INFO.keys())}"
             raise ValueError(msg)
 
         return cost
 
     @staticmethod
-    def convert_kwargs_to_cache_request(_args: Sequence[Any], kwargs: Dict[str, Any]) -> CacheRequest:
+    def convert_kwargs_to_cache_request(_args: Sequence[Any], kwargs: dict[str, Any]) -> CacheRequest:
         return CacheRequest(
             configuration=OpenAIWrapper._kwargs_to_llm_configuration(kwargs),
         )
 
     @staticmethod
-    def _convert_cache_to_response(_args: Sequence[Any], kwargs: Dict[str, Any], cache_response: TraceLog) -> OpenAIObject:
+    def _convert_cache_to_response(_args: Sequence[Any], kwargs: dict[str, Any], cache_response: TraceLog) -> OpenAIObject:
         content = cache_response.output
         message = {"role": "assistant"}
         try:
@@ -248,7 +294,7 @@ class OpenAIWrapper:
         )
 
     @staticmethod
-    def convert_cache_to_response(_args: Sequence[Any], kwargs: Dict[str, Any], cache_response: TraceLog) -> Union[OpenAIObject, Iterator[OpenAIObject]]:
+    def convert_cache_to_response(_args: Sequence[Any], kwargs: dict[str, Any], cache_response: TraceLog) -> Union[OpenAIObject, Iterator[OpenAIObject]]:
         response = OpenAIWrapper._convert_cache_to_response(_args, kwargs, cache_response)
         if kwargs.get("stream", False):
             return iter([response])
@@ -256,7 +302,7 @@ class OpenAIWrapper:
             return response
 
     @staticmethod
-    def aconvert_cache_to_response(_args: Sequence[Any], kwargs: Dict[str, Any], cache_response: TraceLog) -> Union[OpenAIObject, AsyncIterator[OpenAIObject]]:
+    def aconvert_cache_to_response(_args: Sequence[Any], kwargs: dict[str, Any], cache_response: TraceLog) -> Union[OpenAIObject, AsyncIterator[OpenAIObject]]:
         response = OpenAIWrapper._convert_cache_to_response(_args, kwargs, cache_response)
         if kwargs.get("stream", False):
 
