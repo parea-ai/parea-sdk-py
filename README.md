@@ -28,17 +28,21 @@ poetry add parea-ai
 
 ## Evaluating Your LLM App
 
-You can evaluate any step of your LLM app by wrapping it with a decorator, called `trace`, and specifying the evaluation function(s).
-The scores associated with the traces will be logged to the Parea [dashboard](https://app.parea.ai/logs) and/or in a local CSV file if you don't have a Parea API key.
+You can evaluate any step of your LLM app by wrapping it with a decorator, called `trace`, and specifying the evaluation
+function(s).
+The scores associated with the traces will be logged to the Parea [dashboard](https://app.parea.ai/logs) and/or in a
+local CSV file if you don't have a Parea API key.
 
-Evaluation functions receive an argument `log` (of type [Log](parea/schemas/models.py)) and should return a 
-float between 0 (bad) and 1 (good) inclusive. You don't need to start from scratch, there are pre-defined evaluation functions for [general purpose](parea/evals/general.py), 
+Evaluation functions receive an argument `log` (of type [Log](parea/schemas/models.py)) and should return a
+float between 0 (bad) and 1 (good) inclusive. You don't need to start from scratch, there are pre-defined evaluation
+functions for [general purpose](parea/evals/general.py),
 [chat](parea/evals/chat.py), [RAG](parea/evals/rag.py), and [summarization](parea/evals/summary.py) apps :)
 
-You can define evaluation functions locally or use the ones you have deployed to Parea's [Test Hub](https://app.parea.ai/test-hub).
+You can define evaluation functions locally or use the ones you have deployed to
+Parea's [Test Hub](https://app.parea.ai/test-hub).
 If you choose the latter option, the evaluation happens asynchronously and non-blocking.
 
-A fully locally working cookbook can be found [here](parea/cookbook/tracing_and_evaluating_openai_endpoint.py). 
+A fully locally working cookbook can be found [here](parea/cookbook/tracing_and_evaluating_openai_endpoint.py).
 Alternatively, you can add the following code to your codebase to get started:
 
 ```python
@@ -62,7 +66,8 @@ def function_to_evaluate(*args, **kwargs) -> ...:
 ## Debugging Chains & Agents
 
 You can iterate on your chains & agents much faster by using a local cache. This will allow you to make changes to your
-code & prompts without waiting for all previous, valid LLM responses. Simply add these two lines to the beginning your code and start
+code & prompts without waiting for all previous, valid LLM responses. Simply add these two lines to the beginning your
+code and start
 [a local redis cache](https://redis.io/docs/getting-started/install-stack/):
 
 ```python
@@ -71,14 +76,15 @@ from parea import init, RedisCache
 init(cache=RedisCache())
 ```
 
-Above will use the default redis cache at `localhost:6379` with no password. You can also specify your redis database by:
+Above will use the default redis cache at `localhost:6379` with no password. You can also specify your redis database
+by:
 
 ```python
 from parea import init, RedisCache
 
 cache = RedisCache(
   host=os.getenv("REDIS_HOST", "localhost"),  # default value
-  port=int(os.getenv("REDIS_PORT", 6379)),    # default value
+  port=int(os.getenv("REDIS_PORT", 6379)),  # default value
   password=os.getenv("REDIS_PASSWORT", None)  # default value
 )
 init(cache=cache)
@@ -88,21 +94,24 @@ If you set `cache = None` for `init`, no cache will be used.
 
 ### Benchmark your LLM app across many inputs
 
-You can benchmark your LLM app across many inputs by using the `benchmark` command. This will run your the entry point 
+You can benchmark your LLM app across many inputs by using the `benchmark` command. This will run your the entry point
 of your app with the specified inputs and create a report with the results.
 
 ```bash
 parea benchmark --func app:main --csv_path benchmark.csv
 ```
 
-The CSV file will be used to fill in the arguments to your function. The report will be a CSV file of all the traces. If you
-set your Parea API key, the traces will also be logged to the Parea dashboard. Note, for this feature you need to have a 
+The CSV file will be used to fill in the arguments to your function. The report will be a CSV file of all the traces. If
+you
+set your Parea API key, the traces will also be logged to the Parea dashboard. Note, for this feature you need to have a
 redis cache running. Please, raise a GitHub issue if you would like to use this feature without a redis cache.
 
 ### Automatically log all your LLM call traces
 
-You can automatically log all your LLM traces to the Parea dashboard by setting the `PAREA_API_KEY` environment variable or specifying it in the `init` function.
-This will help you debug issues your customers are facing by stepping through the LLM call traces and recreating the issue
+You can automatically log all your LLM traces to the Parea dashboard by setting the `PAREA_API_KEY` environment variable
+or specifying it in the `init` function.
+This will help you debug issues your customers are facing by stepping through the LLM call traces and recreating the
+issue
 in your local setup & code.
 
 ```python
@@ -113,7 +122,6 @@ init(
   cache=...
 )
 ```
-
 
 ## Use a deployed prompt
 
@@ -195,7 +203,7 @@ temperature = 0.0
 
 # define your OpenAI call as you would normally and we'll automatically log the results
 def main():
-  openai.ChatCompletion.create(model=model, temperature=temperature, messages=messages).choices[0].message["content"]
+  openai.chat.completions.create(model=model, temperature=temperature, messages=messages).choices[0].message.content
 ```
 
 ### Open source community features

@@ -1,7 +1,4 @@
-from typing import Dict, Optional
-
 import os
-import random
 from datetime import datetime
 
 import openai
@@ -15,19 +12,14 @@ load_dotenv()
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-p = Parea(api_key=os.getenv("PAREA_API_KEY"))
+p = Parea(api_key=os.getenv("DEV_API_KEY"))
 
 
 def call_llm(data: list[dict], model: str = "gpt-3.5-turbo", temperature: float = 0.0) -> str:
-    return openai.ChatCompletion.create(model=model, temperature=temperature, messages=data).choices[0].message["content"]
+    return openai.chat.completions.create(model=model, temperature=temperature, messages=data).choices[0].message.content
 
 
-def random_eval(inputs: Dict[str, str], output, target: Optional[str] = None) -> float:
-    # return random number between 0 and 1
-    return random.random()
-
-
-@trace(eval_funcs=[random_eval])
+@trace
 def argumentor(query: str, additional_description: str = "") -> str:
     return call_llm(
         [
@@ -56,7 +48,7 @@ def critic(argument: str) -> str:
     )
 
 
-@trace(eval_funcs=[random_eval])
+@trace
 def refiner(query: str, additional_description: str, argument: str, criticism: str) -> str:
     return call_llm(
         [
@@ -76,7 +68,7 @@ def refiner(query: str, additional_description: str, argument: str, criticism: s
     )
 
 
-@trace(eval_funcs=[random_eval], access_output_of_func=lambda x: x[0])
+@trace
 def argument_chain(query: str, additional_description: str = "") -> tuple[str, str]:
     trace_id = get_current_trace_id()
     argument = argumentor(query, additional_description)
