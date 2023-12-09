@@ -4,7 +4,7 @@ import ast
 import re
 
 from parea.evals.utils import call_openai, sent_tokenize
-from parea.schemas.models import Log
+from parea.schemas.log import Log
 
 one_score_pattern = re.compile("\[\[(\d+\.?\d*)\]\]")
 one_score_pattern_backup = re.compile("\[(\d+\.?\d*)\]")

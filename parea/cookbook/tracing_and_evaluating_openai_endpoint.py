@@ -20,7 +20,7 @@ load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
-use_cache = True
+use_cache = True  # by using the in memory cache, you don't need a Parea API key
 cache = InMemoryCache() if use_cache else None
 init(api_key=os.getenv("PAREA_API_KEY"), cache=cache)
 
