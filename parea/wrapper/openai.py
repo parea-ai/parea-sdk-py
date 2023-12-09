@@ -1,6 +1,7 @@
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 import json
+import os
 from collections import defaultdict
 from collections.abc import AsyncIterator, Iterator, Sequence
 
@@ -17,11 +18,15 @@ else:
         return OpenAIObject(**kwargs)
 
 
+from dotenv import load_dotenv
+
 from ..cache.cache import Cache
 from ..schemas.log import LLMInputs, ModelParams
 from ..schemas.models import CacheRequest, TraceLog
 from ..utils.trace_utils import trace_data
 from .wrapper import Wrapper
+
+load_dotenv()
 
 OPENAI_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, int]]]] = {
     "gpt-3.5-turbo": {
@@ -108,10 +113,14 @@ OPENAI_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, int]]]] = {
 
 
 class OpenAIWrapper:
+    openai.api_key = os.getenv("OPENAI_API_KEY")
     if openai_version.startswith("0."):
         original_methods = {"ChatCompletion.create": openai.ChatCompletion.create, "ChatCompletion.acreate": openai.ChatCompletion.acreate}
     else:
-        original_methods = {"chat.completions.create": openai.chat.completions.create}
+        try:
+            original_methods = {"chat.completions.create": openai.chat.completions.create}
+        except openai.OpenAIError:
+            original_methods = {}
 
     def init(self, log: Callable, cache: Cache = None):
         Wrapper(

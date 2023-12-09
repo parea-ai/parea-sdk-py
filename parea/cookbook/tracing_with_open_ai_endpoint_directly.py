@@ -15,14 +15,14 @@ load_dotenv()
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-p = Parea(api_key=os.getenv("PAREA_API_KEY"))
+p = Parea(api_key=os.getenv("DEV_API_KEY"))
 
 
 def call_llm(data: list[dict], model: str = "gpt-3.5-turbo", temperature: float = 0.0) -> str:
-    return openai.ChatCompletion.create(model=model, temperature=temperature, messages=data).choices[0].message["content"]
+    return openai.chat.completions.create(model=model, temperature=temperature, messages=data).choices[0].message.content
 
 
-def random_eval(inputs: Dict[str, str], output, target: Optional[str] = None) -> float:
+def random_eval(inputs: dict[str, str], output=None, target: Optional[str] = None) -> float:
     # return random number between 0 and 1
     return random.random()
 

@@ -140,7 +140,7 @@ def provide_user_specific_recommendations(user_input, user_id, functions) -> tup
 
     food_preference = customer_profile.get("preferences", {}).get("food", [])[0] if customer_profile.get("preferences", {}).get("food") else None
 
-    response = openai.ChatCompletion.create(
+    response = openai.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {
