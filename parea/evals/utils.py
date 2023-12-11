@@ -64,3 +64,25 @@ def embed(model, input) -> List[float]:
         return openai.Embedding.create(model=model, input=input, encoding_format="float").data[0]["embedding"]
     else:
         return openai.embeddings.create(model=model, input=input, encoding_format="float").data[0].embedding
+
+
+def dcg(y_true, ranking):
+    """Discounted cumulative gain (DCG) at rank k."""
+    import numpy as np
+
+    y_true = np.asarray(y_true)
+    ranking = np.asarray(ranking)
+    rel = y_true[ranking]
+    gains = 2**rel - 1
+    discounts = np.log2(np.arange(len(ranking)) + 2)
+    return np.sum(gains / discounts)
+
+
+def ndcg(y_true, ranking):
+    """Normalized discounted cumulative gain (NDCG) at rank k"""
+    import numpy as np
+
+    k = len(ranking)
+    best_ranking = np.argsort(y_true)[::-1]
+    best = dcg(y_true, best_ranking[:k])
+    return dcg(y_true, ranking) / best
