@@ -35,8 +35,8 @@ local CSV file if you don't have a Parea API key.
 
 Evaluation functions receive an argument `log` (of type [Log](parea/schemas/models.py)) and should return a
 float between 0 (bad) and 1 (good) inclusive. You don't need to start from scratch, there are pre-defined evaluation
-functions for [general purpose](parea/evals/general.py),
-[chat](parea/evals/chat.py), [RAG](parea/evals/rag.py), and [summarization](parea/evals/summary.py) apps :)
+functions for [general purpose](parea/evals/general),
+[chat](parea/evals/chat), [RAG](parea/evals/rag), and [summarization](parea/evals/summary) apps :)
 
 You can define evaluation functions locally or use the ones you have deployed to
 Parea's [Test Hub](https://app.parea.ai/test-hub).
