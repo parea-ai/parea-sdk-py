@@ -15,10 +15,17 @@ def context_ranking_listwise_factory(
     Paper: https://arxiv.org/abs/2305.02156
 
     Args:
-        question_field (str, optional): The name of the field in the log that contains the question. Defaults to "question".
-        context_fields (List[str], optional): The name of the fields in the log that contain the contexts. Defaults to ["context"].
-        ranking_measurement (str, optional): The measurement to use for ranking. Defaults to "ndcg".
-        n_contexts_to_rank (int, optional): The number of contexts to rank listwise. Defaults to 10.
+        question_field (str): The name of the field in the log that contains the question. Defaults to "question".
+        context_fields (List[str]): The name of the fields in the log that contain the contexts. Defaults to ["context"].
+        ranking_measurement (str): The measurement to use for ranking. Defaults to "ndcg".
+        n_contexts_to_rank (int): The number of contexts to rank listwise. Defaults to 10.
+
+    Returns:
+        Callable[[Log], float]: A function that takes a log as input and returns a score between 0 and 1 indicating
+        how well the retrieved context is ranked by their relevancy.
+
+    Raises:
+        ValueError: If n_contexts_to_rank is less than 1.
     """
     if n_contexts_to_rank < 1:
         raise ValueError("n_contexts_to_rank must be at least 1.")
