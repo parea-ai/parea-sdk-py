@@ -1,4 +1,4 @@
-from typing import List, Callable
+from typing import Callable, List
 
 from parea.evals.utils import call_openai, sent_tokenize
 from parea.schemas.log import Log

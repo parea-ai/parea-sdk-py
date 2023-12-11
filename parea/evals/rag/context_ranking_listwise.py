@@ -1,4 +1,4 @@
-from typing import List, Callable
+from typing import Callable, List
 
 from parea.evals.utils import call_openai, ndcg
 from parea.schemas.log import Log
@@ -50,7 +50,7 @@ def context_ranking_listwise_factory(
         )
 
         s = sorted_list.strip("[] ").replace(" ", "")
-        number_strings = s.split(',')
+        number_strings = s.split(",")
         return [int(num) for num in number_strings if num.isdigit()]
 
     def progressive_reranking(query: str, contexts: List[str]) -> List[int]:
@@ -65,11 +65,11 @@ def context_ranking_listwise_factory(
         indices = list(range(len(contexts)))
 
         while offset > 0:
-            window_contexts = contexts[offset:offset + window_size]
-            window_indices = indices[offset:offset + window_size]
+            window_contexts = contexts[offset : offset + window_size]
+            window_indices = indices[offset : offset + window_size]
             reranked_indices = listwise_reranking(query, window_contexts)
-            contexts[offset:offset + window_size] = [window_contexts[i] for i in reranked_indices]
-            indices[offset:offset + window_size] = [window_indices[i] for i in reranked_indices]
+            contexts[offset : offset + window_size] = [window_contexts[i] for i in reranked_indices]
+            indices[offset : offset + window_size] = [window_indices[i] for i in reranked_indices]
 
             offset -= window_step
 

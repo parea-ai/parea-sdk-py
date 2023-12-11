@@ -73,7 +73,7 @@ def dcg(y_true, ranking):
     y_true = np.asarray(y_true)
     ranking = np.asarray(ranking)
     rel = y_true[ranking]
-    gains = 2 ** rel - 1
+    gains = 2**rel - 1
     discounts = np.log2(np.arange(len(ranking)) + 2)
     return np.sum(gains / discounts)
 

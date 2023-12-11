@@ -1,5 +1,6 @@
+from typing import Callable, Optional
+
 from collections import Counter
-from typing import Optional, Callable
 
 from parea.schemas.log import Log
 

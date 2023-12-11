@@ -1,10 +1,10 @@
+from typing import Callable
+
 import ast
 import re
-from typing import Callable
 
 from parea.evals.utils import call_openai
 from parea.schemas.log import Log
-
 
 one_score_pattern = re.compile("\[\[(\d+\.?\d*)\]\]")
 one_score_pattern_backup = re.compile("\[(\d+\.?\d*)\]")
