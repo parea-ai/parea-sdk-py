@@ -65,6 +65,15 @@ pytest-cov = "^4.1.0"
 [tool.poetry.scripts]
 parea = 'parea:main'
 
+[tool.poetry.group.dev.dependencies]
+chromadb = "^0.4.20"
+langchain = "^0.0.351"
+langchainhub = "^0.1.14"
+tiktoken = "^0.5.2"
+faiss-cpu = "^1.7.4"
+langchain-experimental = "^0.0.47"
+anthropic = "^0.8.0"
+
 [tool.black]
 # https://github.com/psf/black
 target-version = ["py39"]

@@ -71,6 +71,7 @@ def trace(
 
         trace_data.get()[trace_id] = TraceLog(
             trace_id=trace_id,
+            parent_trace_id=trace_id,
             start_timestamp=to_date_and_time_string(start_time),
             trace_name=name or func_name,
             end_user_identifier=end_user_identifier,
@@ -81,6 +82,7 @@ def trace(
         )
         parent_trace_id = trace_context.get()[-2] if len(trace_context.get()) > 1 else None
         if parent_trace_id:
+            trace_data.get()[trace_id].parent_trace_id = parent_trace_id
             trace_data.get()[parent_trace_id].children.append(trace_id)
 
         return trace_id, start_time

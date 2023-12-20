@@ -85,6 +85,7 @@ class NamedEvaluationScore:
 @define
 class TraceLog(Log):
     trace_id: Optional[str] = field(default=None, validator=validators.instance_of(str))
+    parent_trace_id: Optional[str] = field(default=None, validator=validators.instance_of(str))
     start_timestamp: Optional[str] = field(default=None, validator=validators.instance_of(str))
     organization_id: Optional[str] = None
 
@@ -94,19 +95,19 @@ class TraceLog(Log):
     deployment_id: Optional[str] = None
     cache_hit: bool = False
     output_for_eval_metrics: Optional[str] = None
-    evaluation_metric_names: Optional[List[str]] = None
-    scores: Optional[List[NamedEvaluationScore]] = None
+    evaluation_metric_names: Optional[list[str]] = None
+    scores: Optional[list[NamedEvaluationScore]] = None
     feedback_score: Optional[float] = None
 
     # info filled from decorator
     trace_name: Optional[str] = None
-    children: List[str] = field(factory=list)
+    children: list[str] = field(factory=list)
 
     # metrics filled from either decorator or completion
     end_timestamp: Optional[str] = None
     end_user_identifier: Optional[str] = None
     metadata: Optional[dict[str, Any]] = None
-    tags: Optional[List[str]] = None
+    tags: Optional[list[str]] = None
 
 
 @define

@@ -3,6 +3,7 @@ from typing import Any
 import dataclasses
 import datetime
 import json
+from uuid import UUID
 
 import attrs
 
@@ -27,6 +28,8 @@ class UniversalEncoder(json.JSONEncoder):
             return obj.isoformat()
         elif isinstance(obj, datetime.timedelta):
             return obj.total_seconds()
+        elif isinstance(obj, UUID):
+            return str(obj)
         else:
             return super().default(obj)
 
