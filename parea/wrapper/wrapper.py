@@ -1,8 +1,9 @@
-from typing import Any, AsyncIterator, Callable, Iterator, List, Tuple
+from typing import Any, Callable, List, Tuple
 
 import functools
 import inspect
 import time
+from collections.abc import AsyncIterator, Iterator
 from uuid import uuid4
 
 from parea.cache.cache import Cache
@@ -16,7 +17,7 @@ class Wrapper:
     def __init__(
         self,
         module: Any,
-        func_names: List[str],
+        func_names: list[str],
         resolver: Callable,
         gen_resolver: Callable,
         agen_resolver: Callable,
@@ -36,7 +37,7 @@ class Wrapper:
         self.convert_cache_to_response = convert_cache_to_response
         self.aconvert_cache_to_response = aconvert_cache_to_response
 
-    def wrap_functions(self, module: Any, func_names: List[str]):
+    def wrap_functions(self, module: Any, func_names: list[str]):
         for func_name in func_names:
             func_name_parts = func_name.split(".")
             original = functools.reduce(getattr, func_name_parts, module)
@@ -54,13 +55,14 @@ class Wrapper:
         else:
             return self.sync_decorator(original_func)
 
-    def _init_trace(self) -> Tuple[str, float]:
+    def _init_trace(self) -> tuple[str, float]:
         start_time = time.time()
         trace_id = str(uuid4())
         trace_context.get().append(trace_id)
 
         trace_data.get()[trace_id] = TraceLog(
             trace_id=trace_id,
+            parent_trace_id=trace_id,
             start_timestamp=to_date_and_time_string(start_time),
             trace_name="LLM",
             end_user_identifier=None,
@@ -77,6 +79,7 @@ class Wrapper:
             trace_context.get().insert(0, parent_trace_id)
             trace_data.get()[parent_trace_id] = TraceLog(
                 trace_id=parent_trace_id,
+                parent_trace_id=parent_trace_id,
                 start_timestamp=to_date_and_time_string(start_time),
                 end_user_identifier=None,
                 metadata=None,
@@ -84,6 +87,7 @@ class Wrapper:
                 tags=None,
                 inputs={},
             )
+        trace_data.get()[trace_id].parent_trace_id = parent_trace_id
         trace_data.get()[parent_trace_id].children.append(trace_id)
         self.log(parent_trace_id)
 

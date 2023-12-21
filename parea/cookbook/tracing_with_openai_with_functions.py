@@ -15,7 +15,7 @@ API_KEY = os.getenv("GOOGLE_PLACES_API_KEY")
 PLACES_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-p = Parea(api_key=os.getenv("DEV_API_KEY"))
+p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
 functions = [
     {

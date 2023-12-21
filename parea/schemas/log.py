@@ -5,6 +5,10 @@ from enum import Enum
 from attr import define
 
 
+class TraceIntegrations(str, Enum):
+    LANGCHAIN = "langchain"
+
+
 class Role(str, Enum):
     user = "user"
     assistant = "assistant"
@@ -39,15 +43,15 @@ class LLMInputs:
     model: Optional[str] = None
     provider: Optional[str] = None
     model_params: Optional[ModelParams] = None
-    messages: Optional[List[Message]] = None
-    functions: Optional[List[Any]] = None
+    messages: Optional[list[Message]] = None
+    functions: Optional[list[Any]] = None
     function_call: Optional[Union[str, dict[str, str]]] = None
 
 
 @define
 class Log:
     configuration: LLMInputs = LLMInputs()
-    inputs: Optional[Dict[str, str]] = None
+    inputs: Optional[dict[str, str]] = None
     output: Optional[str] = None
     target: Optional[str] = None
     latency: Optional[float] = 0.0
