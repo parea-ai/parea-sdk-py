@@ -67,9 +67,7 @@ class DocumentationChain:
             [
                 (
                     "system",
-                    "You are a helpful documentation Q&A assistant, trained to answer"
-                    " questions from LangSmith's documentation."
-                    " LangChain is a framework for building applications using large language models."
+                    "You are a helpful documentation Q&A assistant, trained to answer questions from the provided context."
                     "\nThe current time is {time}.\n\nRelevant documents will be retrieved in the following messages.",
                 ),
                 ("system", "{context}"),
