@@ -73,6 +73,8 @@ tiktoken = "^0.5.2"
 faiss-cpu = "^1.7.4"
 langchain-experimental = "^0.0.47"
 anthropic = "^0.8.0"
+ragas = "^0.0.22"
+html2text = "^2020.1.16"
 
 [tool.black]
 # https://github.com/psf/black

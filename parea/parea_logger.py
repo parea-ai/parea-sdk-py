@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 import json
 
@@ -7,7 +7,7 @@ from attrs import asdict, define, field
 from parea.api_client import HTTPClient
 from parea.cache.redis import RedisCache
 from parea.schemas.log import TraceIntegrations
-from parea.schemas.models import TraceLog
+from parea.schemas.models import TraceLog, UpdateLog
 from parea.utils.universal_encoder import json_dumps
 
 LOG_ENDPOINT = "/trace_log"
@@ -24,6 +24,13 @@ class PareaLogger:
 
     def set_redis_cache(self, cache: RedisCache) -> None:
         self._redis_cache = cache
+
+    def update_log(self, data: UpdateLog) -> None:
+        self._client.request(
+            "PUT",
+            LOG_ENDPOINT,
+            data=asdict(data),
+        )
 
     def record_log(self, data: TraceLog) -> None:
         self._client.request(

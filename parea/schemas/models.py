@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from attrs import define, field, validators
 
@@ -118,3 +118,9 @@ class TraceLogTree(TraceLog):
 @define
 class CacheRequest:
     configuration: LLMInputs = LLMInputs()
+
+
+@define
+class UpdateLog:
+    trace_id: str
+    field_name_to_value_map: dict[str, Any]
