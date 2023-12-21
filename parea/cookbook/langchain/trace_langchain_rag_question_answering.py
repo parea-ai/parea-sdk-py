@@ -16,9 +16,7 @@ from parea.utils.trace_integrations.langchain import PareaAILangchainTracer
 
 load_dotenv()
 
-p = Parea(api_key=os.getenv("DEV_API_KEY"))
-
-os.environ["LANGCHAIN_PROJECT"] = "rag-example"
+p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
 loader = WebBaseLoader(
     web_paths=("https://lilianweng.github.io/posts/2023-06-23-agent/",),

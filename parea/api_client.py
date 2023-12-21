@@ -3,10 +3,9 @@ from typing import Any, Optional
 import httpx
 
 
-# http://127.0.0.1:8000/api/parea/v1/trace_log
 class HTTPClient:
     _instance = None
-    base_url = "http://127.0.0.1:8000/api/parea/v1"  # "https://parea-ai-backend-e2adf7624bcb3980.onporter.run/api/parea/v1"
+    base_url = "https://parea-ai-backend-e2adf7624bcb3980.onporter.run/api/parea/v1"
     api_key = None
 
     def __new__(cls, *args, **kwargs):

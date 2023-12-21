@@ -59,14 +59,14 @@ class PareaLogger:
         self._client.request(
             "POST",
             VENDOR_LOG_ENDPOINT.format(vendor=vendor.value),
-            data=json.loads(json_dumps(data)),
+            data=json.loads(json_dumps(data)),  # uuid is not serializable
         )
 
     async def arecord_vendor_log(self, data: dict[str, Any], vendor: TraceIntegrations) -> None:
         await self._client.request_async(
             "POST",
             VENDOR_LOG_ENDPOINT.format(vendor=vendor.value),
-            data=json.loads(json_dumps(data)),
+            data=json.loads(json_dumps(data)),  # uuid is not serializable
         )
 
 

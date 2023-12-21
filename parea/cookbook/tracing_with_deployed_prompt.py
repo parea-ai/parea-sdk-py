@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import json
 import os
 from datetime import datetime
@@ -13,7 +11,7 @@ from parea.utils.trace_utils import get_current_trace_id, trace
 
 load_dotenv()
 
-p = Parea(api_key=os.getenv("DEV_API_KEY"))
+p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
 
 def deployed_argument_generator(query: str, additional_description: str = "") -> str:

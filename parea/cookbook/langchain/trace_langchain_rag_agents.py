@@ -13,10 +13,7 @@ from parea.utils.trace_integrations.langchain import PareaAILangchainTracer
 
 load_dotenv()
 
-p = Parea(api_key=os.getenv("DEV_API_KEY"))
-
-os.environ["LANGCHAIN_PROJECT"] = "rag-example"
-
+p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
 loader = TextLoader("../data/state_of_the_union.txt")
 

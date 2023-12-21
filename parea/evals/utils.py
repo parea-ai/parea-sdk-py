@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Union
+from typing import Callable, Union
 
 import json
 import warnings
@@ -106,7 +106,7 @@ def make_evaluations(trace_id: str, log: Log, eval_funcs: list[EvalFuncTuple], v
         for score in scores:
             print(score)
     parea_logger.update_log(data=UpdateLog(trace_id=trace_id, field_name_to_value_map={"scores": scores, "target": log.target}))
-    print(f"View trace at: http://localhost:3000/logs/detailed/{trace_id} \n")
+    print(f"View trace at: https://app.parea.ai/logs/detailed/{trace_id} \n")
 
 
 def run_evals_in_thread_and_log(trace_id: str, log: Log, eval_funcs: list[EvalFuncTuple], verbose: bool = False):

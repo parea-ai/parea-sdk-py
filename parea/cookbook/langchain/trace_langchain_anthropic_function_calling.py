@@ -10,10 +10,7 @@ from parea.utils.trace_integrations.langchain import PareaAILangchainTracer
 
 load_dotenv()
 
-p = Parea(api_key=os.getenv("DEV_API_KEY"))
-
-os.environ["LANGCHAIN_PROJECT"] = "rag-example"
-
+p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
 model = AnthropicFunctions(model="claude-2")
 
@@ -44,9 +41,8 @@ schema = {
     },
     "required": ["name", "height"],
 }
-inp = """
-Alex is 5 feet tall. Claudia is 1 feet taller Alex and jumps higher than him. Claudia is a brunette and Alex is blonde.
-        """
+inp = """Alex is 5 feet tall. Claudia is 1 feet taller Alex and jumps higher than him. Claudia is a brunette and Alex
+is blonde."""
 
 chain = create_extraction_chain(schema, model)
 

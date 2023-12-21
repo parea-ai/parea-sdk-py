@@ -10,7 +10,7 @@ from parea.utils.trace_utils import get_current_trace_id, trace
 
 load_dotenv()
 
-p = Parea(api_key=os.getenv("DEV_API_KEY"))
+p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
 
 @trace  # <--- If you want to log the inputs to the LLM call you can optionally add a trace decorator here
