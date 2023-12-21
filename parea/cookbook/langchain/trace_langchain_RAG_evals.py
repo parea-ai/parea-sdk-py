@@ -36,7 +36,6 @@ p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
 class DocumentRetriever:
     def __init__(self, url: str):
-        # Load in langsmith documentation as test
         api_loader = RecursiveUrlLoader(url)
         raw_documents = api_loader.load()
 
