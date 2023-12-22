@@ -18,7 +18,11 @@ def answer_context_faithfulness_precision_factory(context_field: Optional[str] =
         if provider == "openai":
             import tiktoken
 
-            encoding = tiktoken.encoding_for_model(model)
+            try:
+                encoding = tiktoken.encoding_for_model(model)
+            except KeyError:
+                print("Warning: model not found. Using cl100k_base encoding.")
+                encoding = tiktoken.get_encoding("cl100k_base")
             context_tokens = encoding.encode(context)
             output_tokens = encoding.encode(log.output)
         else:

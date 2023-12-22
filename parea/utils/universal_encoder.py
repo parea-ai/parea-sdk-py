@@ -20,6 +20,8 @@ class UniversalEncoder(json.JSONEncoder):
     def default(self, obj: Any):
         if isinstance(obj, str):
             return obj
+        elif isinstance(obj, set):
+            return list(obj)
         elif is_dataclass_instance(obj):
             return dataclasses.asdict(obj)
         elif is_attrs_instance(obj):
