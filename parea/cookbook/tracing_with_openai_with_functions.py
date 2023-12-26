@@ -163,11 +163,10 @@ def provide_user_specific_recommendations(user_input, user_id, functions) -> tup
         temperature=0,
         functions=functions,
     )
-
-    if "message" in response.choices[0] and "function_call" in response.choices[0]["message"]:
-        function_call = response.choices[0]["message"]["function_call"]
-        if function_call["name"] == "call_google_places_api":
-            place_type = json.loads(function_call["arguments"])["place_type"]
+    if response.choices[0].message.function_call:
+        function_call = response.choices[0].message.function_call
+        if function_call.name == "call_google_places_api":
+            place_type = json.loads(function_call.arguments)["place_type"]
             places = call_google_places_api(user_id, place_type, food_preference)
             if places:  # If the list of places is not empty
                 return f"Here are some places you might be interested in: {' '.join(places)}", trace_id

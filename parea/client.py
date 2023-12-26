@@ -35,27 +35,33 @@ class Parea:
         _init_parea_wrapper(logger_all_possible, self.cache)
 
     def completion(self, data: Completion) -> CompletionResponse:
+        parent_trace_id = get_current_trace_id()
         inference_id = gen_trace_id()
         data.inference_id = inference_id
+        data.parent_trace_id = parent_trace_id or inference_id
+
         r = self._client.request(
             "POST",
             COMPLETION_ENDPOINT,
             data=asdict(data),
         )
-        if parent_trace_id := get_current_trace_id():
+        if parent_trace_id:
             trace_data.get()[parent_trace_id].children.append(inference_id)
             logger_record_log(parent_trace_id)
         return CompletionResponse(**r.json())
 
     async def acompletion(self, data: Completion) -> CompletionResponse:
+        parent_trace_id = get_current_trace_id()
         inference_id = gen_trace_id()
         data.inference_id = inference_id
+        data.parent_trace_id = parent_trace_id or inference_id
+
         r = await self._client.request_async(
             "POST",
             COMPLETION_ENDPOINT,
             data=asdict(data),
         )
-        if parent_trace_id := get_current_trace_id():
+        if parent_trace_id:
             trace_data.get()[parent_trace_id].children.append(inference_id)
             logger_record_log(parent_trace_id)
         return CompletionResponse(**r.json())

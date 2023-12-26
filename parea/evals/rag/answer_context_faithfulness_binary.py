@@ -7,7 +7,7 @@ from parea.schemas.log import Log
 def answer_context_faithfulness_binary_factory(
     question_field: Optional[str] = "question",
     context_field: Optional[str] = "context",
-    model: Optional[str] = "gpt-4",
+    model: Optional[str] = "gpt-3.5-turbo-16k",
 ) -> Callable[[Log], float]:
     """Quantifies how much the generated answer can be inferred from the retrieved context."""
 
