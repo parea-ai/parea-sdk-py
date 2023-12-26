@@ -246,12 +246,33 @@ class OpenAIWrapper:
 
     @staticmethod
     def _format_function_call(response_message) -> str:
-        function_name = response_message["function_call"]["name"]
-        if isinstance(response_message["function_call"]["arguments"], OpenAIObject):
-            function_args = dict(response_message["function_call"]["arguments"])
-        else:
-            function_args = json.loads(response_message["function_call"]["arguments"])
-        return json.dumps({"name": function_name, "arguments": function_args}, indent=4)
+        def clean_json_string(s):
+            """If OpenAI responds with improper newlines and multiple quotes, this will clean it up"""
+            return json.dumps(s.replace("'", '"').replace("\\n", "\\\\n"))
+
+        if openai_version.startswith("0."):
+            function_name = response_message["function_call"]["name"]
+            if isinstance(response_message["function_call"]["arguments"], OpenAIObject):
+                function_args = dict(response_message["function_call"]["arguments"])
+            else:
+                function_args = json.loads(response_message["function_call"]["arguments"])
+            return json.dumps({"name": function_name, "arguments": function_args}, indent=4)
+
+        func_obj = response_message.function_call or response_message.tool_calls
+        calls = []
+        if not isinstance(func_obj, list):
+            func_obj = [func_obj]
+
+        for call in func_obj:
+            if call:
+                body = getattr(call, "function", None) or call
+                function_name = body.name
+                try:
+                    function_args = json.loads(body.arguments)
+                except json.decoder.JSONDecodeError:
+                    function_args = json.loads(clean_json_string(body.arguments))
+                calls.append(json.dumps({"name": function_name, "arguments": function_args}, indent=4))
+        return "\n".join(calls)
 
     @staticmethod
     def get_model_cost(model_name: str, is_completion: bool = False) -> float:
