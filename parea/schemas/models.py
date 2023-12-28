@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Optional, List
 
 from attrs import define, field, validators
 
@@ -109,6 +109,7 @@ class TraceLog(Log):
     end_user_identifier: Optional[str] = None
     metadata: Optional[dict[str, Any]] = None
     tags: Optional[list[str]] = None
+    experiment_uuid: Optional[str] = None
 
 
 @define
@@ -125,3 +126,35 @@ class CacheRequest:
 class UpdateLog:
     trace_id: str
     field_name_to_value_map: dict[str, Any]
+
+
+@define
+class CreateExperimentRequest:
+    name: str
+
+
+@define
+class Experiment(CreateExperimentRequest):
+    uuid: str
+    created_at: str
+
+
+@define
+class EvaluationScoreSchema(NamedEvaluationScore):
+    id: Optional[int] = None
+
+
+@define
+class TraceStatsSchema:
+    trace_id: str
+    latency: Optional[float] = 0.0
+    input_tokens: Optional[int] = 0
+    output_tokens: Optional[int] = 0
+    total_tokens: Optional[int] = 0
+    cost: Optional[float] = None
+    scores: Optional[List[EvaluationScoreSchema]] = None
+
+
+@define
+class ExperimentStatsSchema:
+    parent_trace_stats: List[TraceStatsSchema]

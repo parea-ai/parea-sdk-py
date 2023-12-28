@@ -1,3 +1,4 @@
+import os
 from typing import Any, Callable, Optional
 
 import contextvars
@@ -9,6 +10,7 @@ import time
 from collections import ChainMap
 from functools import wraps
 
+from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.helpers import gen_trace_id, to_date_and_time_string
 from parea.parea_logger import parea_logger
 from parea.schemas.models import NamedEvaluationScore, TraceLog
@@ -79,6 +81,7 @@ def trace(
             target=target,
             tags=tags,
             inputs=inputs,
+            experiment_uuid=os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None)
         )
         parent_trace_id = trace_context.get()[-2] if len(trace_context.get()) > 1 else None
         if parent_trace_id:
