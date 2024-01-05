@@ -32,3 +32,7 @@ def main():
         run_benchmark(args[1:])
     else:
         print(f"Unknown command: '{args[0]}'")
+
+
+if __name__ == "__main__":
+    main()

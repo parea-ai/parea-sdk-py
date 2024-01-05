@@ -12,9 +12,10 @@ from importlib import util
 from math import sqrt
 from typing import Dict, List
 
+from dotenv import load_dotenv
 from tqdm import tqdm
 
-from parea import Parea
+from parea.client import Parea
 from parea.cache.redis import RedisCache
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.helpers import write_trace_logs_to_csv
@@ -95,11 +96,13 @@ def run_benchmark(args):
     parser.add_argument("--redis_password", help="Redis password", type=str, default=None)
     parsed_args = parser.parse_args(args)
 
+    load_dotenv()
+
     fn = load_from_path(*parsed_args.func.rsplit(":", 1))
 
     data_inputs = read_input_file(parsed_args.csv_path)
 
-    if parea_api_key := os.getenv("PAREA_API_KEY") is None:
+    if not (parea_api_key := os.getenv("PAREA_API_KEY")):
         raise ValueError("Please set the PAREA_API_KEY environment variable")
     p = Parea(api_key=parea_api_key)
 
@@ -118,6 +121,7 @@ def run_benchmark(args):
         for _ in tqdm(concurrent.futures.as_completed(futures), total=len(futures)):
             pass
 
+        time.sleep(5)  # wait for all trace logs to be written to DB
         experiment_stats: ExperimentStatsSchema = p.get_experiment_stats(experiment.uuid)
         stat_name_to_avg_std = calculate_avg_std_for_experiment(experiment_stats)
         print(f"Experiment stats:\n{json.dumps(stat_name_to_avg_std, indent=2)}")

@@ -161,6 +161,8 @@ def make_output(result, islist) -> str:
     if islist:
         json_list = [json_dumps(r) for r in result]
         return json_dumps(json_list)
+    elif isinstance(result, str):
+        return result
     else:
         return json_dumps(result)
 
