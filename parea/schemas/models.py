@@ -134,7 +134,7 @@ class CreateExperimentRequest:
 
 
 @define
-class Experiment(CreateExperimentRequest):
+class ExperimentSchema(CreateExperimentRequest):
     uuid: str
     created_at: str
 

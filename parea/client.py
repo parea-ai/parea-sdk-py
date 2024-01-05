@@ -13,7 +13,7 @@ from parea.cache.cache import Cache
 from parea.helpers import gen_trace_id
 from parea.parea_logger import parea_logger
 from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, UseDeployedPrompt, \
-    UseDeployedPromptResponse, CreateExperimentRequest, Experiment, ExperimentStatsSchema
+    UseDeployedPromptResponse, CreateExperimentRequest, ExperimentSchema, ExperimentStatsSchema
 from parea.utils.trace_utils import get_current_trace_id, logger_all_possible, logger_record_log, trace_data
 from parea.wrapper import OpenAIWrapper
 
@@ -102,21 +102,21 @@ class Parea:
             data=asdict(data),
         )
 
-    def create_experiment(self, data: CreateExperimentRequest) -> Experiment:
+    def create_experiment(self, data: CreateExperimentRequest) -> ExperimentSchema:
         r = self._client.request(
             "POST",
             EXPERIMENT_ENDPOINT,
             data=asdict(data),
         )
-        return structure(r.json(), Experiment)
+        return structure(r.json(), ExperimentSchema)
 
-    async def acreate_experiment(self, data: CreateExperimentRequest) -> Experiment:
+    async def acreate_experiment(self, data: CreateExperimentRequest) -> ExperimentSchema:
         r = await self._client.request_async(
             "POST",
             EXPERIMENT_ENDPOINT,
             data=asdict(data),
         )
-        return structure(r.json(), Experiment)
+        return structure(r.json(), ExperimentSchema)
 
     def get_experiment_stats(self, experiment_uuid: str) -> ExperimentStatsSchema:
         r = self._client.request(
