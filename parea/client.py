@@ -21,7 +21,7 @@ COMPLETION_ENDPOINT = "/completion"
 DEPLOYED_PROMPT_ENDPOINT = "/deployed-prompt"
 RECORD_FEEDBACK_ENDPOINT = "/feedback"
 EXPERIMENT_ENDPOINT = "/experiment"
-EXPERIMENT_STATS_ENDPOINT = "/experiment/stats/{experiment_uuid}"
+EXPERIMENT_STATS_ENDPOINT = "/experiment/{experiment_uuid}/stats"
 
 
 @define

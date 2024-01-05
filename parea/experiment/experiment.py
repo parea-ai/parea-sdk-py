@@ -61,7 +61,7 @@ def experiment(name: str, data: Iterator, func: Callable):
     experiment_schema: ExperimentSchema = p.create_experiment(CreateExperimentRequest(name=name))
     os.putenv(PAREA_OS_ENV_EXPERIMENT_UUID, experiment_schema.uuid)
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=os.cpu_count() or 1) as executor:
         if inspect.iscoroutinefunction(func):
             futures = [executor.submit(async_wrapper, func, **data_input) for data_input in data]
         else:
