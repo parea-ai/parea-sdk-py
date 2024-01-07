@@ -81,7 +81,7 @@ def trace(
             target=target,
             tags=tags,
             inputs=inputs,
-            experiment_uuid=os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None),
+            experiment_uuid=os.environ.get(PAREA_OS_ENV_EXPERIMENT_UUID, None),
         )
         parent_trace_id = trace_context.get()[-2] if len(trace_context.get()) > 1 else None
         if parent_trace_id:
