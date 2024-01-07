@@ -59,7 +59,8 @@ def experiment(name: str, data: Iterator, func: Callable):
     p = Parea(api_key=parea_api_key)
 
     experiment_schema: ExperimentSchema = p.create_experiment(CreateExperimentRequest(name=name))
-    os.putenv(PAREA_OS_ENV_EXPERIMENT_UUID, experiment_schema.uuid)
+    experiment_uuid = experiment_schema.uuid
+    os.putenv(PAREA_OS_ENV_EXPERIMENT_UUID, experiment_uuid)
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=os.cpu_count() or 1) as executor:
         if inspect.iscoroutinefunction(func):
@@ -70,6 +71,7 @@ def experiment(name: str, data: Iterator, func: Callable):
             pass
 
         time.sleep(5)  # wait for all trace logs to be written to DB
-        experiment_stats: ExperimentStatsSchema = p.get_experiment_stats(experiment_schema.uuid)
+        experiment_stats: ExperimentStatsSchema = p.get_experiment_stats(experiment_uuid)
         stat_name_to_avg_std = calculate_avg_std_for_experiment(experiment_stats)
-        print(f"Experiment stats:\n{json.dumps(stat_name_to_avg_std, indent=2)}")
+        print(f"Experiment stats:\n{json.dumps(stat_name_to_avg_std, indent=2)}\n\n")
+        print(f"View experiment & its traces at: https://app.parea.ai/experiments/{experiment_uuid}\n")
