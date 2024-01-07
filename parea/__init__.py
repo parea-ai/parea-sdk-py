@@ -13,8 +13,8 @@ from importlib import metadata as importlib_metadata
 
 from parea.cache import InMemoryCache, RedisCache
 from parea.client import Parea, init
-from parea.experiment.experiment import Experiment
 from parea.experiment.cli import experiment as experiment_cli
+from parea.experiment.experiment import Experiment
 
 
 def get_version() -> str:
