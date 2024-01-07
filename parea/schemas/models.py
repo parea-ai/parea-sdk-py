@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from attrs import define, field, validators
 
@@ -16,7 +16,7 @@ class Completion:
     deployment_id: Optional[str] = None
     name: Optional[str] = None
     metadata: Optional[dict] = None
-    tags: Optional[list[str]] = None
+    tags: Optional[list[str]] = field(factory=list)
     target: Optional[str] = None
     cache: bool = True
     log_omit_inputs: bool = False
@@ -96,8 +96,8 @@ class TraceLog(Log):
     deployment_id: Optional[str] = None
     cache_hit: bool = False
     output_for_eval_metrics: Optional[str] = None
-    evaluation_metric_names: Optional[list[str]] = None
-    scores: Optional[list[NamedEvaluationScore]] = None
+    evaluation_metric_names: Optional[list[str]] = field(factory=list)
+    scores: Optional[list[NamedEvaluationScore]] = field(factory=list)
     feedback_score: Optional[float] = None
 
     # info filled from decorator
@@ -108,12 +108,13 @@ class TraceLog(Log):
     end_timestamp: Optional[str] = None
     end_user_identifier: Optional[str] = None
     metadata: Optional[dict[str, Any]] = None
-    tags: Optional[list[str]] = None
+    tags: Optional[list[str]] = field(factory=list)
+    experiment_uuid: Optional[str] = None
 
 
 @define
 class TraceLogTree(TraceLog):
-    children: Optional[list[TraceLog]] = None
+    children: Optional[list[TraceLog]] = field(factory=list)
 
 
 @define
@@ -125,3 +126,35 @@ class CacheRequest:
 class UpdateLog:
     trace_id: str
     field_name_to_value_map: dict[str, Any]
+
+
+@define
+class CreateExperimentRequest:
+    name: str
+
+
+@define
+class ExperimentSchema(CreateExperimentRequest):
+    uuid: str
+    created_at: str
+
+
+@define
+class EvaluationScoreSchema(NamedEvaluationScore):
+    id: Optional[int] = None
+
+
+@define
+class TraceStatsSchema:
+    trace_id: str
+    latency: Optional[float] = 0.0
+    input_tokens: Optional[int] = 0
+    output_tokens: Optional[int] = 0
+    total_tokens: Optional[int] = 0
+    cost: Optional[float] = None
+    scores: Optional[List[EvaluationScoreSchema]] = field(factory=list)
+
+
+@define
+class ExperimentStatsSchema:
+    parent_trace_stats: List[TraceStatsSchema] = field(factory=list)

@@ -5,19 +5,31 @@ import os
 import time
 
 from attrs import asdict, define, field
+from cattrs import structure
 
 from parea.api_client import HTTPClient
 from parea.cache import InMemoryCache, RedisCache
 from parea.cache.cache import Cache
 from parea.helpers import gen_trace_id
 from parea.parea_logger import parea_logger
-from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, UseDeployedPrompt, UseDeployedPromptResponse
+from parea.schemas.models import (
+    Completion,
+    CompletionResponse,
+    CreateExperimentRequest,
+    ExperimentSchema,
+    ExperimentStatsSchema,
+    FeedbackRequest,
+    UseDeployedPrompt,
+    UseDeployedPromptResponse,
+)
 from parea.utils.trace_utils import get_current_trace_id, logger_all_possible, logger_record_log, trace_data
 from parea.wrapper import OpenAIWrapper
 
 COMPLETION_ENDPOINT = "/completion"
 DEPLOYED_PROMPT_ENDPOINT = "/deployed-prompt"
 RECORD_FEEDBACK_ENDPOINT = "/feedback"
+EXPERIMENT_ENDPOINT = "/experiment"
+EXPERIMENT_STATS_ENDPOINT = "/experiment/{experiment_uuid}/stats"
 
 
 @define
@@ -48,7 +60,7 @@ class Parea:
         if parent_trace_id:
             trace_data.get()[parent_trace_id].children.append(inference_id)
             logger_record_log(parent_trace_id)
-        return CompletionResponse(**r.json())
+        return structure(r.json(), CompletionResponse)
 
     async def acompletion(self, data: Completion) -> CompletionResponse:
         parent_trace_id = get_current_trace_id()
@@ -64,7 +76,7 @@ class Parea:
         if parent_trace_id:
             trace_data.get()[parent_trace_id].children.append(inference_id)
             logger_record_log(parent_trace_id)
-        return CompletionResponse(**r.json())
+        return structure(r.json(), CompletionResponse)
 
     def get_prompt(self, data: UseDeployedPrompt) -> UseDeployedPromptResponse:
         r = self._client.request(
@@ -72,7 +84,7 @@ class Parea:
             DEPLOYED_PROMPT_ENDPOINT,
             data=asdict(data),
         )
-        return UseDeployedPromptResponse(**r.json())
+        return structure(r.json(), UseDeployedPromptResponse)
 
     async def aget_prompt(self, data: UseDeployedPrompt) -> UseDeployedPromptResponse:
         r = await self._client.request_async(
@@ -80,7 +92,7 @@ class Parea:
             DEPLOYED_PROMPT_ENDPOINT,
             data=asdict(data),
         )
-        return UseDeployedPromptResponse(**r.json())
+        return structure(r.json(), UseDeployedPromptResponse)
 
     def record_feedback(self, data: FeedbackRequest) -> None:
         time.sleep(2)  # give logs time to update
@@ -97,6 +109,36 @@ class Parea:
             RECORD_FEEDBACK_ENDPOINT,
             data=asdict(data),
         )
+
+    def create_experiment(self, data: CreateExperimentRequest) -> ExperimentSchema:
+        r = self._client.request(
+            "POST",
+            EXPERIMENT_ENDPOINT,
+            data=asdict(data),
+        )
+        return structure(r.json(), ExperimentSchema)
+
+    async def acreate_experiment(self, data: CreateExperimentRequest) -> ExperimentSchema:
+        r = await self._client.request_async(
+            "POST",
+            EXPERIMENT_ENDPOINT,
+            data=asdict(data),
+        )
+        return structure(r.json(), ExperimentSchema)
+
+    def get_experiment_stats(self, experiment_uuid: str) -> ExperimentStatsSchema:
+        r = self._client.request(
+            "GET",
+            EXPERIMENT_STATS_ENDPOINT.format(experiment_uuid=experiment_uuid),
+        )
+        return structure(r.json(), ExperimentStatsSchema)
+
+    async def aget_experiment_stats(self, experiment_uuid: str) -> ExperimentStatsSchema:
+        r = await self._client.request_async(
+            "GET",
+            EXPERIMENT_STATS_ENDPOINT.format(experiment_uuid=experiment_uuid),
+        )
+        return structure(r.json(), ExperimentStatsSchema)
 
 
 _initialized_parea_wrapper = False

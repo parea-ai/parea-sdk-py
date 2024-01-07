@@ -4,11 +4,13 @@ import contextvars
 import inspect
 import json
 import logging
+import os
 import threading
 import time
 from collections import ChainMap
 from functools import wraps
 
+from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.helpers import gen_trace_id, to_date_and_time_string
 from parea.parea_logger import parea_logger
 from parea.schemas.models import NamedEvaluationScore, TraceLog
@@ -79,6 +81,7 @@ def trace(
             target=target,
             tags=tags,
             inputs=inputs,
+            experiment_uuid=os.environ.get(PAREA_OS_ENV_EXPERIMENT_UUID, None),
         )
         parent_trace_id = trace_context.get()[-2] if len(trace_context.get()) > 1 else None
         if parent_trace_id:
@@ -158,6 +161,8 @@ def make_output(result, islist) -> str:
     if islist:
         json_list = [json_dumps(r) for r in result]
         return json_dumps(json_list)
+    elif isinstance(result, str):
+        return result
     else:
         return json_dumps(result)
 

@@ -1,12 +1,14 @@
-from typing import Any, Callable, List, Tuple
+from typing import Any, Callable
 
 import functools
 import inspect
+import os
 import time
 from collections.abc import AsyncIterator, Iterator
 from uuid import uuid4
 
 from parea.cache.cache import Cache
+from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.helpers import date_and_time_string_to_timestamp
 from parea.schemas.models import TraceLog
 from parea.utils.trace_utils import call_eval_funcs_then_log, to_date_and_time_string, trace_context, trace_data
@@ -70,6 +72,7 @@ class Wrapper:
             target=None,
             tags=None,
             inputs={},
+            experiment_uuid=os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None),
         )
 
         parent_trace_id = trace_context.get()[-2] if len(trace_context.get()) > 1 else None
