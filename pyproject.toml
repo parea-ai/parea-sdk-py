@@ -43,6 +43,7 @@ contextvars = "^2.4"
 openai = "*"
 redis = "^5.0.1"
 pysbd = "^0.3.4"
+cattrs = ">=22.1.0"
 
 [tool.poetry.dev-dependencies]
 bandit = "^1.7.1"
