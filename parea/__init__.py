@@ -11,9 +11,9 @@
 import sys
 from importlib import metadata as importlib_metadata
 
-from parea.experiment.cli import experiment
 from parea.cache import InMemoryCache, RedisCache
 from parea.client import Parea, init
+from parea.experiment.cli import experiment
 
 
 def get_version() -> str:

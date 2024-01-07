@@ -1,3 +1,5 @@
+from typing import Callable, Dict, Iterator, List
+
 import asyncio
 import concurrent
 import inspect
@@ -5,7 +7,6 @@ import json
 import os
 import time
 from math import sqrt
-from typing import Dict, List, Callable, Iterator
 
 from dotenv import load_dotenv
 from tqdm import tqdm
@@ -43,7 +44,7 @@ def calculate_avg_std_for_experiment(experiment_stats: ExperimentStatsSchema) ->
         "output_tokens": calculate_avg_std_as_string(output_tokens_values),
         "total_tokens": calculate_avg_std_as_string(total_tokens_values),
         "cost": calculate_avg_std_as_string(cost_values),
-        **{score_name: calculate_avg_std_as_string(score_values) for score_name, score_values in score_name_to_values.items()}
+        **{score_name: calculate_avg_std_as_string(score_values) for score_name, score_values in score_name_to_values.items()},
     }
 
 

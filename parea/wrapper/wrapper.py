@@ -1,8 +1,8 @@
-import os
-from typing import Any, Callable, List, Tuple
+from typing import Any, Callable
 
 import functools
 import inspect
+import os
 import time
 from collections.abc import AsyncIterator, Iterator
 from uuid import uuid4
@@ -72,7 +72,7 @@ class Wrapper:
             target=None,
             tags=None,
             inputs={},
-            experiment_uuid=os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None)
+            experiment_uuid=os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None),
         )
 
         parent_trace_id = trace_context.get()[-2] if len(trace_context.get()) > 1 else None

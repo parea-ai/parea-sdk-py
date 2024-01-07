@@ -12,8 +12,16 @@ from parea.cache import InMemoryCache, RedisCache
 from parea.cache.cache import Cache
 from parea.helpers import gen_trace_id
 from parea.parea_logger import parea_logger
-from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest, UseDeployedPrompt, \
-    UseDeployedPromptResponse, CreateExperimentRequest, ExperimentSchema, ExperimentStatsSchema
+from parea.schemas.models import (
+    Completion,
+    CompletionResponse,
+    CreateExperimentRequest,
+    ExperimentSchema,
+    ExperimentStatsSchema,
+    FeedbackRequest,
+    UseDeployedPrompt,
+    UseDeployedPromptResponse,
+)
 from parea.utils.trace_utils import get_current_trace_id, logger_all_possible, logger_record_log, trace_data
 from parea.wrapper import OpenAIWrapper
 
