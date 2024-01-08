@@ -25,6 +25,7 @@ def likert_scale_factory(
         Callable[[Log], float]: A function that takes a log as input and returns a score between 0 and 1 indicating
         the quality of the summary on a Likert scale from 1-5 along the dimensions of relevance, consistency, fluency, and coherence.
     """
+
     def likert_scale(log: Log) -> float:
         article = log.inputs[article_field]
         output = log.output

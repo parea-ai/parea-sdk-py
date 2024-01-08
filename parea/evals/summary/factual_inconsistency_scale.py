@@ -24,6 +24,7 @@ def factual_inconsistency_scale_factory(
         Callable[[Log], float]: A function that takes a log as input and returns a score between 0 and 1 indicating
         if the generated summary is factually consistent with the original text.
     """
+
     def factual_inconsistency_scale(log: Log) -> float:
         article = log.inputs[article_field]
         output = log.output

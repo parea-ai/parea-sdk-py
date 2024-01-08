@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Iterable
+from typing import Callable, Dict, Iterable, List
 
 import asyncio
 import inspect
