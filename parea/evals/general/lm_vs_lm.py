@@ -5,8 +5,21 @@ from parea.schemas.log import Log
 
 
 def lm_vs_lm_factuality_factory(examiner_model: str = "gpt-3.5-turbo") -> Callable[[Log], float]:
-    """Using an examining LLM, measures the factuality of a claim. Examining LLM asks follow-up questions to the other
-    LLM until it reaches a conclusion."""
+    """
+    This factory creates an evaluation function that measures the factuality of an LLM's response to a given question.
+    It is based on the paper [LM vs LM: Detecting Factual Errors via Cross Examination](https://arxiv.org/abs/2305.13281) which proposes using
+    another LLM to assess an LLM response's factuality. To do this, the examining LLM generates follow-up questions to the
+    original response until it can confidently determine the factuality of the response.
+    This method outperforms prompting techniques such as asking the original model, "Are you sure?" or instructing the
+    model to say, "I don't know," if it is uncertain.
+
+    Args:
+        examiner_model: The model which will examine the original model. Currently, only supports OpenAI chat models.
+
+    Returns:
+        Callable[[Log], float]: A function that takes a log as input and returns a score between 0 and 1 indicating
+        the factuality of the response.
+    """
 
     def lm_vs_lm_factuality(log: Log) -> float:
         output = log.output

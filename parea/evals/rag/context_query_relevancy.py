@@ -5,7 +5,20 @@ from parea.schemas.log import Log
 
 
 def context_query_relevancy_factory(question_field: str = "question", context_fields: List[str] = ["context"]) -> Callable[[Log], float]:
-    """Quantifies how much the retrieved context relates to the query."""
+    """
+    This factory creates an evaluation function that measures how relevant the retrieved context is to the given question.
+    It is based on the paper [RAGAS: Automated Evaluation of Retrieval Augmented Generation](https://arxiv.org/abs/2309.15217)
+    which suggests using an LLM to extract any sentence from the retrieved context relevant to the query. Then, calculate
+    the ratio of relevant sentences to the total number of sentences in the retrieved context.
+
+    Args:
+        question_field: The key name/field used for the question/query of the user. Defaults to "question".
+        context_fields: A list of key names/fields used for the retrieved contexts. Defaults to ["context"].
+
+    Returns:
+        Callable[[Log], float]: A function that takes a log as input and returns a score between 0 and 1 indicating
+        if the retrieved context is relevant to the query.
+    """
 
     def context_query_relevancy(log: Log) -> float:
         """Quantifies how much the retrieved context relates to the query."""

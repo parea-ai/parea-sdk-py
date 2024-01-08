@@ -5,7 +5,22 @@ from parea.schemas.log import Log
 
 
 def context_ranking_pointwise_factory(question_field: str = "question", context_fields: List[str] = ["context"], ranking_measurement="average_precision") -> Callable[[Log], float]:
-    """Quantifies if the retrieved context is ranked by their relevancy"""
+    """
+    This factory creates an evaluation function that measures how well the retrieved contexts are ranked by relevancy to the given query
+    by pointwise estimation of the relevancy of every context to the query. It is based on the paper
+    [RAGAS: Automated Evaluation of Retrieval Augmented Generation](https://arxiv.org/abs/2309.15217) which suggests using an LLM
+    to check if every extracted context is relevant. Then, they measure how well the contexts are ranked by calculating the
+    mean average precision. Note that this approach considers any two relevant contexts equally important/relevant to the query.
+
+    Args:
+        question_field: The key name/field used for the question/query of the user. Defaults to "question".
+        context_fields: A list of key names/fields used for the retrieved contexts. Defaults to ["context"].
+        ranking_measurement: Method to calculate ranking. Currently, only supports "average_precision".
+
+    Returns:
+        Callable[[Log], float]: A function that takes a log as input and returns a score between 0 and 1 indicating
+        how well the retrieved context is ranked by their relevancy.
+    """
     try:
         import numpy as np
     except ImportError:

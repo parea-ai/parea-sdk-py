@@ -5,7 +5,20 @@ from parea.schemas.log import Log
 
 
 def answer_context_faithfulness_statement_level_factory(question_field: str = "question", context_fields: List[str] = ["context"]) -> Callable[[Log], float]:
-    """Quantifies how much the generated answer can be inferred from the retrieved context."""
+    """
+    This factory creates an evaluation function that measures the faithfulness of the generated answer to the given context
+    by measuring how many statements from the generated answer can be inferred from the given context. It is based on the paper
+    [RAGAS: Automated Evaluation of Retrieval Augmented Generation](https://arxiv.org/abs/2309.15217) which suggests using an LLM
+    to create a list of all statements in the generated answer and assessing whether the given context supports each statement.
+
+    Args:
+        question_field: The key name/field used for the question/query of the user. Defaults to "question".
+        context_fields: A list of key names/fields used for the retrieved contexts. Defaults to ["context"].
+
+    Returns:
+        Callable[[Log], float]: A function that takes a log as input and returns a score between 0 and 1 indicating
+        if the retrieved context is relevant to the query.
+    """
 
     def answer_context_faithfulness_statement_level(log: Log) -> float:
         """Quantifies how much the generated answer can be inferred from the retrieved context."""

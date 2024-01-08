@@ -10,6 +10,21 @@ def likert_scale_factory(
     article_field: Optional[str] = "article",
     model: Optional[str] = "gpt-4",
 ) -> Callable[[Log], float]:
+    """
+    This factory creates an evaluation function that grades the quality of a summary on a Likert scale from 1-5 along
+    the dimensions of relevance, consistency, fluency, and coherence. It is based on the paper
+    [Human-like Summarization Evaluation with ChatGPT](https://arxiv.org/abs/2304.02554) which finds that using `gpt-3.5-0301`
+    leads to a highest correlation with human expert judgment when grading summaries on a Likert scale from 1-5 than baseline
+    methods. Noteworthy is that [BARTScore](https://arxiv.org/abs/2106.11520) was very competitive to `gpt-3.5-0301`.
+
+    Args:
+        article_field: The key name/field used for the content which should be summarized. Defaults to "article".
+        model: The model which should be used for grading. Currently, only supports OpenAI chat models. Defaults to "gpt-4".
+
+    Returns:
+        Callable[[Log], float]: A function that takes a log as input and returns a score between 0 and 1 indicating
+        the quality of the summary on a Likert scale from 1-5 along the dimensions of relevance, consistency, fluency, and coherence.
+    """
     def likert_scale(log: Log) -> float:
         article = log.inputs[article_field]
         output = log.output

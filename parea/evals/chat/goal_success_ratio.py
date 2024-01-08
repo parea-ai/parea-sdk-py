@@ -7,7 +7,16 @@ from parea.schemas.log import Log
 
 
 def goal_success_ratio_factory(use_output: Optional[bool] = False, message_field: Optional[str] = None) -> Callable[[Log], float]:
-    """Factory function that returns a function that calculates the goal success ratio of a log.
+    """
+    This factory creates an evaluation function that measures the success ratio of a goal-oriented conversation.
+    Typically, a user interacts with a chatbot or AI assistant to achieve specific goals.
+    This motivates to measure the quality of a chatbot by counting how many messages a user has to send before they reach their goal.
+    One can further break this down by successful and unsuccessful goals to analyze user & LLM behavior.
+
+    Concretely:
+    1. Delineate the conversation into segments by splitting them by the goals the user wants to achieve.
+    2. Assess if every goal has been reached.
+    3. Calculate the average number of messages sent per segment.
 
     Args:
         use_output (Optional[bool], optional): Whether to use the output of the log to access the messages. Defaults to False.
