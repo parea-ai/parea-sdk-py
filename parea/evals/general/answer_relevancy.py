@@ -5,7 +5,23 @@ from parea.schemas.log import Log
 
 
 def answer_relevancy_factory(question_field: str = "question", n_generations: int = 3) -> Callable[[Log], float]:
-    """Quantifies how much the generated answer relates to the query."""
+    """
+    This factory creates an evaluation function that measures how relevant the generated response is to the given question.
+    It is based on the paper [RAGAS: Automated Evaluation of Retrieval Augmented Generation](https://arxiv.org/abs/2309.15217)
+    which suggests using an LLM to generate multiple questions that fit the generated answer and measure the cosine
+    similarity of the generated questions with the original one.
+
+    Args:
+        question_field: The key name/field used for the question/query of the user. Defaults to "question".
+        n_generations: The number of questions which should be generated. Defaults to 3.
+
+    Returns:
+        Callable[[Log], float]: A function that takes a log as input and returns a score between 0 and 1 indicating
+        if the generated response is relevant to the query.
+
+    Raises:
+        ImportError: If numpy is not installed.
+    """
     try:
         import numpy as np
     except ImportError:

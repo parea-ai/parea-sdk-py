@@ -9,7 +9,21 @@ def answer_context_faithfulness_binary_factory(
     context_field: Optional[str] = "context",
     model: Optional[str] = "gpt-3.5-turbo-16k",
 ) -> Callable[[Log], float]:
-    """Quantifies how much the generated answer can be inferred from the retrieved context."""
+    """
+    This factory creates an evaluation function that classifies if the generated answer was faithful to the given context.
+    It is based on the paper [Evaluating Correctness and Faithfulness of Instruction-Following Models for Question Answering](https://arxiv.org/abs/2307.16877)
+    which suggests using an LLM to flag any information in the generated answer that cannot be deduced from the given context.
+    They find that GPT-4 is the best model for this analysis as measured by correlation with human judgment.
+
+    Args:
+        question_field: The key name/field used for the question/query of the user. Defaults to "question".
+        context_field: The key name/field used for the retrieved context. Defaults to "context".
+        model: The model which should be used for grading. Currently, only supports OpenAI chat models. Defaults to "gpt-4".
+
+    Returns:
+        Callable[[Log], float]: A function that takes a log as input and returns a score between 0 and 1 indicating
+        if the generated answer was faithful to the given context.
+    """
 
     def answer_context_faithfulness_binary(log: Log) -> float:
         question = log.inputs[question_field]

@@ -14,6 +14,8 @@ Parea python sdk
 
 </div>
 
+[Python SDK Docs](https://docs.parea.ai/sdk/python)
+
 ## Installation
 
 ```bash
@@ -47,11 +49,10 @@ Alternatively, you can add the following code to your codebase to get started:
 
 ```python
 import os
-from parea import init, InMemoryCache
+from parea import Parea, InMemoryCache, trace
 from parea.schemas.log import Log
-from parea.utils.trace_utils import trace
 
-init(api_key=os.getenv("PAREA_API_KEY"), cache=InMemoryCache())  # use InMemoryCache if you don't have a Parea API key
+Parea(api_key=os.getenv("PAREA_API_KEY"), cache=InMemoryCache())  # use InMemoryCache if you don't have a Parea API key
 
 
 def locally_defined_eval_function(log: Log) -> float:
@@ -63,6 +64,32 @@ def function_to_evaluate(*args, **kwargs) -> ...:
   ...
 ```
 
+### Run Experiments
+
+You can run an experiment for your LLM application by defining the `Experiment` class and passing it the name, the data and the
+function you want to run. You need annotate the function with the `trace` decorator to trace its inputs, outputs, latency, etc.
+as well as to specify which evaluation functions should be applied to it (as shown above).
+
+```python
+from parea import Experiment
+
+Experiment(
+    name="Experiment Name",        # Name of the experiment (str)
+    data=[{"n": "10"}],            # Data to run the experiment on (list of dicts)
+    func=function_to_evaluate,     # Function to run (callable)
+)
+```
+
+Then you can run the experiment by using the `experiment` command and give it the path to the python file.
+This will run your experiment with the specified inputs and create a report with the results which can be viewed under
+the [Experiments tab](https://app.parea.ai/experiments).
+
+```bash
+parea experiment <path/to/experiment_file.py>
+```
+
+Full working example in our [docs](https://docs.parea.ai/testing/run-experiments).
+
 ## Debugging Chains & Agents
 
 You can iterate on your chains & agents much faster by using a local cache. This will allow you to make changes to your
@@ -71,26 +98,26 @@ code and start
 [a local redis cache](https://redis.io/docs/getting-started/install-stack/):
 
 ```python
-from parea import init, RedisCache
+from parea import Parea, RedisCache
 
-init(cache=RedisCache())
+Parea(cache=RedisCache())
 ```
 
 Above will use the default redis cache at `localhost:6379` with no password. You can also specify your redis database
 by:
 
 ```python
-from parea import init, RedisCache
+from parea import Parea, RedisCache
 
 cache = RedisCache(
   host=os.getenv("REDIS_HOST", "localhost"),  # default value
   port=int(os.getenv("REDIS_PORT", 6379)),  # default value
   password=os.getenv("REDIS_PASSWORT", None)  # default value
 )
-init(cache=cache)
+Parea(cache=cache)
 ```
 
-If you set `cache = None` for `init`, no cache will be used.
+If you set `cache = None` for `Parea`, no cache will be used.
 
 ### Benchmark your LLM app across many inputs
 
@@ -109,15 +136,15 @@ redis cache running. Please, raise a GitHub issue if you would like to use this 
 ### Automatically log all your LLM call traces
 
 You can automatically log all your LLM traces to the Parea dashboard by setting the `PAREA_API_KEY` environment variable
-or specifying it in the `init` function.
+or specifying it in the `Parea` initialization.
 This will help you debug issues your customers are facing by stepping through the LLM call traces and recreating the
 issue
 in your local setup & code.
 
 ```python
-from parea import init
+from parea import Parea
 
-init(
+Parea(
   api_key=os.getenv("PAREA_API_KEY"),  # default value
   cache=...
 )

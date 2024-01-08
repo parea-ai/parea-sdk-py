@@ -34,9 +34,9 @@ EXPERIMENT_STATS_ENDPOINT = "/experiment/{experiment_uuid}/stats"
 
 @define
 class Parea:
-    api_key: str = field(init=True, default="")
-    _client: HTTPClient = field(init=False, default=HTTPClient())
+    api_key: str = field(init=True, default=os.getenv("PAREA_API_KEY"))
     cache: Cache = field(init=True, default=None)
+    _client: HTTPClient = field(init=False, default=HTTPClient())
 
     def __attrs_post_init__(self):
         self._client.set_api_key(self.api_key)
@@ -142,10 +142,6 @@ class Parea:
 
 
 _initialized_parea_wrapper = False
-
-
-def init(api_key: str = os.getenv("PAREA_API_KEY"), cache: Cache = None) -> None:
-    Parea(api_key=api_key, cache=cache)
 
 
 def _init_parea_wrapper(log: Callable = None, cache: Cache = None):

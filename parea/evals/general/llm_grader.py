@@ -11,7 +11,23 @@ one_score_pattern_backup = re.compile("\[(\d+\.?\d*)\]")
 
 
 def llm_grader_factory(model: str, question_field: str = "question") -> Callable[[Log], float]:
-    """Measures the generated response quality by using a LLM on a scale of 1 to 10."""
+    """
+    This factory creates an evaluation function that uses an LLM to grade the response of an LLM to a given question.
+    It is based on the paper [Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena](https://arxiv.org/abs/2306.05685)
+    which intorduces general-purpose zero-shot prompt to rate responses from an LLM to a given question on a scale from 1-10.
+    They find that GPT-4's ratings agree as much with a human rater as a human annotator agrees with another one (>80%).
+    Further, they observe that the agreement with a human annotator increases as the response rating gets clearer.
+    Additionally, they investigated how much the evaluating LLM overestimated its responses and found that GPT-4 and
+    Claude-1 were the only models that didn't overestimate themselves.
+
+    Args:
+        model: The model which should be used for grading. Currently, only supports OpenAI chat models.
+        question_field: The key name/field used for the question/query of the user. Defaults to "question".
+
+    Returns:
+        Callable[[Log], float]: A function that takes a log as input and returns a score between 0 and 1 which is the
+        rating of the response on a scale from 1-10 divided by 10.
+    """
 
     def llm_grader(log: Log) -> float:
         question = log.inputs[question_field]

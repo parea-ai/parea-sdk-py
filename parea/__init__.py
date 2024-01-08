@@ -12,9 +12,10 @@ import sys
 from importlib import metadata as importlib_metadata
 
 from parea.cache import InMemoryCache, RedisCache
-from parea.client import Parea, init
-from parea.experiment.cli import experiment as experiment_cli
+from parea.client import Parea
+from parea.experiment.cli import experiment as _experiment_cli
 from parea.experiment.experiment import Experiment
+from parea.utils.trace_utils import trace
 
 
 def get_version() -> str:
@@ -30,7 +31,7 @@ version: str = get_version()
 def main():
     args = sys.argv[1:]
     if args[0] == "experiment":
-        experiment_cli(args[1:])
+        _experiment_cli(args[1:])
     else:
         print(f"Unknown command: '{args[0]}'")
 

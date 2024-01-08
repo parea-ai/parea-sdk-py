@@ -3,7 +3,23 @@ from parea.schemas.log import Log
 
 
 def self_check(log: Log) -> float:
-    """Measures how consistent is the output of a model under resampling the response."""
+    """
+    Given that many API-based LLMs don't reliably give access to the log probabilities of the generated tokens, assessing
+    the certainty of LLM predictions via perplexity isn't possible.
+    The [SelfCheckGPT: Zero-Resource Black-Box Hallucination Detection for Generative Large Language Models](https://arxiv.org/abs/2303.08896) paper
+    suggests measuring the average factuality of every sentence in a generated response. They generate additional responses
+    from the LLM at a high temperature and check how much every sentence in the original answer is supported by the other generations.
+    The intuition behind this is that if the LLM knows a fact, it's more likely to sample it. The authors find that this
+    works well in detecting non-factual and factual sentences and ranking passages in terms of factuality.
+    The authors noted that correlation with human judgment doesn't increase after 4-6 additional
+    generations when using `gpt-3.5-turbo` to evaluate biography generations.
+
+    Args:
+        log (Log): The log object to of the trace evaluate.
+
+    Returns:
+        float: A score between 0 and 1 indicating the factuality of the response.
+    """
     if log.configuration is None or log.configuration.messages is None:
         return 0.0
 

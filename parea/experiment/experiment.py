@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Iterator, List
+from typing import Callable, Dict, Iterable, List
 
 import asyncio
 import inspect
@@ -50,7 +50,7 @@ def async_wrapper(fn, **kwargs):
     return asyncio.run(fn(**kwargs))
 
 
-def experiment(name: str, data: Iterator, func: Callable) -> ExperimentStatsSchema:
+def experiment(name: str, data: Iterable[Dict], func: Callable) -> ExperimentStatsSchema:
     """Creates an experiment and runs the function on the data iterator."""
     load_dotenv()
 
@@ -81,7 +81,7 @@ _experiments = []
 @define
 class Experiment:
     name: str = field(init=True)
-    data: Iterator[Dict] = field(init=True)
+    data: Iterable[Dict] = field(init=True)
     func: Callable = field(init=True)
     experiment_stats: ExperimentStatsSchema = field(init=False, default=None)
 

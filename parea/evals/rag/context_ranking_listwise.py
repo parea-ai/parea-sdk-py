@@ -10,9 +10,12 @@ def context_ranking_listwise_factory(
     ranking_measurement="ndcg",
     n_contexts_to_rank=10,
 ) -> Callable[[Log], float]:
-    """Quantifies if the retrieved context is ranked by their relevancy by re-ranking the contexts.
-
-    Paper: https://arxiv.org/abs/2305.02156
+    """
+    This factory creates an evaluation function that measures how well the retrieved contexts are ranked by relevancy to the given query
+    by listwise estimation of the relevancy of every context to the query. It is based on the paper
+    [Zero-Shot Listwise Document Reranking with a Large Language Model](https://arxiv.org/abs/2305.02156) which suggests using an LLM
+    to rerank a list of contexts and use that to evaluate how well the contexts are ranked by relevancy to the given query.
+    The authors used a progressive listwise reordering if the retrieved contexts don't fit into the context window of the LLM.
 
     Args:
         question_field (str): The name of the field in the log that contains the question. Defaults to "question".
