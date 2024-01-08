@@ -6,6 +6,7 @@ import time
 
 from attrs import asdict, define, field
 from cattrs import structure
+from openai import OpenAI
 
 from parea.api_client import HTTPClient
 from parea.cache import InMemoryCache, RedisCache
@@ -45,6 +46,9 @@ class Parea:
         if isinstance(self.cache, (RedisCache, InMemoryCache)):
             parea_logger.set_redis_cache(self.cache)
         _init_parea_wrapper(logger_all_possible, self.cache)
+
+    def wrap_openai_client(self, client: OpenAI) -> None:
+        OpenAIWrapper().init(log=logger_all_possible, cache=self.cache, module_client=client)
 
     def completion(self, data: Completion) -> CompletionResponse:
         parent_trace_id = get_current_trace_id()

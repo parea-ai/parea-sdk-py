@@ -122,13 +122,13 @@ class OpenAIWrapper:
         except openai.OpenAIError:
             original_methods = {}
 
-    def init(self, log: Callable, cache: Cache = None):
+    def init(self, log: Callable, cache: Cache = None, module_client=openai):
         Wrapper(
             resolver=self.resolver,
             gen_resolver=self.gen_resolver,
             agen_resolver=self.agen_resolver,
             log=log,
-            module=openai,
+            module=module_client,
             func_names=list(self.original_methods.keys()),
             cache=cache,
             convert_kwargs_to_cache_request=self.convert_kwargs_to_cache_request,
