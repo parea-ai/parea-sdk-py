@@ -23,7 +23,6 @@ def context_ranking_pointwise_factory(question_field: str = "question", context_
 
     Raises:
         ImportError: If numpy is not installed.
-        NotImplementedError: If the ranking_measurement is not supported.
     """
     try:
         import numpy as np
