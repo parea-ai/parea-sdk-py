@@ -1,8 +1,8 @@
 import os
 from datetime import datetime
 
-import openai
 from dotenv import load_dotenv
+from openai import OpenAI
 
 from parea import Parea
 from parea.schemas.models import FeedbackRequest
@@ -10,13 +10,14 @@ from parea.utils.trace_utils import get_current_trace_id, trace
 
 load_dotenv()
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 p = Parea(api_key=os.getenv("PAREA_API_KEY"))
+p.wrap_openai_client(client)
 
 
 def call_llm(data: list[dict], model: str = "gpt-3.5-turbo", temperature: float = 0.0) -> str:
-    return openai.chat.completions.create(model=model, temperature=temperature, messages=data).choices[0].message.content
+    return client.chat.completions.create(model=model, temperature=temperature, messages=data).choices[0].message.content
 
 
 @trace
