@@ -14,6 +14,8 @@ Parea python sdk
 
 </div>
 
+[Python SDK Docs](https://docs.parea.ai/sdk/python)
+
 ## Installation
 
 ```bash
@@ -47,9 +49,8 @@ Alternatively, you can add the following code to your codebase to get started:
 
 ```python
 import os
-from parea import Parea, InMemoryCache
+from parea import Parea, InMemoryCache, trace
 from parea.schemas.log import Log
-from parea.utils.trace_utils import trace
 
 Parea(api_key=os.getenv("PAREA_API_KEY"), cache=InMemoryCache())  # use InMemoryCache if you don't have a Parea API key
 
@@ -62,6 +63,32 @@ def locally_defined_eval_function(log: Log) -> float:
 def function_to_evaluate(*args, **kwargs) -> ...:
   ...
 ```
+
+### Run Experiments
+
+You can run an experiment for your LLM application by defining the `Experiment` class and passing it the name, the data and the
+function you want to run. You need annotate the function with the `trace` decorator to trace its inputs, outputs, latency, etc.
+as well as to specify which evaluation functions should be applied to it (as shown above).
+
+```python
+from parea import Experiment
+
+Experiment(
+    name="Experiment Name",        # Name of the experiment (str)
+    data=[{"n": "10"}],            # Data to run the experiment on (list of dicts)
+    func=function_to_evaluate,     # Function to run (callable)
+)
+```
+
+Then you can run the experiment by using the `experiment` command and give it the path to the python file.
+This will run your experiment with the specified inputs and create a report with the results which can be viewed under
+the [Experiments tab](https://app.parea.ai/experiments).
+
+```bash
+parea experiment <path/to/experiment_file.py>
+```
+
+Full working example in our [docs](https://docs.parea.ai/testing/run-experiments).
 
 ## Debugging Chains & Agents
 
