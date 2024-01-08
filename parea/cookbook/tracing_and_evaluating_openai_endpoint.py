@@ -8,7 +8,7 @@ import openai
 from attr import asdict
 from dotenv import load_dotenv
 
-from parea import InMemoryCache, init
+from parea import InMemoryCache, Parea
 from parea.evals.chat import goal_success_ratio_factory
 from parea.evals.utils import call_openai
 from parea.helpers import write_trace_logs_to_csv
@@ -22,7 +22,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 use_cache = True  # by using the in memory cache, you don't need a Parea API key
 cache = InMemoryCache() if use_cache else None
-init(api_key=os.getenv("PAREA_API_KEY"), cache=cache)
+Parea(api_key=os.getenv("PAREA_API_KEY"), cache=cache)
 
 
 def friendliness(log: Log) -> float:
