@@ -70,6 +70,12 @@ def trace(
 
         inputs = {k: v for k, v in zip(parameters.keys(), args)}
         inputs.update(kwargs)
+        # filter out any values which aren't JSON serializable
+        for k, v in inputs.items():
+            try:
+                json.dumps(v)
+            except TypeError:
+                inputs[k] = str(v)
 
         trace_data.get()[trace_id] = TraceLog(
             trace_id=trace_id,
