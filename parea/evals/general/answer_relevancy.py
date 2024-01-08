@@ -18,6 +18,9 @@ def answer_relevancy_factory(question_field: str = "question", n_generations: in
     Returns:
         Callable[[Log], float]: A function that takes a log as input and returns a score between 0 and 1 indicating
         if the generated response is relevant to the query.
+
+    Raises:
+        ImportError: If numpy is not installed.
     """
     try:
         import numpy as np

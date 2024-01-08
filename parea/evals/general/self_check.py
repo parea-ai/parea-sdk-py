@@ -14,6 +14,8 @@ def self_check(log: Log) -> float:
     The authors noted that correlation with human judgment doesn't increase after 4-6 additional
     generations when using `gpt-3.5-turbo` to evaluate biography generations.
 
+    Args:
+        log (Log): The log object to of the trace evaluate.
 
     Returns:
         float: A score between 0 and 1 indicating the factuality of the response.
