@@ -6,6 +6,7 @@ import time
 
 from attrs import asdict, define, field
 from cattrs import structure
+from dotenv import load_dotenv
 from openai import OpenAI
 
 from parea.api_client import HTTPClient
@@ -25,6 +26,8 @@ from parea.schemas.models import (
 )
 from parea.utils.trace_utils import get_current_trace_id, logger_all_possible, logger_record_log, trace_data
 from parea.wrapper import OpenAIWrapper
+
+load_dotenv()
 
 COMPLETION_ENDPOINT = "/completion"
 DEPLOYED_PROMPT_ENDPOINT = "/deployed-prompt"
