@@ -5,7 +5,7 @@ import httpx
 
 class HTTPClient:
     _instance = None
-    base_url = "https://parea-ai-backend-e2adf7624bcb3980.onporter.run/api/parea/v1"
+    base_url = "https://parea-ai-backend-us-9ac16cdbc7a7b006.onporter.run/api/parea/v1"
     api_key = None
 
     def __new__(cls, *args, **kwargs):
