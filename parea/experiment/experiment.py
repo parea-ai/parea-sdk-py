@@ -67,8 +67,8 @@ def experiment(name: str, data: Iterable[Dict], func: Callable) -> ExperimentSta
             asyncio.run(func(**data_input))
         else:
             func(**data_input)
-    time.sleep(5)  # wait for all trace logs to be written to DB
-    experiment_stats: ExperimentStatsSchema = p.get_experiment_stats(experiment_uuid)
+    time.sleep(5)  # wait for any evaluation to finish which is executed in the background
+    experiment_stats: ExperimentStatsSchema = p.finish_experiment(experiment_uuid)
     stat_name_to_avg_std = calculate_avg_std_for_experiment(experiment_stats)
     print(f"Experiment stats:\n{json.dumps(stat_name_to_avg_std, indent=2)}\n\n")
     print(f"View experiment & its traces at: https://app.parea.ai/experiments/{experiment_uuid}\n")

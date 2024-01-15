@@ -34,6 +34,7 @@ DEPLOYED_PROMPT_ENDPOINT = "/deployed-prompt"
 RECORD_FEEDBACK_ENDPOINT = "/feedback"
 EXPERIMENT_ENDPOINT = "/experiment"
 EXPERIMENT_STATS_ENDPOINT = "/experiment/{experiment_uuid}/stats"
+EXPERIMENT_FINISHED_ENDPOINT = "/experiment/{experiment_uuid}/finished"
 
 
 @define
@@ -144,6 +145,20 @@ class Parea:
         r = await self._client.request_async(
             "GET",
             EXPERIMENT_STATS_ENDPOINT.format(experiment_uuid=experiment_uuid),
+        )
+        return structure(r.json(), ExperimentStatsSchema)
+
+    def finish_experiment(self, experiment_uuid: str) -> ExperimentStatsSchema:
+        r = self._client.request(
+            "POST",
+            EXPERIMENT_FINISHED_ENDPOINT.format(experiment_uuid=experiment_uuid),
+        )
+        return structure(r.json(), ExperimentStatsSchema)
+
+    async def afinish_experiment(self, experiment_uuid: str) -> ExperimentSchema:
+        r = await self._client.request_async(
+            "POST",
+            EXPERIMENT_FINISHED_ENDPOINT.format(experiment_uuid=experiment_uuid),
         )
         return structure(r.json(), ExperimentStatsSchema)
 
