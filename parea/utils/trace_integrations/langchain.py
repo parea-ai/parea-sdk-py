@@ -20,7 +20,7 @@ class PareaAILangchainTracer(BaseTracer):
         data = run.dict()
         if experiment_uuid := os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None):
             data["experiment_uuid"] = experiment_uuid
-        parea_logger.record_vendor_log(run.dict(), TraceIntegrations.LANGCHAIN)
+        parea_logger.record_vendor_log(data, TraceIntegrations.LANGCHAIN)
 
     def get_parent_trace_id(self) -> UUID:
         return self.parent_trace_id
