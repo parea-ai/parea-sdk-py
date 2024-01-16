@@ -99,7 +99,8 @@ def ndcg(y_true, ranking):
     return dcg(y_true, ranking) / best
 
 
-def make_evaluations(trace_id: str, log: Log, eval_funcs: list[EvalFuncTuple], verbose: bool = False):
+# note name is extra odd to make sure that skip_decorator_if_func_in_stack works in 99.9% of cases
+def _make_evaluations_(trace_id: str, log: Log, eval_funcs: list[EvalFuncTuple], verbose: bool = False):
     scores = [NamedEvaluationScore(name=eval.name, score=eval.func(log)) for eval in eval_funcs]
     if verbose:
         print(f"###Eval Results###")
@@ -113,7 +114,7 @@ def run_evals_in_thread_and_log(trace_id: str, log: Log, eval_funcs: list[EvalFu
     import threading
 
     logging_thread = threading.Thread(
-        target=make_evaluations,
+        target=_make_evaluations_,
         kwargs={"trace_id": trace_id, "log": log, "eval_funcs": eval_funcs, "verbose": verbose},
     )
     logging_thread.start()

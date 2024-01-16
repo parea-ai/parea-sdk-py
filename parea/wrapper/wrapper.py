@@ -9,6 +9,7 @@ from uuid import uuid4
 
 from parea.cache.cache import Cache
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
+from parea.evals.utils import _make_evaluations_
 from parea.helpers import date_and_time_string_to_timestamp
 from parea.schemas.models import TraceLog
 from parea.utils.trace_utils import call_eval_funcs_then_log, to_date_and_time_string, trace_context, trace_data
@@ -96,7 +97,7 @@ class Wrapper:
 
         return trace_id, start_time
 
-    @skip_decorator_if_func_in_stack(call_eval_funcs_then_log)
+    @skip_decorator_if_func_in_stack(call_eval_funcs_then_log, _make_evaluations_)
     def async_decorator(self, orig_func: Callable) -> Callable:
         async def wrapper(*args, **kwargs):
             trace_id, start_time = self._init_trace()
@@ -127,7 +128,7 @@ class Wrapper:
 
         return wrapper
 
-    @skip_decorator_if_func_in_stack(call_eval_funcs_then_log)
+    @skip_decorator_if_func_in_stack(call_eval_funcs_then_log, _make_evaluations_)
     def sync_decorator(self, orig_func: Callable) -> Callable:
         def wrapper(*args, **kwargs):
             trace_id, start_time = self._init_trace()
