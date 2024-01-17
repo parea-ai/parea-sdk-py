@@ -1,6 +1,0 @@
-attrs~=23.1.0
-httpx~=0.24.1
-python-dotenv~=1.0.0
-contextvars~=2.4.0
-openai
-redis~=5.0.1
