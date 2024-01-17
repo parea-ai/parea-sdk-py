@@ -7,7 +7,6 @@ import time
 from attrs import asdict, define, field
 from cattrs import structure
 from dotenv import load_dotenv
-from openai import OpenAI
 
 from parea.api_client import HTTPClient
 from parea.cache import InMemoryCache, RedisCache
@@ -51,7 +50,8 @@ class Parea:
             parea_logger.set_redis_cache(self.cache)
         _init_parea_wrapper(logger_all_possible, self.cache)
 
-    def wrap_openai_client(self, client: OpenAI) -> None:
+    def wrap_openai_client(self, client: "OpenAI") -> None:
+        """Only necessary for instance client with OpenAI version >= 1.0.0"""
         OpenAIWrapper().init(log=logger_all_possible, cache=self.cache, module_client=client)
 
     def completion(self, data: Completion) -> CompletionResponse:
