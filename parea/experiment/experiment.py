@@ -9,6 +9,7 @@ import time
 from attrs import define, field
 from dotenv import load_dotenv
 from tqdm import tqdm
+from tqdm.asyncio import tqdm_asyncio
 
 from parea.client import Parea
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
@@ -50,7 +51,7 @@ def async_wrapper(fn, **kwargs):
     return asyncio.run(fn(**kwargs))
 
 
-def experiment(name: str, data: Iterable[Dict], func: Callable) -> ExperimentStatsSchema:
+async def experiment(name: str, data: Iterable[Dict], func: Callable) -> ExperimentStatsSchema:
     """Creates an experiment and runs the function on the data iterator."""
     load_dotenv()
 
@@ -62,11 +63,20 @@ def experiment(name: str, data: Iterable[Dict], func: Callable) -> ExperimentSta
     experiment_uuid = experiment_schema.uuid
     os.environ[PAREA_OS_ENV_EXPERIMENT_UUID] = experiment_uuid
 
-    for data_input in tqdm(data):
-        if inspect.iscoroutinefunction(func):
-            asyncio.run(func(**data_input))
-        else:
+    sem = asyncio.Semaphore(10)
+
+    async def limit_concurrency(data_input):
+        async with sem:
+            return await func(**data_input)
+
+    if inspect.iscoroutinefunction(func):
+        tasks = [limit_concurrency(data_input) for data_input in data]
+        for result in tqdm_asyncio(tasks):
+            await result
+    else:
+        for data_input in tqdm(data):
             func(**data_input)
+
     time.sleep(5)  # wait for any evaluation to finish which is executed in the background
     experiment_stats: ExperimentStatsSchema = p.finish_experiment(experiment_uuid)
     stat_name_to_avg_std = calculate_avg_std_for_experiment(experiment_stats)
@@ -90,4 +100,4 @@ class Experiment:
         _experiments.append(self)
 
     def run(self):
-        self.experiment_stats = experiment(self.name, self.data, self.func)
+        self.experiment_stats = asyncio.run(experiment(self.name, self.data, self.func))
