@@ -4,7 +4,6 @@ import asyncio
 import inspect
 import json
 import os
-import time
 
 from attrs import define, field
 from dotenv import load_dotenv
@@ -14,6 +13,7 @@ from tqdm.asyncio import tqdm_asyncio
 from parea.client import Parea
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.schemas.models import CreateExperimentRequest, ExperimentSchema, ExperimentStatsSchema, TraceStatsSchema
+from parea.utils.trace_utils import thread_ids_running_evals
 
 
 def calculate_avg_as_string(values: List[float]) -> str:
@@ -77,7 +77,14 @@ async def experiment(name: str, data: Iterable[Dict], func: Callable) -> Experim
         for data_input in tqdm(data):
             func(**data_input)
 
-    time.sleep(5)  # wait for any evaluation to finish which is executed in the background
+    total_evals = len(thread_ids_running_evals.get())
+    with tqdm(total=total_evals, dynamic_ncols=True) as pbar:
+        while thread_ids_running_evals.get():
+            pbar.set_description(f"Waiting for evaluations to finish")
+            pbar.update(total_evals - len(thread_ids_running_evals.get()))
+            total_evals = len(thread_ids_running_evals.get())
+            await asyncio.sleep(0.5)
+
     experiment_stats: ExperimentStatsSchema = p.finish_experiment(experiment_uuid)
     stat_name_to_avg_std = calculate_avg_std_for_experiment(experiment_stats)
     print(f"Experiment stats:\n{json.dumps(stat_name_to_avg_std, indent=2)}\n\n")
