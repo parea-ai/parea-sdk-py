@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from typing import Callable, Dict, Iterable, List
 
 import asyncio
@@ -63,7 +65,9 @@ async def experiment(name: str, data: Iterable[Dict], func: Callable) -> Experim
     experiment_uuid = experiment_schema.uuid
     os.environ[PAREA_OS_ENV_EXPERIMENT_UUID] = experiment_uuid
 
-    sem = asyncio.Semaphore(10)
+    max_parallel_calls = 10
+    executor = ThreadPoolExecutor(max_workers=max_parallel_calls)
+    sem = asyncio.Semaphore(max_parallel_calls)
 
     async def limit_concurrency(data_input):
         async with sem:
@@ -74,8 +78,10 @@ async def experiment(name: str, data: Iterable[Dict], func: Callable) -> Experim
         for result in tqdm_asyncio(tasks):
             await result
     else:
-        for data_input in tqdm(data):
-            func(**data_input)
+        loop = asyncio.get_event_loop()
+        tasks = [loop.run_in_executor(executor, partial(func, **data_input)) for data_input in data]
+        for future in tqdm_asyncio.as_completed(tasks):
+            await future
 
     total_evals = len(thread_ids_running_evals.get())
     with tqdm(total=total_evals, dynamic_ncols=True) as pbar:
