@@ -1,6 +1,42 @@
-from typing import Any, Optional
+from typing import Any, Callable, Optional
+
+import asyncio
+import time
+from functools import wraps
 
 import httpx
+
+MAX_RETRIES = 5
+BACKOFF_FACTOR = 0.5
+
+
+def retry_on_502(func: Callable[..., Any]) -> Callable[..., Any]:
+    if asyncio.iscoroutinefunction(func):
+
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            for retry in range(MAX_RETRIES):
+                try:
+                    return await func(*args, **kwargs)
+                except httpx.HTTPStatusError as e:
+                    if e.response.status_code != 502 or retry == MAX_RETRIES - 1:
+                        raise
+                    await asyncio.sleep(BACKOFF_FACTOR * (2**retry))
+
+        return wrapper
+    else:
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for retry in range(MAX_RETRIES):
+                try:
+                    return func(*args, **kwargs)
+                except httpx.HTTPStatusError as e:
+                    if e.response.status_code != 502 or retry == MAX_RETRIES - 1:
+                        raise
+                    time.sleep(BACKOFF_FACTOR * (2**retry))
+
+        return wrapper
 
 
 class HTTPClient:
@@ -18,6 +54,7 @@ class HTTPClient:
     def set_api_key(self, api_key: str):
         self.api_key = api_key
 
+    @retry_on_502
     def request(
         self,
         method: str,
@@ -34,6 +71,7 @@ class HTTPClient:
         response.raise_for_status()
         return response
 
+    @retry_on_502
     async def request_async(
         self,
         method: str,

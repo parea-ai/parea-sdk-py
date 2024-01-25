@@ -25,6 +25,9 @@ trace_context = contextvars.ContextVar("trace_context", default=[])
 # A dictionary to hold trace data for each trace
 trace_data = contextvars.ContextVar("trace_data", default={})
 
+# Context variable to maintain running evals in thread
+thread_ids_running_evals = contextvars.ContextVar("thread_ids_running_evals", default=[])
+
 
 def merge(old, new):
     if isinstance(old, dict) and isinstance(new, dict):
@@ -191,6 +194,7 @@ def logger_all_possible(trace_id: str):
 
 def call_eval_funcs_then_log(trace_id: str, eval_funcs: list[Callable] = None, access_output_of_func: Callable = None):
     data = trace_data.get()[trace_id]
+    thread_ids_running_evals.get().append(trace_id)
     try:
         if eval_funcs and data.status == "success":
             if access_output_of_func:
@@ -215,6 +219,8 @@ def call_eval_funcs_then_log(trace_id: str, eval_funcs: list[Callable] = None, a
             data.output = output_old
     except Exception as e:
         logger.exception(f"Error occurred in when trying to evaluate output, {e}", exc_info=e)
+    finally:
+        thread_ids_running_evals.get().remove(trace_id)
     parea_logger.default_log(data=data)
 
 
