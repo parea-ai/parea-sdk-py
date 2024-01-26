@@ -128,12 +128,7 @@ def get_tokens(model: str, text: str) -> Union[str, list[int]]:
         return []
     try:
         encoding = tiktoken.encoding_for_model(model)
-        tokens = encoding.encode(text)
     except KeyError:
-        regex = re.compile(r"\b(a|an|the)\b", re.UNICODE)
-        text = text.lower()
-        text = "".join(char for char in text if char not in set(string.punctuation))
-        text = re.sub(regex, " ", text)
-        text = " ".join(text.split())
-        tokens = text.split()
+        encoding = tiktoken.get_encoding("cl100k_base")
+    tokens = encoding.encode(text)
     return tokens
