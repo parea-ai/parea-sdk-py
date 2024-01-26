@@ -42,7 +42,7 @@ rag_chain = {"context": retriever | format_docs, "question": RunnablePassthrough
 
 
 def main():
-    response = rag_chain.invoke("What is Task Decomposition?", config={"callbacks": [PareaAILangchainTracer(p)]})
+    response = rag_chain.invoke("What is Task Decomposition?", config={"callbacks": [PareaAILangchainTracer()]})
     print(response)
 
 

@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from parea.api_client import HTTPClient
 from parea.cache import InMemoryCache, RedisCache
 from parea.cache.cache import Cache
+from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.helpers import gen_trace_id
 from parea.parea_logger import parea_logger
 from parea.schemas.models import (
@@ -54,6 +55,7 @@ class Parea:
 
         if self.api_key:
             parea_logger.set_client(self._client)
+            parea_logger.set_project_uuid(self.project_uuid)
         if isinstance(self.cache, (RedisCache, InMemoryCache)):
             parea_logger.set_redis_cache(self.cache)
         _init_parea_wrapper(logger_all_possible, self.cache)
@@ -62,17 +64,20 @@ class Parea:
         """Only necessary for instance client with OpenAI version >= 1.0.0"""
         OpenAIWrapper().init(log=logger_all_possible, cache=self.cache, module_client=client)
 
-    def _add_project_uuid_to_data(self, data: dict) -> dict:
-        data["project_uuid"] = self._project.uuid
-        return data
+    def _add_project_uuid_to_data(self, data) -> dict:
+        data_dict = asdict(data)
+        data_dict["project_uuid"] = self._project.uuid
+        return data_dict
 
     def completion(self, data: Completion) -> CompletionResponse:
         parent_trace_id = get_current_trace_id()
         inference_id = gen_trace_id()
         data.inference_id = inference_id
         data.parent_trace_id = parent_trace_id or inference_id
-        data_dict = asdict(data)
-        self._add_project_uuid_to_data(data_dict)
+
+        data_dict = self._add_project_uuid_to_data(data)
+        if experiment_uuid := os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None):
+            data_dict["experiment_uuid"] = experiment_uuid
 
         r = self._client.request(
             "POST",
@@ -89,8 +94,10 @@ class Parea:
         inference_id = gen_trace_id()
         data.inference_id = inference_id
         data.parent_trace_id = parent_trace_id or inference_id
-        data_dict = asdict(data)
-        self._add_project_uuid_to_data(data_dict)
+
+        data_dict = self._add_project_uuid_to_data(data)
+        if experiment_uuid := os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None):
+            data_dict["experiment_uuid"] = experiment_uuid
 
         r = await self._client.request_async(
             "POST",
@@ -135,22 +142,18 @@ class Parea:
         )
 
     def create_experiment(self, data: CreateExperimentRequest) -> ExperimentSchema:
-        data_dict = asdict(data)
-        self._add_project_uuid_to_data(data_dict)
         r = self._client.request(
             "POST",
             EXPERIMENT_ENDPOINT,
-            data=data_dict,
+            data=self._add_project_uuid_to_data(data),
         )
         return structure(r.json(), ExperimentSchema)
 
     async def acreate_experiment(self, data: CreateExperimentRequest) -> ExperimentSchema:
-        data_dict = asdict(data)
-        self._add_project_uuid_to_data(data_dict)
         r = await self._client.request_async(
             "POST",
             EXPERIMENT_ENDPOINT,
-            data=data_dict,
+            data=self._add_project_uuid_to_data(data),
         )
         return structure(r.json(), ExperimentSchema)
 
