@@ -1,10 +1,13 @@
 from typing import Callable, Union
 
 import json
+import re
+import string
 import warnings
 
 import openai
 import pysbd
+import tiktoken
 from attrs import define
 from openai import __version__ as openai_version
 
@@ -118,3 +121,19 @@ def run_evals_in_thread_and_log(trace_id: str, log: Log, eval_funcs: list[EvalFu
         kwargs={"trace_id": trace_id, "log": log, "eval_funcs": eval_funcs, "verbose": verbose},
     )
     logging_thread.start()
+
+
+def get_tokens(model: str, text: str) -> Union[str, list[int]]:
+    if not text:
+        return []
+    try:
+        encoding = tiktoken.encoding_for_model(model)
+        tokens = encoding.encode(text)
+    except KeyError:
+        regex = re.compile(r"\b(a|an|the)\b", re.UNICODE)
+        text = text.lower()
+        text = "".join(char for char in text if char not in set(string.punctuation))
+        text = re.sub(regex, " ", text)
+        text = " ".join(text.split())
+        tokens = text.split()
+    return tokens
