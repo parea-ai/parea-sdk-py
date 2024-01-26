@@ -158,3 +158,19 @@ class TraceStatsSchema:
 @define
 class ExperimentStatsSchema:
     parent_trace_stats: List[TraceStatsSchema] = field(factory=list)
+
+
+@define
+class CreateGetExperimentSchema:
+    name: str
+
+
+@define
+class ExperimentSchema(CreateGetExperimentSchema):
+    uuid: str
+    created_at: str
+
+
+@define
+class CreateGetProjectResponseSchema(ExperimentSchema):
+    was_created: bool

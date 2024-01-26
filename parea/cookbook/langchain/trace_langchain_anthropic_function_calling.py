@@ -48,9 +48,9 @@ chain = create_extraction_chain(schema, model)
 
 
 def main():
-    response = model.predict_messages([HumanMessage(content="whats the weater in boston?")], functions=functions, callbacks=[PareaAILangchainTracer()])
+    response = model.predict_messages([HumanMessage(content="whats the weater in boston?")], functions=functions, callbacks=[PareaAILangchainTracer(p)])
     print(response)
-    result = chain.run(inp, callbacks=[PareaAILangchainTracer()])
+    result = chain.run(inp, callbacks=[PareaAILangchainTracer(p)])
     print(result)
 
 

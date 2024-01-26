@@ -38,7 +38,7 @@ agent_executor = create_conversational_retrieval_agent(llm, tools)
 
 
 def main():
-    result = agent_executor({"input": "what did the president say about kentaji brown jackson in the most recent state of the union?"}, callbacks=[PareaAILangchainTracer()])
+    result = agent_executor({"input": "what did the president say about kentaji brown jackson in the most recent state of the union?"}, callbacks=[PareaAILangchainTracer(p)])
     print(result)
 
 

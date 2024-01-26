@@ -15,7 +15,7 @@ from parea.utils.trace_integrations.langchain import PareaAILangchainTracer
 load_dotenv()
 
 p = Parea(api_key=os.getenv("PAREA_API_KEY"))
-handler = PareaAILangchainTracer()
+handler = PareaAILangchainTracer(p)
 
 
 def get_docs():
@@ -64,7 +64,7 @@ def get_insights(docs):
     insights = []
     for i in range(len(docs)):
         insight = insight_chain.invoke(
-            {"instructions": "Provide Key insights from the following text", "document": {docs[i].page_content}}, config={"callbacks": [PareaAILangchainTracer()]}
+            {"instructions": "Provide Key insights from the following text", "document": {docs[i].page_content}}, config={"callbacks": [PareaAILangchainTracer(p)]}
         )
         insights.append(insight)
     return insights

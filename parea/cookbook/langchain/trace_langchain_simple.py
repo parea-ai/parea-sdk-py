@@ -11,7 +11,7 @@ from parea.utils.trace_integrations.langchain import PareaAILangchainTracer
 load_dotenv()
 
 p = Parea(api_key=os.getenv("PAREA_API_KEY"))
-handler = PareaAILangchainTracer()
+handler = PareaAILangchainTracer(p)
 
 llm = ChatOpenAI(openai_api_key=os.getenv("OPENAI_API_KEY"))
 prompt = ChatPromptTemplate.from_messages([("user", "{input}")])

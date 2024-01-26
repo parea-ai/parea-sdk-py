@@ -160,7 +160,7 @@ def main():
     provider = openai["provider"]
 
     # instantiate tracer integration
-    handler = PareaAILangchainTracer()
+    handler = PareaAILangchainTracer(p)
     # set up retriever
     retriever = DocumentRetriever("https://en.wikipedia.org/wiki/New_York_City").get_retriever()
     # set up chain
