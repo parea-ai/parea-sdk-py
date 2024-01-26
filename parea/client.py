@@ -49,7 +49,7 @@ class Parea:
         self._client.set_api_key(self.api_key)
         project_api_response: CreateGetProjectResponseSchema = self._create_or_get_project(self.project_name)
         if project_api_response.was_created:
-            print(f'Created project {project_api_response.project.name}')
+            print(f'Created project {project_api_response.name}')
         self._project = structure(asdict(project_api_response), ExperimentSchema)
 
         if self.api_key:
