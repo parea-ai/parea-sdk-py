@@ -18,11 +18,12 @@ from parea.schemas.models import (
     Completion,
     CompletionResponse,
     CreateExperimentRequest,
+    CreateGetProjectResponseSchema,
     ExperimentSchema,
     ExperimentStatsSchema,
     FeedbackRequest,
     UseDeployedPrompt,
-    UseDeployedPromptResponse, CreateGetProjectResponseSchema,
+    UseDeployedPromptResponse,
 )
 from parea.utils.trace_utils import get_current_trace_id, logger_all_possible, logger_record_log, trace_data
 from parea.wrapper import OpenAIWrapper
@@ -41,7 +42,7 @@ PROJECT_ENDPOINT = "/project"
 @define
 class Parea:
     api_key: str = field(init=True, default=os.getenv("PAREA_API_KEY"))
-    project_name: str = field(init=True, default='Default')
+    project_name: str = field(init=True, default="Default")
     cache: Cache = field(init=True, default=None)
     _project: ExperimentSchema = field(init=False, default=None)
     _client: HTTPClient = field(init=False, default=HTTPClient())
@@ -50,7 +51,7 @@ class Parea:
         self._client.set_api_key(self.api_key)
         project_api_response: CreateGetProjectResponseSchema = self._create_or_get_project(self.project_name)
         if project_api_response.was_created:
-            print(f'Created project {project_api_response.name}')
+            print(f"Created project {project_api_response.name}")
         self._project = structure(asdict(project_api_response), ExperimentSchema)
 
         if self.api_key:

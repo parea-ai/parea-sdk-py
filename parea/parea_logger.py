@@ -1,7 +1,7 @@
-import os
 from typing import Any
 
 import json
+import os
 
 from attrs import asdict, define, field
 
@@ -67,7 +67,7 @@ class PareaLogger:
             self.record_log(data)
 
     def record_vendor_log(self, data: dict[str, Any], vendor: TraceIntegrations) -> None:
-        data['project_uuid'] = self._project_uuid
+        data["project_uuid"] = self._project_uuid
         if experiment_uuid := os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None):
             data["experiment_uuid"] = experiment_uuid
         self._client.request(
@@ -77,7 +77,7 @@ class PareaLogger:
         )
 
     async def arecord_vendor_log(self, data: dict[str, Any], vendor: TraceIntegrations) -> None:
-        data['project_uuid'] = self._project_uuid
+        data["project_uuid"] = self._project_uuid
         if experiment_uuid := os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None):
             data["experiment_uuid"] = experiment_uuid
         await self._client.request_async(
