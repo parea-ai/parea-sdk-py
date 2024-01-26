@@ -2,6 +2,7 @@ from typing import Callable, Optional
 
 from collections import Counter
 
+from parea.evals.utils import get_tokens
 from parea.schemas.log import Log
 
 
@@ -22,22 +23,10 @@ def answer_context_faithfulness_precision_factory(context_field: Optional[str] =
     def answer_context_faithfulness_precision(log: Log) -> float:
         """Prop. of tokens in model generation which are also present in the retrieved context."""
         context = log.inputs[context_field]
-
-        provider = log.configuration.provider
         model = log.configuration.model
 
-        if provider == "openai":
-            import tiktoken
-
-            try:
-                encoding = tiktoken.encoding_for_model(model)
-            except KeyError:
-                print("Warning: model not found. Using cl100k_base encoding.")
-                encoding = tiktoken.get_encoding("cl100k_base")
-            context_tokens = encoding.encode(context)
-            output_tokens = encoding.encode(log.output)
-        else:
-            raise NotImplementedError
+        context_tokens = get_tokens(model, context)
+        output_tokens = get_tokens(model, log.output)
 
         if len(context_tokens) == 0:
             return 1.0
