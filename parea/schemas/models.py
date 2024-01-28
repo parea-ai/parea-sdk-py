@@ -1,5 +1,7 @@
 from typing import Any, List, Optional
 
+from enum import Enum
+
 from attrs import define, field, validators
 
 from parea.schemas.log import LLMInputs, Log
@@ -152,9 +154,15 @@ class TraceStatsSchema:
     output_tokens: Optional[int] = 0
     total_tokens: Optional[int] = 0
     cost: Optional[float] = None
-    scores: Optional[List[EvaluationScoreSchema]] = field(factory=list)
+    scores: Optional[list[EvaluationScoreSchema]] = field(factory=list)
 
 
 @define
 class ExperimentStatsSchema:
-    parent_trace_stats: List[TraceStatsSchema] = field(factory=list)
+    parent_trace_stats: list[TraceStatsSchema] = field(factory=list)
+
+
+class UpdateTraceScenario(str, Enum):
+    RESULT: str = "result"
+    ERROR: str = "error"
+    CHAIN: str = "chain"
