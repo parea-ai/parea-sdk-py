@@ -48,7 +48,7 @@ tiktoken = "^0.5.2"
 
 [tool.poetry.dev-dependencies]
 bandit = "^1.7.1"
-black = { version = "^24.1.0", allow-prereleases = true }
+black = { version = "^24.1.1", allow-prereleases = true }
 darglint = "^1.8.1"
 isort = { extras = ["colors"], version = "^5.10.1" }
 mypy = "^1.4.1"
