@@ -6,7 +6,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry]
 name = "parea-ai"
 packages = [{ include = "parea" }]
-version = "0.2.39"
+version = "0.2.40a0"
 description = "Parea python sdk"
 readme = "README.md"
 authors = ["joel-parea-ai <joel@parea.ai>"]
