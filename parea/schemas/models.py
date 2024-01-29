@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from enum import Enum
 
@@ -24,6 +24,7 @@ class Completion:
     log_omit_inputs: bool = False
     log_omit_outputs: bool = False
     log_omit: bool = False
+    experiment_uuid: Optional[str] = None
 
 
 @define

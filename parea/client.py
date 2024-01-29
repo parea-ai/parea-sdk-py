@@ -1,8 +1,9 @@
-from typing import Callable
+from typing import Callable, Dict
 
 import asyncio
 import os
 import time
+from collections.abc import Iterable
 
 from attrs import asdict, define, field
 from cattrs import structure
@@ -11,6 +12,7 @@ from dotenv import load_dotenv
 from parea.api_client import HTTPClient
 from parea.cache import InMemoryCache, RedisCache
 from parea.cache.cache import Cache
+from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.helpers import gen_trace_id
 from parea.parea_logger import parea_logger
 from parea.schemas.models import (
@@ -60,6 +62,9 @@ class Parea:
         data.inference_id = inference_id
         data.parent_trace_id = parent_trace_id or inference_id
 
+        if experiment_uuid := os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None):
+            data.experiment_uuid = experiment_uuid
+
         r = self._client.request(
             "POST",
             COMPLETION_ENDPOINT,
@@ -67,6 +72,7 @@ class Parea:
         )
         if parent_trace_id:
             trace_data.get()[parent_trace_id].children.append(inference_id)
+            trace_data.get()[parent_trace_id].experiment_uuid = experiment_uuid
             logger_record_log(parent_trace_id)
         return structure(r.json(), CompletionResponse)
 
@@ -76,6 +82,9 @@ class Parea:
         data.inference_id = inference_id
         data.parent_trace_id = parent_trace_id or inference_id
 
+        if experiment_uuid := os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None):
+            data.experiment_uuid = experiment_uuid
+
         r = await self._client.request_async(
             "POST",
             COMPLETION_ENDPOINT,
@@ -83,6 +92,7 @@ class Parea:
         )
         if parent_trace_id:
             trace_data.get()[parent_trace_id].children.append(inference_id)
+            trace_data.get()[parent_trace_id].experiment_uuid = experiment_uuid
             logger_record_log(parent_trace_id)
         return structure(r.json(), CompletionResponse)
 
@@ -161,6 +171,11 @@ class Parea:
             EXPERIMENT_FINISHED_ENDPOINT.format(experiment_uuid=experiment_uuid),
         )
         return structure(r.json(), ExperimentStatsSchema)
+
+    def experiment(self, name: str, data: Iterable[dict], func: Callable):
+        from parea import Experiment
+
+        return Experiment(name=name, data=data, func=func, p=self)
 
 
 _initialized_parea_wrapper = False
