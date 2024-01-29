@@ -162,6 +162,16 @@ class TraceStatsSchema:
 class ExperimentStatsSchema:
     parent_trace_stats: list[TraceStatsSchema] = field(factory=list)
 
+    def cumulative_avg_score(self) -> float:
+        """Returns the average score across all evals."""
+        scores = [score.score for trace_stat in self.parent_trace_stats for score in trace_stat.scores]
+        return sum(scores) / len(scores) if scores else 0.0
+
+    def avg_score(self, score_name: str) -> float:
+        """Returns the average score for a given eval."""
+        scores = [score.score for trace_stat in self.parent_trace_stats for score in trace_stat.scores if score.name == score_name]
+        return sum(scores) / len(scores) if scores else 0.0
+
 
 class UpdateTraceScenario(str, Enum):
     RESULT: str = "result"

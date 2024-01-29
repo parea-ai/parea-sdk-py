@@ -1,8 +1,6 @@
 from typing import Callable, Union
 
 import json
-import re
-import string
 import warnings
 
 import openai
@@ -103,24 +101,30 @@ def ndcg(y_true, ranking):
 
 
 # note name is extra odd to make sure that skip_decorator_if_func_in_stack works in 99.9% of cases
-def _make_evaluations_(trace_id: str, log: Log, eval_funcs: list[EvalFuncTuple], verbose: bool = False):
+def _make_evaluations(trace_id: str, log: Log, eval_funcs: list[EvalFuncTuple], verbose: bool = False, sync: bool = False):
     scores = [NamedEvaluationScore(name=eval.name, score=eval.func(log)) for eval in eval_funcs]
+    parea_logger.update_log(data=UpdateLog(trace_id=trace_id, field_name_to_value_map={"scores": scores, "target": log.target}))
     if verbose:
         print(f"###Eval Results###")
         for score in scores:
             print(score)
-    parea_logger.update_log(data=UpdateLog(trace_id=trace_id, field_name_to_value_map={"scores": scores, "target": log.target}))
-    print(f"View trace at: https://app.parea.ai/logs/detailed/{trace_id} \n")
+        print(f"View trace at: https://app.parea.ai/logs/detailed/{trace_id} \n")
+    if sync:
+        return scores
 
 
 def run_evals_in_thread_and_log(trace_id: str, log: Log, eval_funcs: list[EvalFuncTuple], verbose: bool = False):
     import threading
 
     logging_thread = threading.Thread(
-        target=_make_evaluations_,
+        target=_make_evaluations,
         kwargs={"trace_id": trace_id, "log": log, "eval_funcs": eval_funcs, "verbose": verbose},
     )
     logging_thread.start()
+
+
+def run_evals_synchronous(trace_id: str, log: Log, eval_funcs: list[EvalFuncTuple], verbose: bool = False) -> list[NamedEvaluationScore]:
+    return _make_evaluations(trace_id, log, eval_funcs, verbose, True)
 
 
 def get_tokens(model: str, text: str) -> Union[str, list[int]]:
