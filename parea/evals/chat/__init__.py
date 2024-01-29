@@ -1,1 +1,0 @@
-from .goal_success_ratio import goal_success_ratio_factory
