@@ -19,11 +19,11 @@ from parea.schemas.models import (
     CompletionResponse,
     CreateExperimentRequest,
     CreateGetProjectResponseSchema,
-    ExperimentSchema,
+    ProjectSchema,
     ExperimentStatsSchema,
     FeedbackRequest,
     UseDeployedPrompt,
-    UseDeployedPromptResponse,
+    UseDeployedPromptResponse, ExperimentSchema,
 )
 from parea.utils.trace_utils import get_current_trace_id, logger_all_possible, logger_record_log, trace_data
 from parea.wrapper import OpenAIWrapper
@@ -42,9 +42,9 @@ PROJECT_ENDPOINT = "/project"
 @define
 class Parea:
     api_key: str = field(init=True, default=os.getenv("PAREA_API_KEY"))
-    project_name: str = field(init=True, default="Default")
+    project_name: str = field(init=True, default="default")
     cache: Cache = field(init=True, default=None)
-    _project: ExperimentSchema = field(init=False, default=None)
+    _project: ProjectSchema = field(init=False, default=None)
     _client: HTTPClient = field(init=False, default=HTTPClient())
 
     def __attrs_post_init__(self):
@@ -52,7 +52,7 @@ class Parea:
         project_api_response: CreateGetProjectResponseSchema = self._create_or_get_project(self.project_name)
         if project_api_response.was_created:
             print(f"Created project {project_api_response.name}")
-        self._project = structure(asdict(project_api_response), ExperimentSchema)
+        self._project = structure(asdict(project_api_response), ProjectSchema)
 
         if self.api_key:
             parea_logger.set_client(self._client)
@@ -179,7 +179,7 @@ class Parea:
         )
         return structure(r.json(), ExperimentStatsSchema)
 
-    async def afinish_experiment(self, experiment_uuid: str) -> ExperimentSchema:
+    async def afinish_experiment(self, experiment_uuid: str) -> ExperimentStatsSchema:
         r = await self._client.request_async(
             "POST",
             EXPERIMENT_FINISHED_ENDPOINT.format(experiment_uuid=experiment_uuid),

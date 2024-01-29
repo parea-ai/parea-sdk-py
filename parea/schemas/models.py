@@ -161,16 +161,16 @@ class ExperimentStatsSchema:
 
 
 @define
-class CreateGetExperimentSchema:
+class CreateGetProjectSchema:
     name: str
 
 
 @define
-class ExperimentSchema(CreateGetExperimentSchema):
+class ProjectSchema(CreateGetProjectSchema):
     uuid: str
     created_at: str
 
 
 @define
-class CreateGetProjectResponseSchema(ExperimentSchema):
+class CreateGetProjectResponseSchema(ProjectSchema):
     was_created: bool
