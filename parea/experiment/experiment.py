@@ -1,10 +1,10 @@
-import time
 from typing import Callable
 
 import asyncio
 import inspect
 import json
 import os
+import time
 from collections.abc import Iterable
 
 from attrs import define, field

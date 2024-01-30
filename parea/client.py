@@ -20,11 +20,12 @@ from parea.schemas.models import (
     CompletionResponse,
     CreateExperimentRequest,
     CreateGetProjectResponseSchema,
-    ProjectSchema,
+    ExperimentSchema,
     ExperimentStatsSchema,
     FeedbackRequest,
+    ProjectSchema,
     UseDeployedPrompt,
-    UseDeployedPromptResponse, ExperimentSchema,
+    UseDeployedPromptResponse,
 )
 from parea.utils.trace_utils import get_current_trace_id, logger_all_possible, logger_record_log, trace_data
 from parea.wrapper import OpenAIWrapper
