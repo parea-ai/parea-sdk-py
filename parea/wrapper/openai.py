@@ -14,7 +14,18 @@ if openai_version.startswith("0."):
 else:
     from openai.types.chat import ChatCompletion as OpenAIObject
 
-    def convert_to_openai_object(**kwargs):
+    def convert_to_openai_object(kwargs):
+        if "id" not in kwargs:
+            kwargs["id"] = "0"
+        if "created" not in kwargs:
+            kwargs["created"] = 0
+        if "object" not in kwargs:
+            kwargs["object"] = "chat.completion"
+        if "model" not in kwargs:
+            kwargs["model"] = "model"
+        if "choices" in kwargs and isinstance(kwargs["choices"], list) and len(kwargs["choices"]) > 0:
+            if "finish_reason" not in kwargs["choices"][0]:
+                kwargs["choices"][0]["finish_reason"] = "stop"
         return OpenAIObject(**kwargs)
 
 
@@ -111,12 +122,14 @@ OPENAI_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, int]]]] = {
     },
 }
 
+is_old_openai = openai_version.startswith("0.")
+
 
 class OpenAIWrapper:
     openai.api_key = os.getenv("OPENAI_API_KEY")
 
     def get_original_methods(self, module_client=openai):
-        if openai_version.startswith("0."):
+        if is_old_openai:
             original_methods = {"ChatCompletion.create": module_client.ChatCompletion.create, "ChatCompletion.acreate": module_client.ChatCompletion.acreate}
         else:
             try:
@@ -130,6 +143,7 @@ class OpenAIWrapper:
             resolver=self.resolver,
             gen_resolver=self.gen_resolver,
             agen_resolver=self.agen_resolver,
+            should_use_gen_resolver=self.should_use_gen_resolver,
             log=log,
             module=module_client,
             func_names=self.get_original_methods(module_client),
@@ -177,36 +191,51 @@ class OpenAIWrapper:
         return response
 
     @staticmethod
-    def gen_resolver(trace_id: str, _args: Sequence[Any], kwargs: dict[str, Any], response: Iterator[Any], final_log) -> Iterator[Any]:
+    def gen_resolver(trace_id: str, _args: Sequence[Any], kwargs: dict[str, Any], response, final_log):
         llm_configuration = OpenAIWrapper._kwargs_to_llm_configuration(kwargs)
         trace_data.get()[trace_id].configuration = llm_configuration
 
-        message = defaultdict(str)
+        accumulator = OpenAIWrapper._get_default_dict_streaming()
         for chunk in response:
-            update_dict = chunk.choices[0].delta._previous
-            for key, val in update_dict.items():
-                if val is not None:
-                    message[key] += str(val)
+            OpenAIWrapper._update_accumulator_streaming(accumulator, chunk)
             yield chunk
 
-        trace_data.get()[trace_id].output = OpenAIWrapper._get_output(message)
+        trace_data.get()[trace_id].output = OpenAIWrapper._get_output(accumulator)
 
         final_log()
 
     @staticmethod
-    async def agen_resolver(trace_id: str, _args: Sequence[Any], kwargs: dict[str, Any], response: AsyncIterator[Any], final_log) -> AsyncIterator[Any]:
+    def _get_default_dict_streaming():
+        return defaultdict(content="", role="", function_call=defaultdict(arguments="", name=""))
+
+    @staticmethod
+    def _update_accumulator_streaming(accumulator: defaultdict, chunk):
+        if is_old_openai:
+            delta_dict = chunk.choices[0].delta._previous
+        else:
+            delta_dict = chunk.choices[0].delta.model_dump()
+        if delta_dict.pop("tool_calls", None) is not None:
+            raise NotImplementedError("Tool calls are not supported yet for streaming. Please, contact the team")
+        for key, val in delta_dict.items():
+            if val:
+                if isinstance(val, dict):
+                    for k, v in val.items():
+                        if v:
+                            accumulator[key][k] += str(v)
+                elif isinstance(val, str):
+                    accumulator[key] += val
+
+    @staticmethod
+    async def agen_resolver(trace_id: str, _args: Sequence[Any], kwargs: dict[str, Any], response, final_log):
         llm_configuration = OpenAIWrapper._kwargs_to_llm_configuration(kwargs)
         trace_data.get()[trace_id].configuration = llm_configuration
 
-        message = defaultdict(str)
+        accumulator = OpenAIWrapper._get_default_dict_streaming()
         async for chunk in response:
-            update_dict = chunk.choices[0].delta._previous
-            for key, val in update_dict.items():
-                if val is not None:
-                    message[key] += str(val)
+            OpenAIWrapper._update_accumulator_streaming(accumulator, chunk)
             yield chunk
 
-        trace_data.get()[trace_id].output = OpenAIWrapper._get_output(message)
+        trace_data.get()[trace_id].output = OpenAIWrapper._get_output(accumulator)
 
         final_log()
 
@@ -241,7 +270,7 @@ class OpenAIWrapper:
                 }
             )
         response_message = result.choices[0].message
-        if response_message.get("function_call", None) if openai_version.startswith("0.") else response_message.function_call:
+        if not response_message.get("content", None) if is_old_openai else not response_message.content:
             completion = OpenAIWrapper._format_function_call(response_message)
         else:
             completion = response_message.content.strip()
@@ -350,3 +379,12 @@ class OpenAIWrapper:
             return aiterator([response])
         else:
             return response
+
+    @staticmethod
+    def should_use_gen_resolver(response: Any) -> bool:
+        if is_old_openai:
+            return isinstance(response, (Iterator, AsyncIterator))
+        else:
+            from openai import AsyncStream, Stream
+
+            return isinstance(response, (Stream, AsyncStream))
