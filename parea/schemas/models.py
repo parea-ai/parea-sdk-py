@@ -1,4 +1,6 @@
-from typing import Any, List, Optional
+from typing import Any, Optional
+
+from enum import Enum
 
 from attrs import define, field, validators
 
@@ -22,6 +24,7 @@ class Completion:
     log_omit_inputs: bool = False
     log_omit_outputs: bool = False
     log_omit: bool = False
+    experiment_uuid: Optional[str] = None
 
 
 @define
@@ -152,12 +155,28 @@ class TraceStatsSchema:
     output_tokens: Optional[int] = 0
     total_tokens: Optional[int] = 0
     cost: Optional[float] = None
-    scores: Optional[List[EvaluationScoreSchema]] = field(factory=list)
+    scores: Optional[list[EvaluationScoreSchema]] = field(factory=list)
 
 
 @define
 class ExperimentStatsSchema:
-    parent_trace_stats: List[TraceStatsSchema] = field(factory=list)
+    parent_trace_stats: list[TraceStatsSchema] = field(factory=list)
+
+    def cumulative_avg_score(self) -> float:
+        """Returns the average score across all evals."""
+        scores = [score.score for trace_stat in self.parent_trace_stats for score in trace_stat.scores]
+        return sum(scores) / len(scores) if scores else 0.0
+
+    def avg_score(self, score_name: str) -> float:
+        """Returns the average score for a given eval."""
+        scores = [score.score for trace_stat in self.parent_trace_stats for score in trace_stat.scores if score.name == score_name]
+        return sum(scores) / len(scores) if scores else 0.0
+
+
+class UpdateTraceScenario(str, Enum):
+    RESULT: str = "result"
+    ERROR: str = "error"
+    CHAIN: str = "chain"
 
 
 @define

@@ -1,8 +1,9 @@
-from typing import Callable
+from typing import Callable, Dict
 
 import asyncio
 import os
 import time
+from collections.abc import Iterable
 
 from attrs import asdict, define, field
 from cattrs import structure
@@ -87,6 +88,7 @@ class Parea:
         )
         if parent_trace_id:
             trace_data.get()[parent_trace_id].children.append(inference_id)
+            trace_data.get()[parent_trace_id].experiment_uuid = experiment_uuid
             logger_record_log(parent_trace_id)
         return structure(r.json(), CompletionResponse)
 
@@ -107,6 +109,7 @@ class Parea:
         )
         if parent_trace_id:
             trace_data.get()[parent_trace_id].children.append(inference_id)
+            trace_data.get()[parent_trace_id].experiment_uuid = experiment_uuid
             logger_record_log(parent_trace_id)
         return structure(r.json(), CompletionResponse)
 
@@ -197,6 +200,11 @@ class Parea:
     @property
     def project_uuid(self) -> str:
         return self._project.uuid
+
+    def experiment(self, name: str, data: Iterable[dict], func: Callable):
+        from parea import Experiment
+
+        return Experiment(name=name, data=data, func=func, p=self)
 
 
 _initialized_parea_wrapper = False
