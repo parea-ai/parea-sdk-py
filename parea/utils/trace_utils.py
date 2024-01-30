@@ -121,6 +121,7 @@ def trace(
         trace_data.get()[trace_id] = TraceLog(
             trace_id=trace_id,
             parent_trace_id=trace_id,
+            root_trace_id=trace_context.get()[0],
             start_timestamp=to_date_and_time_string(start_time),
             trace_name=name or func_name,
             end_user_identifier=end_user_identifier,

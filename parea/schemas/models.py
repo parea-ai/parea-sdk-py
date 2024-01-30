@@ -90,6 +90,7 @@ class NamedEvaluationScore:
 class TraceLog(Log):
     trace_id: Optional[str] = field(default=None, validator=validators.instance_of(str))
     parent_trace_id: Optional[str] = field(default=None, validator=validators.instance_of(str))
+    root_trace_id: Optional[str] = field(default=None, validator=validators.instance_of(str))
     start_timestamp: Optional[str] = field(default=None, validator=validators.instance_of(str))
     organization_id: Optional[str] = None
 
