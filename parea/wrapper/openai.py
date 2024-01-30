@@ -28,6 +28,7 @@ else:
                 kwargs["choices"][0]["finish_reason"] = "stop"
         return OpenAIObject(**kwargs)
 
+
 from dotenv import load_dotenv
 
 from ..cache.cache import Cache
@@ -129,8 +130,7 @@ class OpenAIWrapper:
 
     def get_original_methods(self, module_client=openai):
         if is_old_openai:
-            original_methods = {"ChatCompletion.create": module_client.ChatCompletion.create,
-                                "ChatCompletion.acreate": module_client.ChatCompletion.acreate}
+            original_methods = {"ChatCompletion.create": module_client.ChatCompletion.create, "ChatCompletion.acreate": module_client.ChatCompletion.acreate}
         else:
             try:
                 original_methods = {"chat.completions.create": module_client.chat.completions.create}
@@ -206,7 +206,7 @@ class OpenAIWrapper:
 
     @staticmethod
     def _get_default_dict_streaming():
-        return defaultdict(content='', role='', function_call=defaultdict(arguments='', name=''))
+        return defaultdict(content="", role="", function_call=defaultdict(arguments="", name=""))
 
     @staticmethod
     def _update_accumulator_streaming(accumulator: defaultdict, chunk):
@@ -214,7 +214,7 @@ class OpenAIWrapper:
             delta_dict = chunk.choices[0].delta._previous
         else:
             delta_dict = chunk.choices[0].delta.model_dump()
-        if delta_dict.pop('tool_calls', None) is not None:
+        if delta_dict.pop("tool_calls", None) is not None:
             raise NotImplementedError("Tool calls are not supported yet for streaming. Please, contact the team")
         for key, val in delta_dict.items():
             if val:
@@ -323,14 +323,12 @@ class OpenAIWrapper:
         )
 
     @staticmethod
-    def _convert_cache_to_response(_args: Sequence[Any], kwargs: dict[str, Any],
-                                   cache_response: TraceLog) -> OpenAIObject:
+    def _convert_cache_to_response(_args: Sequence[Any], kwargs: dict[str, Any], cache_response: TraceLog) -> OpenAIObject:
         content = cache_response.output
         message = {"role": "assistant"}
         try:
             function_call = json.loads(content)
-            if isinstance(function_call, dict) and "name" in function_call and "arguments" in function_call and len(
-                function_call) == 2:
+            if isinstance(function_call, dict) and "name" in function_call and "arguments" in function_call and len(function_call) == 2:
                 message["function_call"] = function_call
                 message["content"] = None
             else:
@@ -359,8 +357,7 @@ class OpenAIWrapper:
         )
 
     @staticmethod
-    def convert_cache_to_response(_args: Sequence[Any], kwargs: dict[str, Any], cache_response: TraceLog) -> Union[
-        OpenAIObject, Iterator[OpenAIObject]]:
+    def convert_cache_to_response(_args: Sequence[Any], kwargs: dict[str, Any], cache_response: TraceLog) -> Union[OpenAIObject, Iterator[OpenAIObject]]:
         response = OpenAIWrapper._convert_cache_to_response(_args, kwargs, cache_response)
         if kwargs.get("stream", False):
             return iter([response])
@@ -368,8 +365,7 @@ class OpenAIWrapper:
             return response
 
     @staticmethod
-    def aconvert_cache_to_response(_args: Sequence[Any], kwargs: dict[str, Any], cache_response: TraceLog) -> Union[
-        OpenAIObject, AsyncIterator[OpenAIObject]]:
+    def aconvert_cache_to_response(_args: Sequence[Any], kwargs: dict[str, Any], cache_response: TraceLog) -> Union[OpenAIObject, AsyncIterator[OpenAIObject]]:
         response = OpenAIWrapper._convert_cache_to_response(_args, kwargs, cache_response)
         if kwargs.get("stream", False):
 
@@ -389,6 +385,6 @@ class OpenAIWrapper:
         if is_old_openai:
             return isinstance(response, (Iterator, AsyncIterator))
         else:
-            from openai import Stream, AsyncStream
+            from openai import AsyncStream, Stream
 
             return isinstance(response, (Stream, AsyncStream))
