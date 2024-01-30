@@ -1,9 +1,10 @@
-from typing import Callable, Dict, List
+from typing import Callable
 
 import asyncio
 import inspect
 import json
 import os
+import time
 from collections.abc import Iterable
 
 from attrs import define, field
@@ -80,6 +81,7 @@ async def experiment(name: str, data: Iterable[dict], func: Callable, p: Parea) 
             total_evals = len(thread_ids_running_evals.get())
             await asyncio.sleep(0.5)
 
+    time.sleep(1)
     experiment_stats: ExperimentStatsSchema = p.finish_experiment(experiment_uuid)
     stat_name_to_avg_std = calculate_avg_std_for_experiment(experiment_stats)
     print(f"Experiment stats:\n{json.dumps(stat_name_to_avg_std, indent=2)}\n\n")

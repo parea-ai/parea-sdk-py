@@ -114,13 +114,16 @@ OPENAI_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, int]]]] = {
 
 class OpenAIWrapper:
     openai.api_key = os.getenv("OPENAI_API_KEY")
-    if openai_version.startswith("0."):
-        original_methods = {"ChatCompletion.create": openai.ChatCompletion.create, "ChatCompletion.acreate": openai.ChatCompletion.acreate}
-    else:
-        try:
-            original_methods = {"chat.completions.create": openai.chat.completions.create}
-        except openai.OpenAIError:
-            original_methods = {}
+
+    def get_original_methods(self, module_client=openai):
+        if openai_version.startswith("0."):
+            original_methods = {"ChatCompletion.create": module_client.ChatCompletion.create, "ChatCompletion.acreate": module_client.ChatCompletion.acreate}
+        else:
+            try:
+                original_methods = {"chat.completions.create": module_client.chat.completions.create}
+            except openai.OpenAIError:
+                original_methods = {}
+        return list(original_methods.keys())
 
     def init(self, log: Callable, cache: Cache = None, module_client=openai):
         Wrapper(
@@ -129,7 +132,7 @@ class OpenAIWrapper:
             agen_resolver=self.agen_resolver,
             log=log,
             module=module_client,
-            func_names=list(self.original_methods.keys()),
+            func_names=self.get_original_methods(module_client),
             cache=cache,
             convert_kwargs_to_cache_request=self.convert_kwargs_to_cache_request,
             convert_cache_to_response=self.convert_cache_to_response,

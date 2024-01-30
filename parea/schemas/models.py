@@ -177,3 +177,19 @@ class UpdateTraceScenario(str, Enum):
     RESULT: str = "result"
     ERROR: str = "error"
     CHAIN: str = "chain"
+
+
+@define
+class CreateGetProjectSchema:
+    name: str
+
+
+@define
+class ProjectSchema(CreateGetProjectSchema):
+    uuid: str
+    created_at: str
+
+
+@define
+class CreateGetProjectResponseSchema(ProjectSchema):
+    was_created: bool

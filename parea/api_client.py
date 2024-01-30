@@ -67,9 +67,13 @@ class HTTPClient:
         Makes an HTTP request to the specified endpoint.
         """
         headers = {"x-api-key": self.api_key} if self.api_key else api_key
-        response = self.sync_client.request(method, endpoint, json=data, headers=headers, params=params)
-        response.raise_for_status()
-        return response
+        try:
+            response = self.sync_client.request(method, endpoint, json=data, headers=headers, params=params)
+            response.raise_for_status()
+            return response
+        except httpx.HTTPStatusError as e:
+            print(f"HTTP Error {e.response.status_code} for {e.request.url}: {e.response.text}")
+            raise
 
     @retry_on_502
     async def request_async(
@@ -84,9 +88,13 @@ class HTTPClient:
         Makes an asynchronous HTTP request to the specified endpoint.
         """
         headers = {"x-api-key": self.api_key} if self.api_key else api_key
-        response = await self.async_client.request(method, endpoint, json=data, headers=headers, params=params)
-        response.raise_for_status()
-        return response
+        try:
+            response = await self.async_client.request(method, endpoint, json=data, headers=headers, params=params)
+            response.raise_for_status()
+            return response
+        except httpx.HTTPStatusError as e:
+            print(f"HTTP Error {e.response.status_code} for {e.request.url}: {e.response.text}")
+            raise
 
     def close(self):
         """
