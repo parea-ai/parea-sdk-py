@@ -69,8 +69,8 @@ def get_current_trace_id() -> str:
     return ""
 
 
-def trace_insert(data: dict[str, Any]):
-    current_trace_id = get_current_trace_id()
+def trace_insert(data: dict[str, Any], trace_id: Optional[str] = None):
+    current_trace_id = trace_id or get_current_trace_id()
     current_trace_data: TraceLog = trace_data.get()[current_trace_id]
 
     for key, new_value in data.items():
@@ -80,7 +80,7 @@ def trace_insert(data: dict[str, Any]):
 
 def fill_trace_data(trace_id: str, data: dict[str, Any], scenario: UpdateTraceScenario):
     if scenario == UpdateTraceScenario.RESULT:
-        trace_data.get()[trace_id].output = make_output(data["result"], data.get("output_as_list"))
+        trace_data.get()[trace_id].output = make_output(data["result"], data.get("output_as_list", False))
         trace_data.get()[trace_id].status = "success"
         trace_data.get()[trace_id].evaluation_metric_names = data.get("eval_funcs_names")
     elif scenario == UpdateTraceScenario.ERROR:
@@ -174,8 +174,46 @@ def trace(
                 cleanup_trace(trace_id, start_time)
             return result
 
+        @wraps(func)
+        async def async_gen_wrapper(*args, **kwargs):
+            trace_id, start_time = init_trace(func.__name__, args, kwargs, func)
+            accumulated_result = []  # Initialize empty list to accumulate results
+            try:
+                async_gen = func(*args, **kwargs)
+                async for item in async_gen:
+                    accumulated_result.append(item)  # Accumulate results
+                    yield item  # Yield each item back to the caller
+                fill_trace_data(trace_id, {"result": "".join(accumulated_result), "eval_funcs_names": eval_funcs_names}, UpdateTraceScenario.RESULT)
+            except Exception as e:
+                logger.exception(f"Error occurred in async generator function {func.__name__}, {e}")
+                fill_trace_data(trace_id, {"error": str(e)}, UpdateTraceScenario.ERROR)
+                raise e
+            finally:
+                cleanup_trace(trace_id, start_time)
+
+        @wraps(func)
+        def gen_wrapper(*args, **kwargs):
+            trace_id, start_time = init_trace(func.__name__, args, kwargs, func)
+            accumulated_result = []  # Initialize empty list to accumulate results
+            try:
+                gen = func(*args, **kwargs)
+                for item in gen:
+                    accumulated_result.append(item)  # Accumulate results
+                    yield item  # Yield each item back to the caller
+                fill_trace_data(trace_id, {"result": "".join(accumulated_result), "eval_funcs_names": eval_funcs_names}, UpdateTraceScenario.RESULT)
+            except Exception as e:
+                logger.exception(f"Error occurred in generator function {func.__name__}, {e}")
+                fill_trace_data(trace_id, {"error": str(e)}, UpdateTraceScenario.ERROR)
+                raise e
+            finally:
+                cleanup_trace(trace_id, start_time)
+
         if inspect.iscoroutinefunction(func):
             return async_wrapper
+        elif inspect.isasyncgenfunction(func):
+            return async_gen_wrapper
+        elif inspect.isgeneratorfunction(func):
+            return gen_wrapper
         else:
             return wrapper
 
