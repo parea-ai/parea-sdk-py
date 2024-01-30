@@ -14,7 +14,7 @@ Parea python sdk
 
 </div>
 
-[Python SDK Docs](https://docs.parea.ai/sdk/python)
+[Python SDK Docs](https://docs.parea.ai/api-reference/sdk/python)
 
 ## Installation
 
@@ -88,7 +88,7 @@ the [Experiments tab](https://app.parea.ai/experiments).
 parea experiment <path/to/experiment_file.py>
 ```
 
-Full working example in our [docs](https://docs.parea.ai/testing/run-experiments).
+Full working example in our [docs](https://docs.parea.ai/evaluation/offline/experiments).
 
 ## Debugging Chains & Agents
 

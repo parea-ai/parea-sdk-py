@@ -90,6 +90,7 @@ class Wrapper:
                 target=None,
                 tags=None,
                 inputs={},
+                experiment_uuid=os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None),
             )
         trace_data.get()[trace_id].parent_trace_id = parent_trace_id
         trace_data.get()[parent_trace_id].children.append(trace_id)
