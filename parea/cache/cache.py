@@ -93,7 +93,7 @@ class Cache(ABC):
         """
         raise NotImplementedError
 
-    def read_logs(self) -> List[TraceLog]:
+    def read_logs(self) -> list[TraceLog]:
         """
         Read all logs from the cache.
 

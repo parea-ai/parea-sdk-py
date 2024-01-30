@@ -57,7 +57,7 @@ def usefulness(log: Log) -> float:
 
 
 @trace(eval_funcs=[friendliness, usefulness])
-def helpful_the_second_time(messages: List[Dict[str, str]]) -> str:
+def helpful_the_second_time(messages: list[dict[str, str]]) -> str:
     helpful_response = call_openai(
         [
             {"role": "system", "content": "You are a friendly, and helpful assistant that helps people with their homework."},

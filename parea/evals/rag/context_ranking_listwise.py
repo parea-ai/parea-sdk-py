@@ -6,7 +6,7 @@ from parea.schemas.log import Log
 
 def context_ranking_listwise_factory(
     question_field: str = "question",
-    context_fields: List[str] = ["context"],
+    context_fields: list[str] = ["context"],
     ranking_measurement="ndcg",
     n_contexts_to_rank=10,
 ) -> Callable[[Log], float]:
@@ -33,7 +33,7 @@ def context_ranking_listwise_factory(
     if n_contexts_to_rank < 1:
         raise ValueError("n_contexts_to_rank must be at least 1.")
 
-    def listwise_reranking(query: str, contexts: List[str]) -> List[int]:
+    def listwise_reranking(query: str, contexts: list[str]) -> list[int]:
         """Uses a LLM to listwise rerank the contexts. Returns the indices of the contexts in the order of their
         relevance (most relevant to least relevant)."""
         if len(contexts) == 0 or len(contexts) == 1:
@@ -63,7 +63,7 @@ def context_ranking_listwise_factory(
         number_strings = s.split(",")
         return [int(num) for num in number_strings if num.isdigit()]
 
-    def progressive_reranking(query: str, contexts: List[str]) -> List[int]:
+    def progressive_reranking(query: str, contexts: list[str]) -> list[int]:
         """Returns the indices of the contexts in the order of their relevance (most relevant to least relevant)."""
         if len(contexts) <= n_contexts_to_rank:
             return listwise_reranking(query, contexts)

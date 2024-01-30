@@ -6,8 +6,8 @@ import re
 from parea.evals.utils import call_openai
 from parea.schemas.log import Log
 
-one_score_pattern = re.compile("\[\[(\d+\.?\d*)\]\]")
-one_score_pattern_backup = re.compile("\[(\d+\.?\d*)\]")
+one_score_pattern = re.compile(r"\[\[(\d+\.?\d*)\]\]")
+one_score_pattern_backup = re.compile(r"\[(\d+\.?\d*)\]")
 
 
 def llm_grader_factory(model: str, question_field: str = "question") -> Callable[[Log], float]:

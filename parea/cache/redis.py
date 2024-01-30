@@ -98,7 +98,7 @@ class RedisCache(Cache):
         except redis.RedisError as e:
             logger.error(f"Error adding to list in cache: {e}")
 
-    def read_logs(self) -> List[TraceLog]:
+    def read_logs(self) -> list[TraceLog]:
         try:
             trace_logs_raw = self.r.hgetall(self.key_logs)
             trace_logs = []

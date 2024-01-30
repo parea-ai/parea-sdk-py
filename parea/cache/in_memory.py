@@ -36,5 +36,5 @@ class InMemoryCache(Cache):
     def log(self, value: TraceLog):
         self.logs.append(value)
 
-    def read_logs(self) -> List[TraceLog]:
+    def read_logs(self) -> list[TraceLog]:
         return self.logs.copy()
