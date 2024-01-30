@@ -24,6 +24,7 @@ class Wrapper:
         resolver: Callable,
         gen_resolver: Callable,
         agen_resolver: Callable,
+        should_use_gen_resolver: Callable,
         cache: Cache,
         convert_kwargs_to_cache_request: Callable,
         convert_cache_to_response: Callable,
@@ -33,6 +34,7 @@ class Wrapper:
         self.resolver = resolver
         self.gen_resolver = gen_resolver
         self.agen_resolver = agen_resolver
+        self.should_use_gen_resolver = should_use_gen_resolver
         self.log = log
         self.wrap_functions(module, func_names)
         self.cache = cache
@@ -122,10 +124,10 @@ class Wrapper:
                     await self.cache.ainvalidate(cache_key)
             finally:
                 if exception is not None:
-                    self._cleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
+                    self._acleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
                     raise exception
                 else:
-                    return self._cleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
+                    return self._acleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
 
         return wrapper
 
@@ -191,17 +193,17 @@ class Wrapper:
     def _cleanup_trace(self, trace_id: str, start_time: float, error: str, cache_hit, args, kwargs, response):
         final_log = self._cleanup_trace_core(trace_id, start_time, error, cache_hit, args, kwargs)
 
-        if isinstance(response, Iterator):
+        if self.should_use_gen_resolver(response):
             return self.gen_resolver(trace_id, args, kwargs, response, final_log)
         else:
             self.resolver(trace_id, args, kwargs, response)
             final_log()
             return response
 
-    async def _acleanup_trace(self, trace_id: str, start_time: float, error: str, cache_hit, args, kwargs, response):
+    def _acleanup_trace(self, trace_id: str, start_time: float, error: str, cache_hit, args, kwargs, response):
         final_log = self._cleanup_trace_core(trace_id, start_time, error, cache_hit, args, kwargs)
 
-        if isinstance(response, AsyncIterator):
+        if self.should_use_gen_resolver(response):
             return self.agen_resolver(trace_id, args, kwargs, response, final_log)
         else:
             self.resolver(trace_id, args, kwargs, response)
