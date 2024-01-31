@@ -68,6 +68,7 @@ class Wrapper:
         trace_data.get()[trace_id] = TraceLog(
             trace_id=trace_id,
             parent_trace_id=trace_id,
+            root_trace_id=trace_id,
             start_timestamp=to_date_and_time_string(start_time),
             trace_name="LLM",
             end_user_identifier=None,

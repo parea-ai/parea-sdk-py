@@ -27,8 +27,7 @@ from parea.schemas.models import (
     UseDeployedPrompt,
     UseDeployedPromptResponse,
 )
-from parea.utils.trace_utils import get_current_trace_id, logger_all_possible, logger_record_log, trace_data, \
-    get_root_trace_id
+from parea.utils.trace_utils import get_current_trace_id, get_root_trace_id, logger_all_possible, logger_record_log, trace_data
 from parea.wrapper import OpenAIWrapper
 
 load_dotenv()
