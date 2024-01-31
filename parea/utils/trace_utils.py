@@ -8,6 +8,7 @@ import os
 import threading
 import time
 from collections import ChainMap
+from collections.abc import AsyncGenerator, AsyncIterator, Generator, Iterator
 from functools import wraps
 
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
@@ -76,10 +77,11 @@ def get_root_trace_id() -> str:
     return ""
 
 
-def trace_insert(data: dict[str, Any]):
-    current_trace_id = get_current_trace_id()
+def trace_insert(data: dict[str, Any], trace_id: Optional[str] = None):
+    current_trace_id = trace_id or get_current_trace_id()
     current_trace_data: TraceLog = trace_data.get()[current_trace_id]
-
+    if not current_trace_data:
+        return
     for key, new_value in data.items():
         existing_value = current_trace_data.__getattribute__(key)
         current_trace_data.__setattr__(key, merge(existing_value, new_value) if existing_value else new_value)
@@ -87,7 +89,8 @@ def trace_insert(data: dict[str, Any]):
 
 def fill_trace_data(trace_id: str, data: dict[str, Any], scenario: UpdateTraceScenario):
     if scenario == UpdateTraceScenario.RESULT:
-        trace_data.get()[trace_id].output = make_output(data["result"], data.get("output_as_list"))
+        if not isinstance(data["result"], (Generator, AsyncGenerator, AsyncIterator, Iterator)):
+            trace_data.get()[trace_id].output = make_output(data["result"], data.get("output_as_list", False))
         trace_data.get()[trace_id].status = "success"
         trace_data.get()[trace_id].evaluation_metric_names = data.get("eval_funcs_names")
     elif scenario == UpdateTraceScenario.ERROR:

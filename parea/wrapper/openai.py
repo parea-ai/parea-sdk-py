@@ -8,6 +8,9 @@ from collections.abc import AsyncIterator, Iterator, Sequence
 import openai
 from openai import __version__ as openai_version
 
+from ..utils.universal_encoder import json_dumps
+from .utils import _calculate_input_tokens, _compute_cost, _format_function_call, _kwargs_to_llm_configuration, _num_tokens_from_string
+
 if openai_version.startswith("0."):
     from openai.openai_object import OpenAIObject
     from openai.util import convert_to_openai_object
@@ -32,95 +35,11 @@ else:
 from dotenv import load_dotenv
 
 from ..cache.cache import Cache
-from ..schemas.log import LLMInputs, ModelParams
 from ..schemas.models import CacheRequest, TraceLog
 from ..utils.trace_utils import trace_data
 from .wrapper import Wrapper
 
 load_dotenv()
-
-OPENAI_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, int]]]] = {
-    "gpt-3.5-turbo": {
-        "prompt": 1.5,
-        "completion": 2.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
-    },
-    "gpt-3.5-turbo-0301": {
-        "prompt": 1.5,
-        "completion": 4.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
-    },
-    "gpt-3.5-turbo-0613": {
-        "prompt": 1.5,
-        "completion": 4.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
-    },
-    "gpt-3.5-turbo-16k": {
-        "prompt": 3.0,
-        "completion": 4.0,
-        "token_limit": {"max_completion_tokens": 16385, "max_prompt_tokens": 16385},
-    },
-    "gpt-3.5-turbo-16k-0301": {
-        "prompt": 3.0,
-        "completion": 4.0,
-        "token_limit": {"max_completion_tokens": 16385, "max_prompt_tokens": 16385},
-    },
-    "gpt-3.5-turbo-16k-0613": {
-        "prompt": 3.0,
-        "completion": 4.0,
-        "token_limit": {"max_completion_tokens": 16385, "max_prompt_tokens": 16385},
-    },
-    "gpt-3.5-turbo-1106": {
-        "prompt": 1.0,
-        "completion": 2.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
-    },
-    "gpt-3.5-turbo-instruct": {
-        "prompt": 1.5,
-        "completion": 4.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
-    },
-    "gpt-4": {
-        "prompt": 30.0,
-        "completion": 60.0,
-        "token_limit": {"max_completion_tokens": 8192, "max_prompt_tokens": 8192},
-    },
-    "gpt-4-0314": {
-        "prompt": 30.0,
-        "completion": 60.0,
-        "token_limit": {"max_completion_tokens": 8192, "max_prompt_tokens": 8192},
-    },
-    "gpt-4-0613": {
-        "prompt": 30.0,
-        "completion": 60.0,
-        "token_limit": {"max_completion_tokens": 8192, "max_prompt_tokens": 8192},
-    },
-    "gpt-4-32k": {
-        "prompt": 60.0,
-        "completion": 120.0,
-        "token_limit": {"max_completion_tokens": 32768, "max_prompt_tokens": 32768},
-    },
-    "gpt-4-32k-0314": {
-        "prompt": 60.0,
-        "completion": 120.0,
-        "token_limit": {"max_completion_tokens": 32768, "max_prompt_tokens": 32768},
-    },
-    "gpt-4-32k-0613": {
-        "prompt": 60.0,
-        "completion": 120.0,
-        "token_limit": {"max_completion_tokens": 32768, "max_prompt_tokens": 32768},
-    },
-    "gpt-4-vision-preview": {
-        "prompt": 30.0,
-        "completion": 60.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
-    },
-    "gpt-4-1106-preview": {
-        "prompt": 10.0,
-        "completion": 30.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
-    },
-}
 
 is_old_openai = openai_version.startswith("0.")
 
@@ -176,17 +95,11 @@ class OpenAIWrapper:
         llm_configuration = OpenAIWrapper._kwargs_to_llm_configuration(kwargs)
         model = llm_configuration.model
 
-        model_rate = OpenAIWrapper.get_model_cost(model)
-        model_completion_rate = OpenAIWrapper.get_model_cost(model, is_completion=True)
-        prompt_cost = (model_rate / 1000) * (input_tokens / 1000)
-        completion_cost = (model_completion_rate / 1000) * (output_tokens / 1000)
-        total_cost = sum([prompt_cost, completion_cost])
-
         trace_data.get()[trace_id].configuration = llm_configuration
         trace_data.get()[trace_id].input_tokens = input_tokens
         trace_data.get()[trace_id].output_tokens = output_tokens
         trace_data.get()[trace_id].total_tokens = total_tokens
-        trace_data.get()[trace_id].cost = total_cost
+        trace_data.get()[trace_id].cost = _compute_cost(input_tokens, output_tokens, model)
         trace_data.get()[trace_id].output = output
         return response
 
@@ -201,6 +114,19 @@ class OpenAIWrapper:
             yield chunk
 
         trace_data.get()[trace_id].output = OpenAIWrapper._get_output(accumulator)
+
+        model = llm_configuration.model
+        output_tokens = _num_tokens_from_string(accumulator.get("content") or json_dumps(accumulator.get("function_call")), model)
+        input_tokens = _calculate_input_tokens(
+            kwargs.get("messages", []),
+            kwargs.get("functions", []) or [d["function"] for d in kwargs.get("tools", [])],
+            kwargs.get("function_call", "auto") or kwargs.get("tool_choice", "auto"),
+            kwargs.get("model"),
+        )
+        trace_data.get()[trace_id].input_tokens = input_tokens
+        trace_data.get()[trace_id].output_tokens = output_tokens
+        trace_data.get()[trace_id].total_tokens = input_tokens + output_tokens
+        trace_data.get()[trace_id].cost = _compute_cost(input_tokens, output_tokens, model)
 
         final_log()
 
@@ -237,24 +163,24 @@ class OpenAIWrapper:
 
         trace_data.get()[trace_id].output = OpenAIWrapper._get_output(accumulator)
 
+        model = llm_configuration.model
+        output_tokens = _num_tokens_from_string(accumulator.get("content") or json_dumps(accumulator.get("function_call")), model)
+        input_tokens = _calculate_input_tokens(
+            kwargs.get("messages", []),
+            kwargs.get("functions", []) or [d["function"] for d in kwargs.get("tools", [])],
+            kwargs.get("function_call", "auto") or kwargs.get("tool_choice", "auto"),
+            kwargs.get("model"),
+        )
+        trace_data.get()[trace_id].input_tokens = input_tokens
+        trace_data.get()[trace_id].output_tokens = output_tokens
+        trace_data.get()[trace_id].total_tokens = input_tokens + output_tokens
+        trace_data.get()[trace_id].cost = _compute_cost(input_tokens, output_tokens, model)
+
         final_log()
 
     @staticmethod
     def _kwargs_to_llm_configuration(kwargs):
-        return LLMInputs(
-            model=kwargs.get("model", None),
-            provider="openai",
-            messages=kwargs.get("messages", None),
-            functions=kwargs.get("functions", None),
-            function_call=kwargs.get("function_call", None),
-            model_params=ModelParams(
-                temp=kwargs.get("temperature", 1.0),
-                max_length=kwargs.get("max_tokens", None),
-                top_p=kwargs.get("top_p", 1.0),
-                frequency_penalty=kwargs.get("frequency_penalty", 0.0),
-                presence_penalty=kwargs.get("presence_penalty", 0.0),
-            ),
-        )
+        return _kwargs_to_llm_configuration(kwargs)
 
     @staticmethod
     def _get_output(result: Any) -> str:
@@ -278,43 +204,7 @@ class OpenAIWrapper:
 
     @staticmethod
     def _format_function_call(response_message) -> str:
-        def clean_json_string(s):
-            """If OpenAI responds with improper newlines and multiple quotes, this will clean it up"""
-            return json.dumps(s.replace("'", '"').replace("\\n", "\\\\n"))
-
-        if openai_version.startswith("0."):
-            function_name = response_message["function_call"]["name"]
-            if isinstance(response_message["function_call"]["arguments"], OpenAIObject):
-                function_args = dict(response_message["function_call"]["arguments"])
-            else:
-                function_args = json.loads(response_message["function_call"]["arguments"])
-            return json.dumps({"name": function_name, "arguments": function_args}, indent=4)
-
-        func_obj = response_message.function_call or response_message.tool_calls
-        calls = []
-        if not isinstance(func_obj, list):
-            func_obj = [func_obj]
-
-        for call in func_obj:
-            if call:
-                body = getattr(call, "function", None) or call
-                function_name = body.name
-                try:
-                    function_args = json.loads(body.arguments)
-                except json.decoder.JSONDecodeError:
-                    function_args = json.loads(clean_json_string(body.arguments))
-                calls.append(json.dumps({"name": function_name, "arguments": function_args}, indent=4))
-        return "\n".join(calls)
-
-    @staticmethod
-    def get_model_cost(model_name: str, is_completion: bool = False) -> float:
-        model_name = model_name.lower()
-        cost = OPENAI_MODEL_INFO.get(model_name, {}).get("completion" if is_completion else "prompt", None)
-        if cost is None:
-            msg = f"Unknown model: {model_name}. " f"Please provide a valid OpenAI model name. " f"Known models are: {', '.join(OPENAI_MODEL_INFO.keys())}"
-            raise ValueError(msg)
-
-        return cost
+        return _format_function_call(response_message)
 
     @staticmethod
     def convert_kwargs_to_cache_request(_args: Sequence[Any], kwargs: dict[str, Any]) -> CacheRequest:
