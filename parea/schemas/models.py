@@ -11,6 +11,7 @@ from parea.schemas.log import LLMInputs, Log
 class Completion:
     inference_id: Optional[str] = None
     parent_trace_id: Optional[str] = None
+    root_trace_id: Optional[str] = None
     trace_name: Optional[str] = None
     llm_inputs: Optional[dict[str, Any]] = None
     llm_configuration: LLMInputs = LLMInputs()
