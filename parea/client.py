@@ -27,7 +27,7 @@ from parea.schemas.models import (
     UseDeployedPrompt,
     UseDeployedPromptResponse,
 )
-from parea.utils.trace_utils import get_current_trace_id, logger_all_possible, logger_record_log, trace_data
+from parea.utils.trace_utils import get_current_trace_id, get_root_trace_id, logger_all_possible, logger_record_log, trace_data
 from parea.wrapper import OpenAIWrapper
 
 load_dotenv()
@@ -77,6 +77,7 @@ class Parea:
         inference_id = gen_trace_id()
         data.inference_id = inference_id
         data.parent_trace_id = parent_trace_id or inference_id
+        data.root_trace_id = get_root_trace_id()
 
         data_dict = self._add_project_uuid_to_data(data)
         if experiment_uuid := os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None):
@@ -98,6 +99,7 @@ class Parea:
         inference_id = gen_trace_id()
         data.inference_id = inference_id
         data.parent_trace_id = parent_trace_id or inference_id
+        data.root_trace_id = get_root_trace_id()
 
         data_dict = self._add_project_uuid_to_data(data)
         if experiment_uuid := os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None):

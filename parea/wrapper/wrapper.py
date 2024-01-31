@@ -68,6 +68,7 @@ class Wrapper:
         trace_data.get()[trace_id] = TraceLog(
             trace_id=trace_id,
             parent_trace_id=trace_id,
+            root_trace_id=trace_id,
             start_timestamp=to_date_and_time_string(start_time),
             trace_name="LLM",
             end_user_identifier=None,
@@ -86,6 +87,7 @@ class Wrapper:
             trace_data.get()[parent_trace_id] = TraceLog(
                 trace_id=parent_trace_id,
                 parent_trace_id=parent_trace_id,
+                root_trace_id=parent_trace_id,
                 start_timestamp=to_date_and_time_string(start_time),
                 end_user_identifier=None,
                 metadata=None,
@@ -94,6 +96,7 @@ class Wrapper:
                 inputs={},
                 experiment_uuid=os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None),
             )
+        trace_data.get()[trace_id].root_trace_id = trace_context.get()[0]
         trace_data.get()[trace_id].parent_trace_id = parent_trace_id
         trace_data.get()[parent_trace_id].children.append(trace_id)
         self.log(parent_trace_id)

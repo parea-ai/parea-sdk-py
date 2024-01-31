@@ -70,6 +70,13 @@ def get_current_trace_id() -> str:
     return ""
 
 
+def get_root_trace_id() -> str:
+    stack = trace_context.get()
+    if stack:
+        return stack[0]
+    return ""
+
+
 def trace_insert(data: dict[str, Any], trace_id: Optional[str] = None):
     current_trace_id = trace_id or get_current_trace_id()
     current_trace_data: TraceLog = trace_data.get()[current_trace_id]
@@ -124,6 +131,7 @@ def trace(
         trace_data.get()[trace_id] = TraceLog(
             trace_id=trace_id,
             parent_trace_id=trace_id,
+            root_trace_id=trace_context.get()[0],
             start_timestamp=to_date_and_time_string(start_time),
             trace_name=name or func_name,
             end_user_identifier=end_user_identifier,
