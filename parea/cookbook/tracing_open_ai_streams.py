@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from openai import AsyncOpenAI, OpenAI
 
 from parea import Parea
-from parea.cookbook.data.openai_input_examples import simple_example
+from parea.cookbook.data.openai_input_examples import simple_example, simple_example_json
 from parea.utils.trace_utils import trace
 
 load_dotenv()
@@ -36,6 +36,7 @@ async def acall_openai_stream(data: dict):
 
 if __name__ == "__main__":
     call_openai_stream(simple_example)
+    call_openai_stream(simple_example_json)
     # call_openai_stream(functions_example)
     # asyncio.run(acall_openai_stream(simple_example))
     # asyncio.run(acall_openai_stream(functions_example))
