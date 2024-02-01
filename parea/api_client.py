@@ -43,7 +43,7 @@ def retry_on_502(func: Callable[..., Any]) -> Callable[..., Any]:
 
 class HTTPClient:
     _instance = None
-    base_url = "http://localhost:8000/api/parea/v1"  # "https://parea-ai-backend-us-9ac16cdbc7a7b006.onporter.run/api/parea/v1"
+    base_url = "https://parea-ai-backend-us-9ac16cdbc7a7b006.onporter.run/api/parea/v1"
     api_key = None
 
     def __new__(cls, *args, **kwargs):
@@ -170,18 +170,14 @@ class HTTPClient:
 
 
 def parse_event_data(byte_data):
-    # Decode bytes to string
     decoded_data = byte_data.decode("utf-8")
 
-    # Find the JSON part of the data
     try:
-        # Assuming the format is consistent, splitting by '\n' and taking the part with 'data: '
         json_str = [line for line in decoded_data.split("\r\n") if line.startswith("data:")][0]
-        # Removing 'data: ' to isolate the JSON string
         json_str = json_str.replace("data: ", "")
         if json_str.startswith("ID_START"):
             return ""
-        # Convert JSON string to Python dictionary
+
         data_dict = json.loads(json_str)
         return data_dict["chunk"]
     except Exception as e:
