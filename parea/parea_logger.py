@@ -31,11 +31,6 @@ class PareaLogger:
     def set_project_uuid(self, project_uuid: str) -> None:
         self._project_uuid = project_uuid
 
-    def _add_project_uuid_to_data(self, data) -> dict:
-        data_dict = asdict(data)
-        data_dict["project_uuid"] = self._project_uuid
-        return data_dict
-
     def update_log(self, data: UpdateLog) -> None:
         self._client.request(
             "PUT",
@@ -44,17 +39,19 @@ class PareaLogger:
         )
 
     def record_log(self, data: TraceLog) -> None:
+        data.project_uuid = self._project_uuid
         self._client.request(
             "POST",
             LOG_ENDPOINT,
-            data=self._add_project_uuid_to_data(data),
+            data=asdict(data),
         )
 
     async def arecord_log(self, data: TraceLog) -> None:
+        data.project_uuid = self._project_uuid
         await self._client.request_async(
             "POST",
             LOG_ENDPOINT,
-            data=self._add_project_uuid_to_data(data),
+            data=asdict(data),
         )
 
     def write_log(self, data: TraceLog) -> None:

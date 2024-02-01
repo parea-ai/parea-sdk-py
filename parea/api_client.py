@@ -1,7 +1,9 @@
 from typing import Any, Callable, Optional
 
 import asyncio
+import json
 import time
+from collections.abc import AsyncIterable
 from functools import wraps
 
 import httpx
@@ -96,6 +98,52 @@ class HTTPClient:
             print(f"HTTP Error {e.response.status_code} for {e.request.url}: {e.response.text}")
             raise
 
+    @retry_on_502
+    def stream_request(
+        self,
+        method: str,
+        endpoint: str,
+        data: Optional[dict[str, Any]] = None,
+        params: Optional[dict[str, Any]] = None,
+        api_key: Optional[str] = None,
+        chunk_size: Optional[int] = None,
+    ):
+        """
+        Makes a streaming HTTP request to the specified endpoint, yielding chunks of data.
+        """
+        headers = {"x-api-key": self.api_key} if self.api_key else api_key
+        try:
+            with self.sync_client.stream(method, endpoint, json=data, headers=headers, params=params, timeout=None) as response:
+                response.raise_for_status()
+                for chunk in response.iter_bytes(chunk_size):
+                    yield parse_event_data(chunk)
+        except httpx.HTTPStatusError as e:
+            print(f"HTTP Error {e.response.status_code} for {e.request.url}: {e.response.text}")
+            raise
+
+    @retry_on_502
+    async def stream_request_async(
+        self,
+        method: str,
+        endpoint: str,
+        data: Optional[dict[str, Any]] = None,
+        params: Optional[dict[str, Any]] = None,
+        api_key: Optional[str] = None,
+        chunk_size: Optional[int] = None,
+    ) -> AsyncIterable[bytes]:
+        """
+        Makes an asynchronous streaming HTTP request to the specified endpoint, yielding chunks of data.
+        """
+        headers = {"x-api-key": self.api_key} if self.api_key else api_key
+        try:
+            async with self.async_client.stream(method, endpoint, json=data, headers=headers, params=params, timeout=None) as response:
+                response.raise_for_status()
+                async for chunk in response.aiter_bytes(chunk_size):
+                    yield parse_event_data(chunk)
+        except httpx.HTTPStatusError as e:
+            print(f"HTTP Error {e.response.status_code} for {e.request.url}: {e.response.text}")
+            raise
+
     def close(self):
         """
         Closes the synchronous HTTP client.
@@ -119,3 +167,19 @@ class HTTPClient:
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.close_async()
+
+
+def parse_event_data(byte_data):
+    decoded_data = byte_data.decode("utf-8")
+
+    try:
+        json_str = [line for line in decoded_data.split("\r\n") if line.startswith("data:")][0]
+        json_str = json_str.replace("data: ", "")
+        if json_str.startswith("ID_START"):
+            return ""
+
+        data_dict = json.loads(json_str)
+        return data_dict["chunk"]
+    except Exception as e:
+        print(f"Error parsing event data: {e}")
+        return None
