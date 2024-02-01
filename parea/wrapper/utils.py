@@ -5,7 +5,9 @@ import sys
 from functools import wraps
 
 import tiktoken
-from openai.types.chat import ChatCompletion
+from openai import __version__ as openai_version
+if openai_version.startswith("1."):
+    from openai.types.chat import ChatCompletion
 
 from parea.parea_logger import parea_logger
 from parea.schemas.log import LLMInputs, ModelParams
