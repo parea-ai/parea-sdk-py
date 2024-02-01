@@ -36,6 +36,7 @@ class ModelParams:
     frequency_penalty: float = 0.0
     presence_penalty: float = 0.0
     max_length: Optional[int] = None
+    response_format: Optional[dict] = None
 
 
 @define
