@@ -99,27 +99,6 @@ class HTTPClient:
             raise
 
     @retry_on_502
-    def request_stream(
-        self,
-        method: str,
-        endpoint: str,
-        data: Optional[dict[str, Any]] = None,
-        params: Optional[dict[str, Any]] = None,
-        api_key: Optional[str] = None,
-    ) -> httpx.Response:
-        """
-        Makes an HTTP request to the specified endpoint.
-        """
-        headers = {"x-api-key": self.api_key} if self.api_key else api_key
-        try:
-            with self.sync_client.stream(method, endpoint, json=data, headers=headers, params=params) as response:
-                response.raise_for_status()
-                return response
-        except httpx.HTTPStatusError as e:
-            print(f"HTTP Error {e.response.status_code} for {e.request.url}: {e.response.text}")
-            raise
-
-    @retry_on_502
     def stream_request(
         self,
         method: str,
