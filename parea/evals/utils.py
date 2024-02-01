@@ -38,7 +38,7 @@ def safe_json_loads(s) -> dict:
     return {}
 
 
-def call_openai(messages, model, temperature=1.0, max_tokens=None, top_p=1.0, frequency_penalty=0.0, presence_penalty=0.0, n=1) -> Union[str, list[str]]:
+def call_openai(messages, model, temperature=1.0, max_tokens=None, top_p=1.0, frequency_penalty=0.0, presence_penalty=0.0, response_format=None, n=1) -> Union[str, list[str]]:
     if openai_version.startswith("0."):
         completion = openai.ChatCompletion.create(
             model=model,
@@ -63,6 +63,7 @@ def call_openai(messages, model, temperature=1.0, max_tokens=None, top_p=1.0, fr
             top_p=top_p,
             frequency_penalty=frequency_penalty,
             presence_penalty=presence_penalty,
+            response_format=response_format,
             n=n,
         )
         if n == 1:

@@ -36,6 +36,7 @@ def self_check(log: Log) -> float:
             top_p=log.configuration.model_params.top_p,
             frequency_penalty=log.configuration.model_params.frequency_penalty,
             presence_penalty=log.configuration.model_params.presence_penalty,
+            response_format=log.configuration.model_params.response_format,
         )
         sampled_outputs.append(response)
 

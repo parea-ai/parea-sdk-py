@@ -49,6 +49,7 @@ def lm_vs_lm_factuality_factory(examiner_model: str = "gpt-3.5-turbo") -> Callab
                 frequency_penalty=log.configuration.model_params.frequency_penalty,
                 presence_penalty=log.configuration.model_params.presence_penalty,
                 max_tokens=log.configuration.model_params.max_length,
+                response_format=log.configuration.model_params.response_format,
             )
             messages_examiner.append({"role": "assistant", "content": follow_up_answers})
 

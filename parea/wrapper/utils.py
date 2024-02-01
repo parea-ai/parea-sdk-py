@@ -6,6 +6,7 @@ from functools import wraps
 
 import tiktoken
 from openai import __version__ as openai_version
+
 if openai_version.startswith("1."):
     from openai.types.chat import ChatCompletion
 
@@ -188,6 +189,7 @@ def _kwargs_to_llm_configuration(kwargs, model=None):
             top_p=kwargs.get("top_p", 1.0),
             frequency_penalty=kwargs.get("frequency_penalty", 0.0),
             presence_penalty=kwargs.get("presence_penalty", 0.0),
+            response_format=kwargs.get("response_format", None),
         ),
     )
 
