@@ -136,12 +136,12 @@ class Parea:
             trace_data.get()[parent_trace_id].experiment_uuid = experiment_uuid
             logger_record_log(parent_trace_id)
 
-        r = self._client.stream_request(
+        response = self._client.stream_request(
             "POST",
             f"{COMPLETION_ENDPOINT}/stream",
             data=asdict(data),
         )
-        yield from r
+        yield from response
 
     async def astream(self, data: Completion) -> AsyncIterable[bytes]:
         parent_trace_id = get_current_trace_id()
@@ -159,13 +159,13 @@ class Parea:
             trace_data.get()[parent_trace_id].experiment_uuid = experiment_uuid
             logger_record_log(parent_trace_id)
 
-        r = self._client.stream_request_async(
+        response = self._client.stream_request_async(
             "POST",
             f"{COMPLETION_ENDPOINT}/stream",
             data=asdict(data),
         )
-        async for c in r:
-            yield c
+        async for chunk in response:
+            yield chunk
 
     def get_prompt(self, data: UseDeployedPrompt) -> UseDeployedPromptResponse:
         r = self._client.request(

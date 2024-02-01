@@ -59,7 +59,7 @@ class LLMInputs:
         "gpt-4-32k-0314"
         "gpt-4-32k-0613"
         "gpt-4-1106-preview"
-    Custom Azure model names you provided on Parea AI
+    You can use Azure models by providing your model name prefixed with azure_, e.g. azure_gpt-3.5-turbo
     ANTHROPIC_MODELS
         "claude-instant-1.1"
         "claude-instant-1"
