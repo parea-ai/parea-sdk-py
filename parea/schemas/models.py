@@ -26,6 +26,7 @@ class Completion:
     log_omit_outputs: bool = False
     log_omit: bool = False
     experiment_uuid: Optional[str] = None
+    project_uuid: str = "default"
 
 
 @define
@@ -94,6 +95,7 @@ class TraceLog(Log):
     root_trace_id: Optional[str] = field(default=None, validator=validators.instance_of(str))
     start_timestamp: Optional[str] = field(default=None, validator=validators.instance_of(str))
     organization_id: Optional[str] = None
+    project_uuid: Optional[str] = None
 
     # metrics filled from completion
     error: Optional[str] = None

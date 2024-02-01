@@ -1,9 +1,9 @@
-from typing import Callable, Dict
+from typing import Callable
 
 import asyncio
 import os
 import time
-from collections.abc import Iterable
+from collections.abc import AsyncIterable, Iterable
 
 from attrs import asdict, define, field
 from cattrs import structure
@@ -78,20 +78,22 @@ class Parea:
         data.inference_id = inference_id
         data.parent_trace_id = parent_trace_id or inference_id
         data.root_trace_id = get_root_trace_id()
+        data.project_uuid = self._project.uuid
 
-        data_dict = self._add_project_uuid_to_data(data)
         if experiment_uuid := os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None):
-            data_dict["experiment_uuid"] = experiment_uuid
+            data.experiment_uuid = experiment_uuid
 
         r = self._client.request(
             "POST",
             COMPLETION_ENDPOINT,
-            data=data_dict,
+            data=asdict(data),
         )
+
         if parent_trace_id:
             trace_data.get()[parent_trace_id].children.append(inference_id)
             trace_data.get()[parent_trace_id].experiment_uuid = experiment_uuid
             logger_record_log(parent_trace_id)
+
         return structure(r.json(), CompletionResponse)
 
     async def acompletion(self, data: Completion) -> CompletionResponse:
@@ -100,21 +102,70 @@ class Parea:
         data.inference_id = inference_id
         data.parent_trace_id = parent_trace_id or inference_id
         data.root_trace_id = get_root_trace_id()
+        data.project_uuid = self._project.uuid
 
-        data_dict = self._add_project_uuid_to_data(data)
         if experiment_uuid := os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None):
-            data_dict["experiment_uuid"] = experiment_uuid
+            data.experiment_uuid = experiment_uuid
 
         r = await self._client.request_async(
             "POST",
             COMPLETION_ENDPOINT,
-            data=data_dict,
+            data=asdict(data),
         )
+
         if parent_trace_id:
             trace_data.get()[parent_trace_id].children.append(inference_id)
             trace_data.get()[parent_trace_id].experiment_uuid = experiment_uuid
             logger_record_log(parent_trace_id)
+
         return structure(r.json(), CompletionResponse)
+
+    def stream(self, data: Completion) -> Iterable[bytes]:
+        parent_trace_id = get_current_trace_id()
+        inference_id = gen_trace_id()
+        data.inference_id = inference_id
+        data.parent_trace_id = parent_trace_id or inference_id
+        data.root_trace_id = get_root_trace_id()
+        data.project_uuid = self._project.uuid
+
+        if experiment_uuid := os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None):
+            data.experiment_uuid = experiment_uuid
+
+        if parent_trace_id:
+            trace_data.get()[parent_trace_id].children.append(inference_id)
+            trace_data.get()[parent_trace_id].experiment_uuid = experiment_uuid
+            logger_record_log(parent_trace_id)
+
+        r = self._client.stream_request(
+            "POST",
+            f"{COMPLETION_ENDPOINT}/stream",
+            data=asdict(data),
+        )
+        yield from r
+
+    async def astream(self, data: Completion) -> AsyncIterable[bytes]:
+        parent_trace_id = get_current_trace_id()
+        inference_id = gen_trace_id()
+        data.inference_id = inference_id
+        data.parent_trace_id = parent_trace_id or inference_id
+        data.root_trace_id = get_root_trace_id()
+        data.project_uuid = self._project.uuid
+
+        if experiment_uuid := os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None):
+            data.experiment_uuid = experiment_uuid
+
+        if parent_trace_id:
+            trace_data.get()[parent_trace_id].children.append(inference_id)
+            trace_data.get()[parent_trace_id].experiment_uuid = experiment_uuid
+            logger_record_log(parent_trace_id)
+
+        r = self._client.stream_request_async(
+            "POST",
+            f"{COMPLETION_ENDPOINT}/stream",
+            data=asdict(data),
+        )
+        async for c in r:
+            yield c
 
     def get_prompt(self, data: UseDeployedPrompt) -> UseDeployedPromptResponse:
         r = self._client.request(

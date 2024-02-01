@@ -3,13 +3,12 @@ import os
 import bs4
 from dotenv import load_dotenv
 from langchain import hub
-from langchain.chat_models import ChatOpenAI
 from langchain.document_loaders import WebBaseLoader
-from langchain.embeddings import OpenAIEmbeddings
 from langchain.schema import StrOutputParser
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
 from langchain_core.runnables import RunnablePassthrough
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 from parea import Parea
 from parea.utils.trace_integrations.langchain import PareaAILangchainTracer
