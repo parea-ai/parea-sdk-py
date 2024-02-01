@@ -121,6 +121,25 @@ def argument_chain3(query: str, additional_description: str = "") -> CompletionR
     return refiner2(query, additional_description, argument, criticism)
 
 
+@trace
+def json_call():
+    json_messages = [
+        {"role": "system", "content": "You are a helpful assistant talking in JSON."},
+        {"role": "user", "content": "What are you?"}
+    ]
+    return p.completion(
+        data=Completion(
+            llm_configuration=LLMInputs(
+                model="gpt-3.5-turbo-1106",
+                provider='openai',
+                model_params=ModelParams(temp=0.0, response_format={"type": "json_object"}),
+                messages=[Message(**d) for d in json_messages],
+            )
+        )
+    ).content
+
+
+
 if __name__ == "__main__":
     result1 = argument_chain(
         "Whether coffee is good for you.",
@@ -153,3 +172,5 @@ if __name__ == "__main__":
             target="Moonshine is wonderful. End of story.",
         )
     )
+
+    print(json_call())

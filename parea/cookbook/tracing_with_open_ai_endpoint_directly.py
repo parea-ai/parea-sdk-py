@@ -78,6 +78,16 @@ def argument_chain(query: str, additional_description: str = "") -> tuple[str, s
     return refined_argument, trace_id
 
 
+@trace
+def json_call() -> str:
+    completion = client.chat.completions.create(
+        model="gpt-3.5-turbo-0125",
+        messages=[{"role": "system", "content": "You are a helpful assistant talking in JSON."}, {"role": "user", "content": "What are you?"}],
+        response_format={"type": "json_object"},
+    )
+    return completion.choices[0].message.content
+
+
 if __name__ == "__main__":
     result, trace_id = argument_chain(
         "Whether sparkling wine is good for you.",
@@ -90,3 +100,5 @@ if __name__ == "__main__":
             score=0.7,  # 0.0 (bad) to 1.0 (good)
         )
     )
+
+    print(json_call())
