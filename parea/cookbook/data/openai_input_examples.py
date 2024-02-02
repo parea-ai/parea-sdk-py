@@ -65,9 +65,6 @@ simple_example = {
 
 simple_example_json = {
     "model": "gpt-3.5-turbo-1106",
-    "messages": [
-        {"role": "system", "content": "You are a helpful assistant talking JSON."},
-        {"role": "user", "content": "Hello!"}
-    ],
+    "messages": [{"role": "system", "content": "You are a helpful assistant talking JSON."}, {"role": "user", "content": "Hello!"}],
     "response_format": {"type": "json_object"},
 }

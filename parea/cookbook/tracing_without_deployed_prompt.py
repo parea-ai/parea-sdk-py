@@ -123,21 +123,17 @@ def argument_chain3(query: str, additional_description: str = "") -> CompletionR
 
 @trace
 def json_call():
-    json_messages = [
-        {"role": "system", "content": "You are a helpful assistant talking in JSON."},
-        {"role": "user", "content": "What are you?"}
-    ]
+    json_messages = [{"role": "system", "content": "You are a helpful assistant talking in JSON."}, {"role": "user", "content": "What are you?"}]
     return p.completion(
         data=Completion(
             llm_configuration=LLMInputs(
                 model="gpt-3.5-turbo-1106",
-                provider='openai',
+                provider="openai",
                 model_params=ModelParams(temp=0.0, response_format={"type": "json_object"}),
                 messages=[Message(**d) for d in json_messages],
             )
         )
     ).content
-
 
 
 if __name__ == "__main__":
