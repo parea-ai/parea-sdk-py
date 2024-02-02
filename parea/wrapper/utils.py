@@ -49,23 +49,24 @@ def _num_tokens_from_messages(messages, model="gpt-3.5-turbo-0613"):
         print("Warning: model not found. Using cl100k_base encoding.")
         encoding = tiktoken.get_encoding("cl100k_base")
     if model in {
+        "gpt-3.5-turbo",
         "gpt-3.5-turbo-1106",
+        "gpt-3.5-turbo-0125",
         "gpt-3.5-turbo-0613",
         "gpt-3.5-turbo-16k-0613",
         "gpt-4-0314",
         "gpt-4-32k-0314",
         "gpt-4-0613",
         "gpt-4-32k-0613",
+        "gpt-4-turbo-preview",
         "gpt-4-1106-preview",
+        "gpt-4-0125-preview",
     }:
         tokens_per_message = 3
         tokens_per_name = 1
     elif model == "gpt-3.5-turbo-0301":
         tokens_per_message = 4  # every message follows <|start|>{role/name}\n{content}<|end|>\n
         tokens_per_name = -1  # if there's a name, the role is omitted
-    elif "gpt-3.5-turbo" in model:
-        print("Warning: gpt-3.5-turbo may update over time. Returning num tokens assuming gpt-3.5-turbo-0613.")
-        return _num_tokens_from_messages(messages, model="gpt-3.5-turbo-0613")
     elif "gpt-4" in model:
         print("Warning: gpt-4 may update over time. Returning num tokens assuming gpt-4-0613.")
         return _num_tokens_from_messages(messages, model="gpt-4-0613")
@@ -269,11 +270,6 @@ def convert_openai_raw_to_log(r: dict, data: dict):
 CHUNK_DONE_SENTINEL = "data: [DONE]"
 
 OPENAI_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, int]]]] = {
-    "gpt-3.5-turbo": {
-        "prompt": 1.5,
-        "completion": 2.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
-    },
     "gpt-3.5-turbo-0301": {
         "prompt": 1.5,
         "completion": 4.0,
@@ -303,6 +299,16 @@ OPENAI_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, int]]]] = {
         "prompt": 1.0,
         "completion": 2.0,
         "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
+    },
+    "gpt-3.5-turbo-0125": {
+        "prompt": 0.5,
+        "completion": 2.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 16385},
+    },
+    "gpt-3.5-turbo": {
+        "prompt": 0.5,
+        "completion": 2.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 16385},
     },
     "gpt-3.5-turbo-instruct": {
         "prompt": 1.5,
@@ -344,7 +350,17 @@ OPENAI_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, int]]]] = {
         "completion": 60.0,
         "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
     },
+    "gpt-4-turbo-preview": {
+        "prompt": 10.0,
+        "completion": 30.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
     "gpt-4-1106-preview": {
+        "prompt": 10.0,
+        "completion": 30.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
+    "gpt-4-0125-preview": {
         "prompt": 10.0,
         "completion": 30.0,
         "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
