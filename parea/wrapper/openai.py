@@ -136,6 +136,8 @@ class OpenAIWrapper:
 
     @staticmethod
     def _update_accumulator_streaming(accumulator: defaultdict, chunk):
+        if not chunk.choices:
+            return
         if is_old_openai:
             delta_dict = chunk.choices[0].delta._previous
         else:
