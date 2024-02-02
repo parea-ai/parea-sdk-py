@@ -1,5 +1,5 @@
 tool_calling_example = {
-    "model": "gpt-3.5-turbo-1106",
+    "model": "gpt-3.5-turbo-0125",
     "messages": [{"role": "user", "content": "What's the weather like in San Francisco, Tokyo, and Paris?"}],
     "tools": [
         {
@@ -25,7 +25,7 @@ tool_calling_example = {
 }
 
 functions_example = {
-    "model": "gpt-3.5-turbo-1106",
+    "model": "gpt-3.5-turbo-0125",
     "messages": [
         {
             "role": "system",
@@ -59,12 +59,12 @@ functions_example = {
 }
 
 simple_example = {
-    "model": "gpt-3.5-turbo-1106",
+    "model": "gpt-3.5-turbo-0125",
     "messages": [{"role": "system", "content": "You are a helpful assistant."}, {"role": "user", "content": "Hello!"}],
 }
 
 simple_example_json = {
-    "model": "gpt-3.5-turbo-1106",
+    "model": "gpt-3.5-turbo-0125",
     "messages": [{"role": "system", "content": "You are a helpful assistant talking JSON."}, {"role": "user", "content": "Hello!"}],
     "response_format": {"type": "json_object"},
 }
