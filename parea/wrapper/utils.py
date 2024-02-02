@@ -2,7 +2,7 @@ from typing import Callable, Optional, Union
 
 import json
 import sys
-from functools import wraps
+from functools import lru_cache, wraps
 
 import tiktoken
 from openai import __version__ as openai_version
@@ -39,7 +39,7 @@ def skip_decorator_if_func_in_stack(*funcs_to_check: Callable) -> Callable:
     return decorator_wrapper
 
 
-def _num_tokens_from_messages(messages, model="gpt-3.5-turbo-0613"):
+def _num_tokens_from_messages(messages, model="gpt-3.5-turbo-0613", is_azure: bool = False):
     """Return the number of tokens used by a list of messages.
     source: https://cookbook.openai.com/examples/how_to_count_tokens_with_tiktoken
     """
@@ -48,16 +48,20 @@ def _num_tokens_from_messages(messages, model="gpt-3.5-turbo-0613"):
     except KeyError:
         print("Warning: model not found. Using cl100k_base encoding.")
         encoding = tiktoken.get_encoding("cl100k_base")
-    if model in {
-        "gpt-3.5-turbo-1106",
-        "gpt-3.5-turbo-0613",
-        "gpt-3.5-turbo-16k-0613",
-        "gpt-4-0314",
-        "gpt-4-32k-0314",
-        "gpt-4-0613",
-        "gpt-4-32k-0613",
-        "gpt-4-1106-preview",
-    }:
+    if (
+        model
+        in {
+            "gpt-3.5-turbo-1106",
+            "gpt-3.5-turbo-0613",
+            "gpt-3.5-turbo-16k-0613",
+            "gpt-4-0314",
+            "gpt-4-32k-0314",
+            "gpt-4-0613",
+            "gpt-4-32k-0613",
+            "gpt-4-1106-preview",
+        }
+        or is_azure
+    ):
         tokens_per_message = 3
         tokens_per_name = 1
     elif model == "gpt-3.5-turbo-0301":
@@ -136,7 +140,11 @@ def _num_tokens_from_functions(functions, function_call, model="gpt-3.5-turbo-06
 
 def _num_tokens_from_string(string: str, model_name: str = "gpt-3.5-turbo") -> int:
     """Returns the number of tokens in a text string."""
-    encoding = tiktoken.encoding_for_model(model_name)
+    try:
+        encoding = tiktoken.encoding_for_model(model_name)
+    except KeyError:
+        print(f"Warning: model {model_name} not found. Using cl100k_base encoding.")
+        encoding = tiktoken.get_encoding("cl100k_base")
     num_tokens = len(encoding.encode(string))
     return num_tokens
 
@@ -147,8 +155,9 @@ def _calculate_input_tokens(
     function_call: Union[str, dict[str, str]],
     model: str,
 ) -> int:
+    is_azure = model.startswith("azure_") or model in AZURE_MODEL_INFO
     num_function_tokens = _num_tokens_from_functions(functions, function_call, model)
-    num_input_tokens = _num_tokens_from_string(json.dumps(messages), model) if model == "gpt-4-vision-preview" else _num_tokens_from_messages(messages, model)
+    num_input_tokens = _num_tokens_from_string(json.dumps(messages), model) if model == "gpt-4-vision-preview" else _num_tokens_from_messages(messages, model, is_azure)
     return num_input_tokens + num_function_tokens
 
 
@@ -194,8 +203,12 @@ def _kwargs_to_llm_configuration(kwargs, model=None):
     )
 
 
+@lru_cache(maxsize=128)
 def _compute_cost(prompt_tokens: int, completion_tokens: int, model: str) -> float:
-    cost_per_token = OPENAI_MODEL_INFO.get(model, {"prompt": 0, "completion": 0})
+    if model in AZURE_MODEL_INFO:
+        cost_per_token = AZURE_MODEL_INFO[model]
+    else:
+        cost_per_token = OPENAI_MODEL_INFO.get(model, {"prompt": 0, "completion": 0})
     cost = ((prompt_tokens * cost_per_token["prompt"]) + (completion_tokens * cost_per_token["completion"])) / 1_000_000
     cost = round(cost, 10)
     return cost
@@ -304,6 +317,11 @@ OPENAI_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, int]]]] = {
         "completion": 2.0,
         "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
     },
+    "gpt-3.5-turbo-0125": {
+        "prompt": 1.0,
+        "completion": 2.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
+    },
     "gpt-3.5-turbo-instruct": {
         "prompt": 1.5,
         "completion": 4.0,
@@ -345,6 +363,88 @@ OPENAI_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, int]]]] = {
         "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
     },
     "gpt-4-1106-preview": {
+        "prompt": 10.0,
+        "completion": 30.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
+    "gpt-4-0125-preview": {
+        "prompt": 10.0,
+        "completion": 30.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
+}
+AZURE_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, int]]]] = {
+    "gpt-35-turbo": {
+        "prompt": 1.5,
+        "completion": 2.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
+    },
+    "gpt-35-turbo-0301": {
+        "prompt": 1.5,
+        "completion": 4.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
+    },
+    "gpt-35-turbo-0613": {
+        "prompt": 1.5,
+        "completion": 4.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
+    },
+    "gpt-35-turbo-16k": {
+        "prompt": 3.0,
+        "completion": 4.0,
+        "token_limit": {"max_completion_tokens": 16384, "max_prompt_tokens": 16384},
+    },
+    "gpt-35-turbo-16k-0301": {
+        "prompt": 3.0,
+        "completion": 4.0,
+        "token_limit": {"max_completion_tokens": 16384, "max_prompt_tokens": 16384},
+    },
+    "gpt-35-turbo-16k-0613": {
+        "prompt": 3.0,
+        "completion": 4.0,
+        "token_limit": {"max_completion_tokens": 16384, "max_prompt_tokens": 16384},
+    },
+    "gpt-4": {
+        "prompt": 30.0,
+        "completion": 60.0,
+        "token_limit": {"max_completion_tokens": 8192, "max_prompt_tokens": 8192},
+    },
+    "gpt-4-0314": {
+        "prompt": 30.0,
+        "completion": 60.0,
+        "token_limit": {"max_completion_tokens": 8192, "max_prompt_tokens": 8192},
+    },
+    "gpt-4-0613": {
+        "prompt": 30.0,
+        "completion": 60.0,
+        "token_limit": {"max_completion_tokens": 8192, "max_prompt_tokens": 8192},
+    },
+    "gpt-4-32k": {
+        "prompt": 60.0,
+        "completion": 120.0,
+        "token_limit": {"max_completion_tokens": 32768, "max_prompt_tokens": 32768},
+    },
+    "gpt-4-32k-0314": {
+        "prompt": 60.0,
+        "completion": 120.0,
+        "token_limit": {"max_completion_tokens": 32768, "max_prompt_tokens": 32768},
+    },
+    "gpt-4-32k-0613": {
+        "prompt": 60.0,
+        "completion": 120.0,
+        "token_limit": {"max_completion_tokens": 32768, "max_prompt_tokens": 32768},
+    },
+    "gpt-4-1106-preview": {
+        "prompt": 10.0,
+        "completion": 20.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
+    "gpt-4-vision": {
+        "prompt": 10.0,
+        "completion": 30.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
+    "gpt-35-turbo-instruct": {
         "prompt": 10.0,
         "completion": 30.0,
         "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
