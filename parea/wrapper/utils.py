@@ -1,8 +1,7 @@
-from typing import Callable, Optional, Union
-
 import json
 import sys
 from functools import lru_cache, wraps
+from typing import Callable, Optional, Union
 
 import tiktoken
 from openai import __version__ as openai_version
@@ -51,15 +50,19 @@ def _num_tokens_from_messages(messages, model="gpt-3.5-turbo-0613", is_azure: bo
     if (
         model
         in {
-            "gpt-3.5-turbo-1106",
-            "gpt-3.5-turbo-0613",
-            "gpt-3.5-turbo-16k-0613",
-            "gpt-4-0314",
-            "gpt-4-32k-0314",
-            "gpt-4-0613",
-            "gpt-4-32k-0613",
-            "gpt-4-1106-preview",
-        }
+        "gpt-3.5-turbo",
+        "gpt-3.5-turbo-1106",
+        "gpt-3.5-turbo-0125",
+        "gpt-3.5-turbo-0613",
+        "gpt-3.5-turbo-16k-0613",
+        "gpt-4-0314",
+        "gpt-4-32k-0314",
+        "gpt-4-0613",
+        "gpt-4-32k-0613",
+        "gpt-4-turbo-preview",
+        "gpt-4-1106-preview",
+        "gpt-4-0125-preview",
+    }
         or is_azure
     ):
         tokens_per_message = 3
@@ -67,9 +70,6 @@ def _num_tokens_from_messages(messages, model="gpt-3.5-turbo-0613", is_azure: bo
     elif model == "gpt-3.5-turbo-0301":
         tokens_per_message = 4  # every message follows <|start|>{role/name}\n{content}<|end|>\n
         tokens_per_name = -1  # if there's a name, the role is omitted
-    elif "gpt-3.5-turbo" in model:
-        print("Warning: gpt-3.5-turbo may update over time. Returning num tokens assuming gpt-3.5-turbo-0613.")
-        return _num_tokens_from_messages(messages, model="gpt-3.5-turbo-0613")
     elif "gpt-4" in model:
         print("Warning: gpt-4 may update over time. Returning num tokens assuming gpt-4-0613.")
         return _num_tokens_from_messages(messages, model="gpt-4-0613")
@@ -157,7 +157,9 @@ def _calculate_input_tokens(
 ) -> int:
     is_azure = model.startswith("azure_") or model in AZURE_MODEL_INFO
     num_function_tokens = _num_tokens_from_functions(functions, function_call, model)
-    num_input_tokens = _num_tokens_from_string(json.dumps(messages), model) if model == "gpt-4-vision-preview" else _num_tokens_from_messages(messages, model, is_azure)
+    num_input_tokens = _num_tokens_from_string(json.dumps(messages),
+                                               model) if model == "gpt-4-vision-preview" else _num_tokens_from_messages(
+        messages, model, is_azure)
     return num_input_tokens + num_function_tokens
 
 
@@ -191,7 +193,8 @@ def _kwargs_to_llm_configuration(kwargs, model=None):
         provider="openai",
         messages=kwargs.get("messages", None),
         functions=functions,
-        function_call=kwargs.get("function_call", function_call_default) or kwargs.get("tool_choice", function_call_default),
+        function_call=kwargs.get("function_call", function_call_default) or kwargs.get("tool_choice",
+                                                                                       function_call_default),
         model_params=ModelParams(
             temp=kwargs.get("temperature", 1.0),
             max_length=kwargs.get("max_tokens", None),
@@ -276,17 +279,13 @@ def convert_openai_raw_stream_to_log(content: list, tools: dict, data: dict, tra
 
 
 def convert_openai_raw_to_log(r: dict, data: dict):
-    log_in_thread(_process_response, {"response": ChatCompletion(**r), "model_inputs": data, "trace_id": get_current_trace_id()})
+    log_in_thread(_process_response,
+                  {"response": ChatCompletion(**r), "model_inputs": data, "trace_id": get_current_trace_id()})
 
 
 CHUNK_DONE_SENTINEL = "data: [DONE]"
 
 OPENAI_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, int]]]] = {
-    "gpt-3.5-turbo": {
-        "prompt": 1.5,
-        "completion": 2.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
-    },
     "gpt-3.5-turbo-0301": {
         "prompt": 1.5,
         "completion": 4.0,
@@ -318,9 +317,14 @@ OPENAI_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, int]]]] = {
         "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
     },
     "gpt-3.5-turbo-0125": {
-        "prompt": 1.0,
+        "prompt": 0.5,
         "completion": 2.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 16385},
+    },
+    "gpt-3.5-turbo": {
+        "prompt": 0.5,
+        "completion": 2.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 16385},
     },
     "gpt-3.5-turbo-instruct": {
         "prompt": 1.5,
@@ -360,6 +364,11 @@ OPENAI_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, int]]]] = {
     "gpt-4-vision-preview": {
         "prompt": 30.0,
         "completion": 60.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
+    "gpt-4-turbo-preview": {
+        "prompt": 10.0,
+        "completion": 30.0,
         "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
     },
     "gpt-4-1106-preview": {
