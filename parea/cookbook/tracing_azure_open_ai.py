@@ -2,7 +2,7 @@ import asyncio
 import os
 
 from dotenv import load_dotenv
-from openai import AsyncAzureOpenAI, AzureOpenAI
+from openai.lib.azure import AsyncAzureOpenAI, AzureOpenAI
 
 from parea import Parea
 from parea.cookbook.data.openai_input_examples import functions_example, simple_example
@@ -11,12 +11,15 @@ from parea.utils.trace_utils import trace
 load_dotenv()
 
 client = AzureOpenAI(
-    api_version="2023-12-01-preview", api_key=os.getenv("AZURE_OAI_API_KEY"), azure_endpoint=os.getenv("AZURE_OAI_ENDPOINT"), azure_deployment=os.getenv("AZURE_OAI_DEPLOYMENT")
+    api_version="2023-12-01-preview",
+    api_key=os.getenv("AZURE_OAI_API_KEY"),
+    azure_endpoint=os.getenv("AZURE_OAI_ENDPOINT"),
 )
 aclient = AsyncAzureOpenAI(
-    api_version="2023-12-01-preview", api_key=os.getenv("AZURE_OAI_API_KEY"), azure_endpoint=os.getenv("AZURE_OAI_ENDPOINT"), azure_deployment=os.getenv("AZURE_OAI_DEPLOYMENT")
+    api_version="2023-12-01-preview",
+    api_key=os.getenv("AZURE_OAI_API_KEY"),
+    azure_endpoint=os.getenv("AZURE_OAI_ENDPOINT"),
 )
-
 
 p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 p.wrap_openai_client(client)
@@ -54,10 +57,13 @@ async def acall_azure_stream(data: dict):
 
 
 if __name__ == "__main__":
-    call_azure(simple_example)
+    azure_model = "AZURE_MODEL_NAME"  # replace with your model name
+    functions_example["model"] = azure_model
+    simple_example["model"] = azure_model
+    call_azure(functions_example)
     # call_azure_stream(simple_example)
     # call_azure_stream(functions_example)
-    # asyncio.run(acall_azure(simple_example))
-    asyncio.run(acall_azure(functions_example))
+    asyncio.run(acall_azure(simple_example))
+    # asyncio.run(acall_azure(functions_example))
     # asyncio.run(acall_azure_stream(simple_example))
-    # asyncio.run(acall_azure_stream(functions_example))
+    asyncio.run(acall_azure_stream(functions_example))

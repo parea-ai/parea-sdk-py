@@ -93,7 +93,7 @@ class OpenAIWrapper:
             total_tokens = 0
 
         llm_configuration = OpenAIWrapper._kwargs_to_llm_configuration(kwargs)
-        model = llm_configuration.model
+        model = response.model or llm_configuration.model
 
         trace_data.get()[trace_id].configuration = llm_configuration
         trace_data.get()[trace_id].input_tokens = input_tokens
@@ -115,13 +115,13 @@ class OpenAIWrapper:
 
         trace_data.get()[trace_id].output = OpenAIWrapper._get_output(accumulator)
 
-        model = llm_configuration.model
+        model = accumulator.get("model") or llm_configuration.model
         output_tokens = _num_tokens_from_string(accumulator.get("content") or json_dumps(accumulator.get("function_call")), model)
         input_tokens = _calculate_input_tokens(
             kwargs.get("messages", []),
             kwargs.get("functions", []) or [d["function"] for d in kwargs.get("tools", [])],
             kwargs.get("function_call", "auto") or kwargs.get("tool_choice", "auto"),
-            kwargs.get("model"),
+            model,
         )
         trace_data.get()[trace_id].input_tokens = input_tokens
         trace_data.get()[trace_id].output_tokens = output_tokens
@@ -136,6 +136,8 @@ class OpenAIWrapper:
 
     @staticmethod
     def _update_accumulator_streaming(accumulator: defaultdict, chunk):
+        if chunk.model:
+            accumulator["model"] = chunk.model
         if not chunk.choices:
             return
         if is_old_openai:
@@ -164,14 +166,13 @@ class OpenAIWrapper:
             yield chunk
 
         trace_data.get()[trace_id].output = OpenAIWrapper._get_output(accumulator)
-
-        model = llm_configuration.model
+        model = accumulator.get("model") or llm_configuration.model
         output_tokens = _num_tokens_from_string(accumulator.get("content") or json_dumps(accumulator.get("function_call")), model)
         input_tokens = _calculate_input_tokens(
             kwargs.get("messages", []),
             kwargs.get("functions", []) or [d["function"] for d in kwargs.get("tools", [])],
             kwargs.get("function_call", "auto") or kwargs.get("tool_choice", "auto"),
-            kwargs.get("model"),
+            model,
         )
         trace_data.get()[trace_id].input_tokens = input_tokens
         trace_data.get()[trace_id].output_tokens = output_tokens

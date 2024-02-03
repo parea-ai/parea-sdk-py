@@ -1,10 +1,11 @@
+import asyncio
 import os
 
 from dotenv import load_dotenv
 from openai import AsyncOpenAI, OpenAI
 
 from parea import Parea
-from parea.cookbook.data.openai_input_examples import simple_example, simple_example_json
+from parea.cookbook.data.openai_input_examples import functions_example, simple_example_json
 from parea.utils.trace_utils import trace
 
 load_dotenv()
@@ -12,10 +13,9 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 aclient = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-
 p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 p.wrap_openai_client(client)
-# p.wrap_openai_client(aclient)
+p.wrap_openai_client(aclient)
 
 
 @trace
@@ -35,8 +35,8 @@ async def acall_openai_stream(data: dict):
 
 
 if __name__ == "__main__":
-    call_openai_stream(simple_example)
+    # call_openai_stream(simple_example)
     call_openai_stream(simple_example_json)
     # call_openai_stream(functions_example)
     # asyncio.run(acall_openai_stream(simple_example))
-    # asyncio.run(acall_openai_stream(functions_example))
+    asyncio.run(acall_openai_stream(functions_example))

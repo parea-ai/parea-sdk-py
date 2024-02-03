@@ -4,7 +4,6 @@ import functools
 import inspect
 import os
 import time
-from collections.abc import AsyncIterator, Iterator
 from uuid import uuid4
 
 from parea.cache.cache import Cache
