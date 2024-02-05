@@ -105,6 +105,7 @@ class TraceLog(Log):
     output_for_eval_metrics: Optional[str] = None
     evaluation_metric_names: Optional[list[str]] = field(factory=list)
     scores: Optional[list[NamedEvaluationScore]] = field(factory=list)
+    apply_eval_frac: Optional[float] = 1.0
     feedback_score: Optional[float] = None
 
     # info filled from decorator
