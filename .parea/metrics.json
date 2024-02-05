@@ -1,0 +1,11 @@
+{
+  "latency": "0.78",
+  "input_tokens": "0.00",
+  "output_tokens": "0.00",
+  "total_tokens": "0.00",
+  "cost": "0.00",
+  "hit_rate_top_20": "0.05",
+  "mrr_top_20": "0.03",
+  "gpt_35_turbo_1106_0_shot": "0.35",
+  "gpt_35_turbo_0125_0_shot": "0.32"
+}
