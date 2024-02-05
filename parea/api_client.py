@@ -8,7 +8,7 @@ from functools import wraps
 
 import httpx
 
-MAX_RETRIES = 5
+MAX_RETRIES = 7
 BACKOFF_FACTOR = 0.5
 
 
