@@ -10,6 +10,7 @@ import time
 from collections import ChainMap
 from collections.abc import AsyncGenerator, AsyncIterator, Generator, Iterator
 from functools import wraps
+from random import random
 
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.helpers import gen_trace_id, to_date_and_time_string
@@ -110,6 +111,7 @@ def trace(
     eval_funcs_names: Optional[list[str]] = None,
     eval_funcs: Optional[list[Callable]] = None,
     access_output_of_func: Optional[Callable] = None,
+    apply_eval_frac: Optional[float] = 1.0,
 ):
     def init_trace(func_name, args, kwargs, func) -> tuple[str, float]:
         start_time = time.time()
@@ -140,6 +142,7 @@ def trace(
             tags=tags,
             inputs=inputs,
             experiment_uuid=os.environ.get(PAREA_OS_ENV_EXPERIMENT_UUID, None),
+            apply_eval_frac=apply_eval_frac,
         )
         parent_trace_id = trace_context.get()[-2] if len(trace_context.get()) > 1 else None
         if parent_trace_id:
@@ -151,7 +154,20 @@ def trace(
         end_time = time.time()
         trace_data.get()[trace_id].end_timestamp = to_date_and_time_string(end_time)
         trace_data.get()[trace_id].latency = end_time - start_time
-        thread_eval_funcs_then_log(trace_id, eval_funcs, access_output_of_func)
+
+        output = trace_data.get()[trace_id].output
+        if trace_data.get()[trace_id].status == "success" and output:
+            output_for_eval_metrics = output
+            if access_output_of_func:
+                try:
+                    output = json.loads(output)
+                    output = access_output_of_func(output)
+                    output_for_eval_metrics = json_dumps(output)
+                except Exception as e:
+                    logger.exception(f"Error accessing output of func with output: {output}. Error: {e}", exc_info=e)
+            trace_data.get()[trace_id].output_for_eval_metrics = output_for_eval_metrics
+
+        thread_eval_funcs_then_log(trace_id, eval_funcs)
         trace_context.get().pop()
 
     def decorator(func):
@@ -198,32 +214,18 @@ def trace(
     return decorator
 
 
-def call_eval_funcs_then_log(trace_id: str, eval_funcs: list[Callable] = None, access_output_of_func: Callable = None):
+def call_eval_funcs_then_log(trace_id: str, eval_funcs: list[Callable] = None):
     data = trace_data.get()[trace_id]
     parea_logger.default_log(data=data)
 
-    if eval_funcs and data.status == "success":
+    if eval_funcs and data.status == "success" and random() <= data.apply_eval_frac:
         thread_ids_running_evals.get().append(trace_id)
-        if access_output_of_func:
-            try:
-                output = json.loads(data.output)
-                output = access_output_of_func(output)
-                output_for_eval_metrics = json_dumps(output)
-            except Exception as e:
-                logger.exception(f"Error accessing output of func with output: {data.output}. Error: {e}", exc_info=e)
-                return
-        else:
-            output_for_eval_metrics = data.output
-
-        data.output = output_for_eval_metrics
         scores = []
-
         for func in eval_funcs:
             try:
                 scores.append(NamedEvaluationScore(name=func.__name__, score=func(data)))
             except Exception as e:
                 logger.exception(f"Error occurred calling evaluation function '{func.__name__}', {e}", exc_info=e)
-
         parea_logger.update_log(data=UpdateLog(trace_id=trace_id, field_name_to_value_map={"scores": scores}))
         thread_ids_running_evals.get().remove(trace_id)
 
@@ -236,5 +238,5 @@ def logger_all_possible(trace_id: str):
     log_in_thread(parea_logger.default_log, {"data": trace_data.get()[trace_id]})
 
 
-def thread_eval_funcs_then_log(trace_id: str, eval_funcs: list[Callable] = None, access_output_of_func: Callable = None):
-    log_in_thread(call_eval_funcs_then_log, {"trace_id": trace_id, "eval_funcs": eval_funcs, "access_output_of_func": access_output_of_func})
+def thread_eval_funcs_then_log(trace_id: str, eval_funcs: list[Callable] = None):
+    log_in_thread(call_eval_funcs_then_log, {"trace_id": trace_id, "eval_funcs": eval_funcs})
