@@ -6,7 +6,7 @@ from parea.constants import PAREA_DVC_METRICS_FILE, PAREA_DVC_YAML_FILE, PAREA_D
 
 
 def save_results_to_dvc_if_init(experiment_name: str, metrics: dict):
-    if not _parea_dvc_initialized(print_output=False):
+    if not parea_dvc_initialized(print_output=False):
         return
     write_metrics_to_dvc(metrics)
     try:
@@ -22,7 +22,7 @@ def write_metrics_to_dvc(metrics: dict):
         f.write(json.dumps(metrics, indent=2))
 
 
-def _parea_dvc_initialized(print_output: bool = True) -> bool:
+def parea_dvc_initialized(print_output: bool = True) -> bool:
     print_fn = print if print_output else lambda *args, **kwargs: None
     git_root = subprocess.check_output(['git', 'rev-parse', '--show-toplevel'], text=True, stderr=subprocess.STDOUT).strip()
 
@@ -51,10 +51,5 @@ def _parea_dvc_initialized(print_output: bool = True) -> bool:
     if dvc_metrics_file_missing or dvc_yaml_file_missing:
         return False
 
-    print_fn("DVC and Parea's DVC integration are initialized.")
+    print_fn("Parea's DVC integration is initialized.")
     return True
-
-
-# Example usage:
-if __name__ == "__main__":
-    print(_parea_dvc_initialized())
