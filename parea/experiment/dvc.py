@@ -2,7 +2,7 @@ import json
 import os
 import subprocess
 
-from parea.constants import PAREA_DVC_METRICS_FILE, PAREA_DVC_YAML_FILE
+from parea.constants import PAREA_DVC_METRICS_FILE, PAREA_DVC_YAML_FILE, PAREA_DVC_DIR
 
 
 def save_results_to_dvc_if_init(experiment_name: str, metrics: dict):
@@ -16,17 +16,22 @@ def save_results_to_dvc_if_init(experiment_name: str, metrics: dict):
 
 
 def write_metrics_to_dvc(metrics: dict):
-    with open(PAREA_DVC_METRICS_FILE, "w") as f:
+    git_root = subprocess.check_output(['git', 'rev-parse', '--show-toplevel'], text=True,
+                                       stderr=subprocess.STDOUT).strip()
+    with open(os.path.join(git_root, PAREA_DVC_METRICS_FILE), "w") as f:
         f.write(json.dumps(metrics, indent=2))
 
 
 def _parea_dvc_initialized(print_output: bool = True) -> bool:
     print_fn = print if print_output else lambda *args, **kwargs: None
     git_root = subprocess.check_output(['git', 'rev-parse', '--show-toplevel'], text=True, stderr=subprocess.STDOUT).strip()
+
+    # make sure DVC is initialized
     if not os.path.exists(os.path.join(git_root, ".dvc")):
         print_fn("DVC is not initialized. Please run `dvc init` to initialize DVC.")
         return False
 
+    # make sure dvc.yaml and metrics.json exist in .parea directory
     if not os.path.exists(os.path.join(git_root, PAREA_DVC_YAML_FILE)):
         print_fn(f"{PAREA_DVC_YAML_FILE} is not found. Creating the file.")
         with open(os.path.join(git_root, PAREA_DVC_YAML_FILE), "w") as f:
@@ -34,9 +39,18 @@ def _parea_dvc_initialized(print_output: bool = True) -> bool:
     if not os.path.exists(os.path.join(git_root, PAREA_DVC_METRICS_FILE)):
         print_fn(f"{PAREA_DVC_METRICS_FILE} is not found. Creating the file.")
         write_metrics_to_dvc({})
-    if PAREA_DVC_METRICS_FILE not in subprocess.check_output(['git', 'ls-files', PAREA_DVC_METRICS_FILE], cwd=git_root, text=True, stderr=subprocess.STDOUT):
+
+    # make sure dvc.yaml and metrics.json are committed
+    files_in_parea_dvc = subprocess.check_output(['git', 'ls-files', PAREA_DVC_DIR], cwd=git_root, text=True, stderr=subprocess.STDOUT)
+    dvc_yaml_file_missing = PAREA_DVC_YAML_FILE not in files_in_parea_dvc
+    dvc_metrics_file_missing = PAREA_DVC_METRICS_FILE not in files_in_parea_dvc
+    if dvc_metrics_file_missing:
         print_fn(f"{PAREA_DVC_METRICS_FILE} is not committed. Please to commit the file to your git history.")
+    if dvc_yaml_file_missing:
+        print_fn(f"{PAREA_DVC_YAML_FILE} is not committed. Please to commit the file to your git history.")
+    if dvc_metrics_file_missing or dvc_yaml_file_missing:
         return False
+
     print_fn("DVC and Parea's DVC integration are initialized.")
     return True
 
