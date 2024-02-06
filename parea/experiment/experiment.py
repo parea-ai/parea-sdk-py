@@ -13,6 +13,7 @@ from tqdm.asyncio import tqdm_asyncio
 
 from parea import Parea
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
+from parea.experiment.dvc import save_results_to_dvc_if_init
 from parea.schemas.models import CreateExperimentRequest, ExperimentSchema, ExperimentStatsSchema, TraceStatsSchema
 from parea.utils.trace_utils import thread_ids_running_evals
 
@@ -86,6 +87,7 @@ async def experiment(name: str, data: Iterable[dict], func: Callable, p: Parea) 
     stat_name_to_avg_std = calculate_avg_std_for_experiment(experiment_stats)
     print(f"Experiment stats:\n{json.dumps(stat_name_to_avg_std, indent=2)}\n\n")
     print(f"View experiment & its traces at: https://app.parea.ai/experiments/{experiment_uuid}\n")
+    save_results_to_dvc_if_init(name, stat_name_to_avg_std)
     return experiment_stats
 
 

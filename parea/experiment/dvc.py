@@ -5,6 +5,16 @@ import subprocess
 from parea.constants import PAREA_DVC_METRICS_FILE, PAREA_DVC_YAML_FILE
 
 
+def save_results_to_dvc_if_init(experiment_name: str, metrics: dict):
+    if not _parea_dvc_initialized(print_output=False):
+        return
+    write_metrics_to_dvc(metrics)
+    try:
+        subprocess.run(["dvc", "exp", "save", "-n", experiment_name], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to save results to DVC: {e}")
+
+
 def write_metrics_to_dvc(metrics: dict):
     with open(PAREA_DVC_METRICS_FILE, "w") as f:
         f.write(json.dumps(metrics, indent=2))
