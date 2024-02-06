@@ -5,6 +5,7 @@ import os
 import time
 from collections.abc import AsyncIterable, Iterable
 
+import httpx
 from attrs import asdict, define, field
 from cattrs import structure
 from dotenv import load_dotenv
@@ -200,20 +201,34 @@ class Parea:
         )
 
     def create_experiment(self, data: CreateExperimentRequest) -> ExperimentSchema:
-        r = self._client.request(
-            "POST",
-            EXPERIMENT_ENDPOINT,
-            data=self._add_project_uuid_to_data(data),
-        )
-        return structure(r.json(), ExperimentSchema)
+        try:
+            r = self._client.request(
+                "POST",
+                EXPERIMENT_ENDPOINT,
+                data=self._add_project_uuid_to_data(data),
+            )
+            return structure(r.json(), ExperimentSchema)
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 400:
+                response_detail = e.response.json()
+                error_msg = response_detail.get("detail", e.response.text)
+                raise ValueError(f"Error creating experiment: {error_msg}")
+            raise
 
     async def acreate_experiment(self, data: CreateExperimentRequest) -> ExperimentSchema:
-        r = await self._client.request_async(
-            "POST",
-            EXPERIMENT_ENDPOINT,
-            data=self._add_project_uuid_to_data(data),
-        )
-        return structure(r.json(), ExperimentSchema)
+        try:
+            r = await self._client.request_async(
+                "POST",
+                EXPERIMENT_ENDPOINT,
+                data=self._add_project_uuid_to_data(data),
+            )
+            return structure(r.json(), ExperimentSchema)
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 400:
+                response_detail = e.response.json()
+                error_msg = response_detail.get("detail", e.response.text)
+                raise ValueError(f"Error creating experiment: {error_msg}")
+            raise
 
     def get_experiment_stats(self, experiment_uuid: str) -> ExperimentStatsSchema:
         r = self._client.request(
@@ -255,10 +270,10 @@ class Parea:
     def project_uuid(self) -> str:
         return self._project.uuid
 
-    def experiment(self, name: str, data: Iterable[dict], func: Callable):
+    def experiment(self, data: Iterable[dict], func: Callable):
         from parea import Experiment
 
-        return Experiment(name=name, data=data, func=func, p=self)
+        return Experiment(data=data, func=func, p=self)
 
 
 _initialized_parea_wrapper = False

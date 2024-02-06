@@ -35,14 +35,14 @@ def generate_random_number(n: str) -> str:
 # Define the experiment
 # You can use the CLI command to execute this experiment or call `.run()`
 p.experiment(
-    name="random-numbers-2",        # Name of the experiment (str)
-    data=[{"n": "10"}, {"n": "-10"}],           # Data to run the experiment on (list of dicts)
-    func=generate_random_number,  # Function to run (callable)
+    data=[{"n": "10"}, {"n": "-10"}],  # Data to run the experiment on (list of dicts)
+    func=generate_random_number,       # Function to run (callable)
+    #  name="random-numbers",        # optionally specify name of the experiment (str); must be unique for project; only alphanumeric, dashes and underscores
 )
 
 # You can optionally run the experiment manually by calling `.run()`
 # p.experiment(
-#    name="Random Numbers",
+#    name="random-numbers",
 #    data=[{"n": "10"}],
 #    func=generate_random_number,
 # ).run()

@@ -20,8 +20,8 @@ def retry_on_502(func: Callable[..., Any]) -> Callable[..., Any]:
             for retry in range(MAX_RETRIES):
                 try:
                     return await func(*args, **kwargs)
-                except httpx.HTTPStatusError as e:
-                    if e.response.status_code != 502 or retry == MAX_RETRIES - 1:
+                except (httpx.HTTPStatusError, httpx.ConnectError) as e:
+                    if (isinstance(e, httpx.HTTPStatusError) and e.response.status_code != 502) or retry == MAX_RETRIES - 1:
                         raise
                     await asyncio.sleep(BACKOFF_FACTOR * (2**retry))
 
@@ -33,8 +33,8 @@ def retry_on_502(func: Callable[..., Any]) -> Callable[..., Any]:
             for retry in range(MAX_RETRIES):
                 try:
                     return func(*args, **kwargs)
-                except httpx.HTTPStatusError as e:
-                    if e.response.status_code != 502 or retry == MAX_RETRIES - 1:
+                except (httpx.HTTPStatusError, httpx.ConnectError) as e:
+                    if (isinstance(e, httpx.HTTPStatusError) and e.response.status_code != 502) or retry == MAX_RETRIES - 1:
                         raise
                     time.sleep(BACKOFF_FACTOR * (2**retry))
 
