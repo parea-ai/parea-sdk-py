@@ -22,7 +22,7 @@ def write_metrics_to_dvc(metrics: dict):
         f.write(json.dumps(metrics, indent=2))
 
 
-def parea_dvc_initialized(print_output: bool = True) -> bool:
+def parea_dvc_initialized(print_output: bool) -> bool:
     print_fn = print if print_output else lambda *args, **kwargs: None
     git_root = subprocess.check_output(['git', 'rev-parse', '--show-toplevel'], text=True, stderr=subprocess.STDOUT).strip()
 

@@ -1,8 +1,8 @@
 {
-  "latency": "0.79",
+  "latency": "1.21",
   "input_tokens": "17.00",
-  "output_tokens": "7.00",
-  "total_tokens": "24.00",
+  "output_tokens": "44.50",
+  "total_tokens": "61.50",
   "cost": "0.00",
   "is_between_1_and_n": "0.50"
 }
