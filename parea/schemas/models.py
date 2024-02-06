@@ -45,7 +45,6 @@ class CompletionResponse:
     start_timestamp: str
     end_timestamp: str
     error: Optional[str] = None
-    trace_id: Optional[str] = None
 
 
 @define
@@ -65,7 +64,7 @@ class Prompt:
 class UseDeployedPromptResponse:
     deployment_id: str
     name: Optional[str] = None
-    functions: Optional[dict[str, Any]] = None
+    functions: Optional[list[str]] = None
     function_call: Optional[str] = None
     prompt: Optional[Prompt] = None
     model: Optional[str] = None
