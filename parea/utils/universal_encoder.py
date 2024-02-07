@@ -6,6 +6,7 @@ import json
 from uuid import UUID
 
 import attrs
+from pydantic import BaseModel
 
 
 def is_dataclass_instance(obj):
@@ -26,6 +27,11 @@ class UniversalEncoder(json.JSONEncoder):
             return dataclasses.asdict(obj)
         elif is_attrs_instance(obj):
             return attrs.asdict(obj)
+        elif isinstance(obj, BaseModel):
+            try:
+                return obj.model_dump()
+            except Exception:
+                return obj.dict()
         elif isinstance(obj, (datetime.datetime, datetime.date, datetime.time)):
             return obj.isoformat()
         elif isinstance(obj, datetime.timedelta):
