@@ -74,7 +74,6 @@ class HTTPClient:
             response.raise_for_status()
             return response
         except httpx.HTTPStatusError as e:
-            print(f"HTTP Error {e.response.status_code} for {e.request.url}: {e.response.text}")
             raise
 
     @retry_on_502
