@@ -34,7 +34,7 @@ def main():
     if args[0] == "experiment":
         _experiment_cli(args[1:])
     elif args[0] == "dvc-init":
-        parea_dvc_initialized(print_output=True)
+        parea_dvc_initialized(only_check=False)
     else:
         print(f"Unknown command: '{args[0]}'")
 

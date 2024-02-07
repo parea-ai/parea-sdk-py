@@ -6,7 +6,7 @@ from parea.constants import PAREA_DVC_DIR, PAREA_DVC_METRICS_FILE, PAREA_DVC_YAM
 
 
 def save_results_to_dvc_if_init(experiment_name: str, metrics: dict):
-    if not parea_dvc_initialized(print_output=False):
+    if not parea_dvc_initialized(only_check=True):
         return
     write_metrics_to_dvc(metrics)
     try:
@@ -21,8 +21,8 @@ def write_metrics_to_dvc(metrics: dict):
         f.write(json.dumps(metrics, indent=2))
 
 
-def parea_dvc_initialized(print_output: bool) -> bool:
-    print_fn = print if print_output else lambda *args, **kwargs: None
+def parea_dvc_initialized(only_check: bool) -> bool:
+    print_fn = print if not only_check else lambda *args, **kwargs: None
     git_root = subprocess.check_output(["git", "rev-parse", "--show-toplevel"], text=True, stderr=subprocess.STDOUT).strip()
 
     # make sure DVC is initialized
@@ -32,12 +32,18 @@ def parea_dvc_initialized(print_output: bool) -> bool:
 
     # make sure dvc.yaml and metrics.json exist in .parea directory
     if not os.path.exists(os.path.join(git_root, PAREA_DVC_YAML_FILE)):
-        print_fn(f"{PAREA_DVC_YAML_FILE} is not found. Creating the file.")
-        with open(os.path.join(git_root, PAREA_DVC_YAML_FILE), "w") as f:
-            f.write("metrics:\n  - metrics.json\n")
+        if only_check:
+            return False
+        else:
+            print_fn(f"{PAREA_DVC_YAML_FILE} is not found. Creating the file.")
+            with open(os.path.join(git_root, PAREA_DVC_YAML_FILE), "w") as f:
+                f.write("metrics:\n  - metrics.json\n")
     if not os.path.exists(os.path.join(git_root, PAREA_DVC_METRICS_FILE)):
-        print_fn(f"{PAREA_DVC_METRICS_FILE} is not found. Creating the file.")
-        write_metrics_to_dvc({})
+        if only_check:
+            return False
+        else:
+            print_fn(f"{PAREA_DVC_METRICS_FILE} is not found. Creating the file.")
+            write_metrics_to_dvc({})
 
     # make sure dvc.yaml and metrics.json are committed
     files_in_parea_dvc = subprocess.check_output(["git", "ls-files", PAREA_DVC_DIR], cwd=git_root, text=True, stderr=subprocess.STDOUT)
