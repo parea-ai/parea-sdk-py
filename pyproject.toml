@@ -68,7 +68,7 @@ parea = 'parea:main'
 
 [tool.poetry.group.dev.dependencies]
 chromadb = "^0.4.20"
-langchain = "^0.0.351"
+langchain = ">=0.0.351,<0.0.355"
 langchainhub = "^0.1.14"
 tiktoken = "^0.5.2"
 faiss-cpu = "^1.7.4"
