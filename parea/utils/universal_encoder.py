@@ -1,8 +1,7 @@
-from typing import Any
-
 import dataclasses
 import datetime
 import json
+from typing import Any
 from uuid import UUID
 
 import attrs
@@ -30,7 +29,7 @@ class UniversalEncoder(json.JSONEncoder):
         elif isinstance(obj, BaseModel):
             try:
                 return obj.model_dump()
-            except Exception:
+            except Exception as e:
                 return obj.dict()
         elif isinstance(obj, (datetime.datetime, datetime.date, datetime.time)):
             return obj.isoformat()
