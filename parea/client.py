@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Union
 
 import asyncio
 import os
@@ -25,6 +25,7 @@ from parea.schemas.models import (
     ExperimentStatsSchema,
     FeedbackRequest,
     ProjectSchema,
+    TestCaseCollection,
     UseDeployedPrompt,
     UseDeployedPromptResponse,
 )
@@ -40,6 +41,7 @@ EXPERIMENT_ENDPOINT = "/experiment"
 EXPERIMENT_STATS_ENDPOINT = "/experiment/{experiment_uuid}/stats"
 EXPERIMENT_FINISHED_ENDPOINT = "/experiment/{experiment_uuid}/finished"
 PROJECT_ENDPOINT = "/project"
+GET_COLLECTION_ENDPOINT = "/collection/{test_collection_name}"
 
 
 @define
@@ -266,11 +268,32 @@ class Parea:
         )
         return structure(r.json(), CreateGetProjectResponseSchema)
 
+    def get_collection(self, test_collection_name: str) -> TestCaseCollection:
+        r = self._client.request(
+            "GET",
+            GET_COLLECTION_ENDPOINT.format(test_collection_name=test_collection_name),
+        )
+        return structure(r.json(), TestCaseCollection)
+
+    async def aget_collection(self, test_collection_name: str) -> TestCaseCollection:
+        r = await self._client.request_async(
+            "GET",
+            GET_COLLECTION_ENDPOINT.format(test_collection_name=test_collection_name),
+        )
+        return structure(r.json(), TestCaseCollection)
+
     @property
     def project_uuid(self) -> str:
         return self._project.uuid
 
-    def experiment(self, data: Iterable[dict], func: Callable):
+    def experiment(self, data: Union[str, Iterable[dict]], func: Callable):
+        """
+        :param data: If your dataset is defined locally it should be an iterable of k/v
+        pairs matching the expected inputs of your function. To reference a test collection you
+        have saved on Parea, use the collection name as a string.
+
+        :param func: The function to run. This function should accept inputs that match the keys of the data field.
+        """
         from parea import Experiment
 
         return Experiment(data=data, func=func, p=self)
