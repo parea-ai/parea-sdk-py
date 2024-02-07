@@ -17,7 +17,7 @@ if openai_version.startswith("0."):
 else:
     from openai.types.chat import ChatCompletion as OpenAIObject
 
-    def convert_to_openai_object(kwargs):
+    def convert_to_openai_object(kwargs) -> OpenAIObject:
         if "id" not in kwargs:
             kwargs["id"] = "0"
         if "created" not in kwargs:
@@ -92,7 +92,7 @@ class OpenAIWrapper:
             total_tokens = 0
 
         llm_configuration = self._kwargs_to_llm_configuration(kwargs)
-        model = response.model or llm_configuration.model
+        model = response.model if response and response.model else llm_configuration.model
 
         trace_data.get()[trace_id].configuration = llm_configuration
         trace_data.get()[trace_id].input_tokens = input_tokens
@@ -106,51 +106,49 @@ class OpenAIWrapper:
         llm_configuration = self._kwargs_to_llm_configuration(kwargs)
         trace_data.get()[trace_id].configuration = llm_configuration
 
-        accumulated_content, accumulated_tools, model_from_response = self._get_default_dict_streaming()
+        accumulator, model_from_response = self._get_default_dict_streaming()
         for chunk in response:
-            self._update_accumulator_streaming(accumulated_content, accumulated_tools, model_from_response, chunk)
+            self._update_accumulator_streaming(accumulator, model_from_response, chunk)
             yield chunk
 
-        model, content, tool_calls = self._get_formatted_accumulated_stats(accumulated_content, accumulated_tools, model_from_response)
+        self._format_accumulator_in_place(accumulator)
 
-        trace_data.get()[trace_id].output = content or json_dumps(tool_calls, indent=4)  # self._get_output(accumulator)
-        model = model or llm_configuration.model
-        output_tokens = _num_tokens_from_string(content or json_dumps(tool_calls), model)
-        input_tokens = _calculate_input_tokens(
-            kwargs.get("messages", []),
-            kwargs.get("functions", []) or [d["function"] for d in kwargs.get("tools", [])],
-            kwargs.get("function_call", "auto") or kwargs.get("tool_choice", "auto"),
-            model,
-        )
-        trace_data.get()[trace_id].input_tokens = input_tokens
-        trace_data.get()[trace_id].output_tokens = output_tokens
-        trace_data.get()[trace_id].total_tokens = input_tokens + output_tokens
-        trace_data.get()[trace_id].cost = _compute_cost(input_tokens, output_tokens, model)
-
+        model = model_from_response.get("model") or llm_configuration.model
+        self.update_trace_data_from_stream_response(trace_id, model, accumulator, kwargs)
         final_log()
 
     @staticmethod
     def _get_default_dict_streaming():
-        accumulated_content = []
         model_from_response = {"model": ""}
-        accumulated_tools = defaultdict(lambda: {"function": {"arguments": [], "name": ""}})
-        return accumulated_content, accumulated_tools, model_from_response
-
-    def _get_formatted_accumulated_stats(self, accumulated_content, accumulated_tools, model_from_response):
-        model = model_from_response.get("model")
-        content = "".join(accumulated_content)
-
-        for tool in accumulated_tools.values():
-            tool["function"]["arguments"] = "".join(tool["function"]["arguments"])
-
-        tool_calls = [t["function"] for t in accumulated_tools.values()]
-        for tool in tool_calls:
-            tool["arguments"] = json.loads(tool["arguments"])
-
-        return model, content, tool_calls
+        accumulated_tools = defaultdict(lambda: {"id": "", "function": {"arguments": [], "name": ""}, "type": "function"})
+        accumulator = defaultdict(content=[], role="assistant", function_call=defaultdict(arguments=[], name=""), tool_calls=accumulated_tools)
+        return accumulator, model_from_response
 
     @staticmethod
-    def _update_accumulator_streaming(accumulated_content, accumulated_tools, model_from_response, chunk):
+    def _format_accumulator_in_place(accumulator):
+        content = "".join(accumulator.get("content"))
+        accumulator["content"] = content
+
+        tool_calls = []
+        if accumulated_tools := accumulator.get("tool_calls", {}):
+            for tool in accumulated_tools.values():
+                tool["function"]["arguments"] = "".join(tool["function"]["arguments"])
+
+            tool_calls = list(accumulated_tools.values())
+            for tool in tool_calls:
+                tool["function"]["arguments"] = json_dumps(json.loads(tool["function"]["arguments"]), indent=2)
+        accumulator["tool_calls"] = tool_calls
+
+        if function_call := accumulator.get("function_call"):
+            if function_call.get("name"):
+                function_call["arguments"] = json_dumps(json.loads("".join(function_call["arguments"])), indent=2)
+            else:
+                function_call["arguments"] = ""
+
+        return accumulator
+
+    @staticmethod
+    def _update_accumulator_streaming(accumulator, model_from_response, chunk):
         if chunk.model and not model_from_response.get("model"):
             model_from_response["model"] = chunk.model
 
@@ -162,34 +160,48 @@ class OpenAIWrapper:
         else:
             delta_dict = chunk.choices[0].delta.model_dump()
 
+        if not accumulator["role"]:
+            accumulator["role"] = delta_dict.get("role")
+
         if delta_dict.get("content"):
-            accumulated_content.append(delta_dict["content"])
+            accumulator["content"].append(delta_dict["content"])
 
         if delta_dict.get("function_call"):
-            accumulated_tools[0]["function"]["name"] = delta_dict.get("function_call")["name"] or accumulated_tools[0]["function"]["name"]
+            accumulator["function_call"]["name"] = delta_dict.get("function_call")["name"] or accumulator["function_call"]["name"]
             if delta_dict.get("function_call", {}).get("arguments"):
-                accumulated_tools[0]["function"]["arguments"].append(delta_dict["function_call"]["arguments"])
+                accumulator["function_call"]["arguments"].append(delta_dict["function_call"]["arguments"])
 
-        for tool_call in delta_dict.get("tool_calls", []):
-            tool_id = tool_call["index"]
-            accumulated_tools[tool_id]["function"]["name"] = tool_call.get("function")["name"] or accumulated_tools[tool_id]["function"]["name"]
-            if tool_call.get("function", {}).get("arguments"):
-                accumulated_tools[tool_id]["function"]["arguments"].append(tool_call["function"]["arguments"])
+        if tool_calls := delta_dict.get("tool_calls", []):
+            for tool_call in tool_calls:
+                tool_id = tool_call["index"]
+
+                accumulator["tool_calls"][tool_id]["id"] = tool_call.get("id") or accumulator["tool_calls"][tool_id]["id"]
+                if not accumulator["tool_calls"][tool_id]["type"]:
+                    accumulator["tool_calls"][tool_id]["type"] = "function"
+
+                accumulator["tool_calls"][tool_id]["function"]["name"] = tool_call.get("function", {}).get("name") or accumulator["tool_calls"][tool_id]["function"]["name"]
+                if tool_call.get("function", {}).get("arguments"):
+                    accumulator["tool_calls"][tool_id]["function"]["arguments"].append(tool_call["function"]["arguments"])
 
     async def agen_resolver(self, trace_id: str, _args: Sequence[Any], kwargs: dict[str, Any], response, final_log):
         llm_configuration = self._kwargs_to_llm_configuration(kwargs)
         trace_data.get()[trace_id].configuration = llm_configuration
 
-        accumulated_content, accumulated_tools, model_from_response = self._get_default_dict_streaming()
+        accumulator, model_from_response = self._get_default_dict_streaming()
         async for chunk in response:
-            self._update_accumulator_streaming(accumulated_content, accumulated_tools, model_from_response, chunk)
+            self._update_accumulator_streaming(accumulator, model_from_response, chunk)
             yield chunk
 
-        model, content, tool_calls = self._get_formatted_accumulated_stats(accumulated_content, accumulated_tools, model_from_response)
+        self._format_accumulator_in_place(accumulator)
 
-        trace_data.get()[trace_id].output = content or json_dumps(tool_calls, indent=4)  # self._get_output(accumulator)
-        model = model or llm_configuration.model
-        output_tokens = _num_tokens_from_string(content or json_dumps(tool_calls), model)
+        model = model_from_response.get("model") or llm_configuration.model
+        self.update_trace_data_from_stream_response(trace_id, model, accumulator, kwargs)
+        final_log()
+
+    def update_trace_data_from_stream_response(self, trace_id, model, accumulator, kwargs):
+        output = self._get_output(accumulator, model)
+        trace_data.get()[trace_id].output = output
+        output_tokens = _num_tokens_from_string(output, model)
         input_tokens = _calculate_input_tokens(
             kwargs.get("messages", []),
             kwargs.get("functions", []) or [d["function"] for d in kwargs.get("tools", [])],
@@ -201,13 +213,11 @@ class OpenAIWrapper:
         trace_data.get()[trace_id].total_tokens = input_tokens + output_tokens
         trace_data.get()[trace_id].cost = _compute_cost(input_tokens, output_tokens, model)
 
-        final_log()
-
     @staticmethod
     def _kwargs_to_llm_configuration(kwargs):
         return _kwargs_to_llm_configuration(kwargs)
 
-    def _get_output(self, result: Any) -> str:
+    def _get_output(self, result: Any, model: Optional[str] = None) -> str:
         if not isinstance(result, OpenAIObject) and isinstance(result, dict):
             result = convert_to_openai_object(
                 {
@@ -217,7 +227,7 @@ class OpenAIWrapper:
                             "message": result,
                         }
                     ],
-                    "model": result.get("model", "model"),
+                    "model": model or "model",
                 }
             )
         response_message = result.choices[0].message
@@ -239,12 +249,18 @@ class OpenAIWrapper:
     @staticmethod
     def _convert_cache_to_response(_args: Sequence[Any], kwargs: dict[str, Any], cache_response: TraceLog) -> OpenAIObject:
         content = cache_response.output
-        message = {"role": "assistant"}
+        message = {"role": "assistant", "content": None}
         try:
-            function_call = json.loads(content)
-            if isinstance(function_call, dict) and "name" in function_call and "arguments" in function_call and len(function_call) == 2:
-                message["function_call"] = function_call
-                message["content"] = None
+            function_or_tool_call = json.loads(content)
+            if isinstance(function_or_tool_call, list) and len(function_or_tool_call) == 1:
+                if "name" in function_or_tool_call[0] and "arguments" in function_or_tool_call[0]:
+                    message["function_call"] = function_or_tool_call[0]
+            elif isinstance(function_or_tool_call, list) and len(function_or_tool_call) > 1:
+                tool_calls = []
+                for idx, tool_call in enumerate(function_or_tool_call):
+                    if "name" in tool_call and "arguments" in tool_call:
+                        tool_calls.append({"id": idx, "function": tool_call, "type": "function"})
+                message["tool_calls"] = tool_calls
             else:
                 message["content"] = content
         except json.JSONDecodeError:
@@ -255,7 +271,7 @@ class OpenAIWrapper:
         return convert_to_openai_object(
             {
                 "object": "chat.completion",
-                "model": cache_response.configuration["model"],
+                "model": cache_response.configuration.model,
                 "choices": [
                     {
                         "index": 0,

@@ -167,7 +167,10 @@ def _format_function_call(response_message) -> str:
         """If OpenAI responds with improper newlines and multiple quotes, this will clean it up"""
         return json.dumps(s.replace("'", '"').replace("\\n", "\\\\n"))
 
-    func_obj = response_message.function_call or response_message.tool_calls
+    func_obj = response_message.tool_calls
+    if response_message.function_call and response_message.function_call.name:
+        func_obj = response_message.function_call
+
     calls = []
     if not isinstance(func_obj, list):
         func_obj = [func_obj]
