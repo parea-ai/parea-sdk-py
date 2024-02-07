@@ -21,6 +21,11 @@ def write_metrics_to_dvc(metrics: dict):
         f.write(json.dumps(metrics, indent=2))
 
 
+def _check_has_been_committed(git_root: str, file: str) -> bool:
+    output = subprocess.check_output(["git", "ls-files", PAREA_DVC_DIR], cwd=git_root, text=True, stderr=subprocess.STDOUT)
+    return output and len(output) > 0
+
+
 def parea_dvc_initialized(only_check: bool) -> bool:
     print_fn = print if not only_check else lambda *args, **kwargs: None
     git_root = subprocess.check_output(["git", "rev-parse", "--show-toplevel"], text=True, stderr=subprocess.STDOUT).strip()
@@ -40,6 +45,7 @@ def parea_dvc_initialized(only_check: bool) -> bool:
                 os.mkdir(os.path.join(git_root, PAREA_DVC_DIR))
             with open(os.path.join(git_root, PAREA_DVC_YAML_FILE), "w") as f:
                 f.write("metrics:\n  - metrics.json\n")
+            subprocess.run(["git", "add", PAREA_DVC_YAML_FILE], cwd=git_root, check=True)
     if not os.path.exists(os.path.join(git_root, PAREA_DVC_METRICS_FILE)):
         if only_check:
             return False
@@ -48,11 +54,11 @@ def parea_dvc_initialized(only_check: bool) -> bool:
             if not os.path.exists(os.path.join(git_root, PAREA_DVC_DIR)):
                 os.mkdir(os.path.join(git_root, PAREA_DVC_DIR))
             write_metrics_to_dvc({})
+            subprocess.run(["git", "add", PAREA_DVC_METRICS_FILE], cwd=git_root, check=True)
 
     # make sure dvc.yaml and metrics.json are committed
-    files_in_parea_dvc = subprocess.check_output(["git", "ls-files", PAREA_DVC_DIR], cwd=git_root, text=True, stderr=subprocess.STDOUT)
-    dvc_yaml_file_missing = PAREA_DVC_YAML_FILE not in files_in_parea_dvc
-    dvc_metrics_file_missing = PAREA_DVC_METRICS_FILE not in files_in_parea_dvc
+    dvc_yaml_file_missing = _check_has_been_committed(git_root, PAREA_DVC_YAML_FILE)
+    dvc_metrics_file_missing = _check_has_been_committed(git_root, PAREA_DVC_METRICS_FILE)
     if dvc_metrics_file_missing:
         print_fn(f"{PAREA_DVC_METRICS_FILE} is not committed. Please to commit the file to your git history.")
     if dvc_yaml_file_missing:
