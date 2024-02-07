@@ -57,8 +57,8 @@ def parea_dvc_initialized(only_check: bool) -> bool:
             subprocess.run(["git", "add", PAREA_DVC_METRICS_FILE], cwd=git_root, check=True)
 
     # make sure dvc.yaml and metrics.json are committed
-    dvc_yaml_file_missing = _check_has_been_committed(git_root, PAREA_DVC_YAML_FILE)
-    dvc_metrics_file_missing = _check_has_been_committed(git_root, PAREA_DVC_METRICS_FILE)
+    dvc_yaml_file_missing = not _check_has_been_committed(git_root, PAREA_DVC_YAML_FILE)
+    dvc_metrics_file_missing = not _check_has_been_committed(git_root, PAREA_DVC_METRICS_FILE)
     if dvc_metrics_file_missing:
         print_fn(f"{PAREA_DVC_METRICS_FILE} is not committed. Please to commit the file to your git history.")
     if dvc_yaml_file_missing:
