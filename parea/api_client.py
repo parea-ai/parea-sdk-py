@@ -1,10 +1,9 @@
-from typing import Any, Callable, Optional
-
 import asyncio
 import json
 import time
 from collections.abc import AsyncIterable
 from functools import wraps
+from typing import Any, Callable, Optional
 
 import httpx
 
@@ -43,7 +42,7 @@ def retry_on_502(func: Callable[..., Any]) -> Callable[..., Any]:
 
 class HTTPClient:
     _instance = None
-    base_url = "http://localhost:8000/api/parea/v1"  # "https://parea-ai-backend-us-9ac16cdbc7a7b006.onporter.run/api/parea/v1"
+    base_url = "https://parea-ai-backend-us-9ac16cdbc7a7b006.onporter.run/api/parea/v1"
     api_key = None
 
     def __new__(cls, *args, **kwargs):
