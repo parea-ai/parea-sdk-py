@@ -14,6 +14,7 @@ from importlib import metadata as importlib_metadata
 from parea.cache import InMemoryCache, RedisCache
 from parea.client import Parea
 from parea.experiment.cli import experiment as _experiment_cli
+from parea.experiment.dvc import parea_dvc_initialized
 from parea.experiment.experiment import Experiment
 from parea.utils.trace_utils import trace
 
@@ -32,6 +33,8 @@ def main():
     args = sys.argv[1:]
     if args[0] == "experiment":
         _experiment_cli(args[1:])
+    elif args[0] == "dvc-init":
+        parea_dvc_initialized(print_output=True)
     else:
         print(f"Unknown command: '{args[0]}'")
 

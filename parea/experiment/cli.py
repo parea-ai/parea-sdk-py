@@ -34,6 +34,7 @@ def read_input_file(file_path) -> list[dict]:
 def experiment(args):
     parser = argparse.ArgumentParser()
     parser.add_argument("file", help="Path to the experiment", type=str)
+    parser.add_argument("--name", help="Name of the experiment", type=str, default=None)
 
     parsed_args = parser.parse_args(args)
 
@@ -45,4 +46,4 @@ def experiment(args):
         sys.exit(1)
 
     for _experiment in _experiments:
-        _experiment.run()
+        _experiment.run(parsed_args.name)
