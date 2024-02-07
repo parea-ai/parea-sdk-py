@@ -36,6 +36,8 @@ def parea_dvc_initialized(only_check: bool) -> bool:
             return False
         else:
             print_fn(f"{PAREA_DVC_YAML_FILE} is not found. Creating the file.")
+            if not os.path.exists(os.path.join(git_root, PAREA_DVC_DIR)):
+                os.mkdir(os.path.join(git_root, PAREA_DVC_DIR))
             with open(os.path.join(git_root, PAREA_DVC_YAML_FILE), "w") as f:
                 f.write("metrics:\n  - metrics.json\n")
     if not os.path.exists(os.path.join(git_root, PAREA_DVC_METRICS_FILE)):
@@ -43,6 +45,8 @@ def parea_dvc_initialized(only_check: bool) -> bool:
             return False
         else:
             print_fn(f"{PAREA_DVC_METRICS_FILE} is not found. Creating the file.")
+            if not os.path.exists(os.path.join(git_root, PAREA_DVC_DIR)):
+                os.mkdir(os.path.join(git_root, PAREA_DVC_DIR))
             write_metrics_to_dvc({})
 
     # make sure dvc.yaml and metrics.json are committed
