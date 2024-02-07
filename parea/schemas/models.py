@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Iterable, Optional
 
 from enum import Enum
 
@@ -197,3 +197,34 @@ class ProjectSchema(CreateGetProjectSchema):
 @define
 class CreateGetProjectResponseSchema(ProjectSchema):
     was_created: bool
+
+
+@define
+class TestCase:
+    id: int
+    test_case_collection_id: int
+    inputs: dict[str, str] = field(factory=dict)
+    target: Optional[str] = None
+    tags: list[str] = field(factory=list)
+
+
+@define
+class TestCaseCollection:
+    id: int
+    name: str
+    created_at: str
+    last_updated_at: str
+    column_names: list[str] = field(factory=list)
+    test_cases: dict[int, TestCase] = field(factory=dict)
+
+    def get_all_test_case_inputs(self) -> Iterable[dict[str, str]]:
+        return (test_case.inputs for test_case in self.test_cases.values())
+
+    def num_test_cases(self) -> int:
+        return len(self.test_cases)
+
+    def get_all_test_case_targets(self) -> Iterable[str]:
+        return (test_case.target for test_case in self.test_cases.values())
+
+    def get_all_test_inputs_and_targets(self) -> Iterable[tuple[dict[str, str], Optional[str]]]:
+        return ((test_case.inputs, test_case.target) for test_case in self.test_cases.values())

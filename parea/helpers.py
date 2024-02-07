@@ -1,9 +1,13 @@
+from typing import Optional
+
 import csv
+import random
 import time
 import uuid
 
 from attr import asdict, fields_dict
 
+from parea.constants import ADJECTIVES, NOUNS
 from parea.schemas.models import TraceLog
 
 
@@ -29,3 +33,18 @@ def write_trace_logs_to_csv(path_csv: str, trace_logs: list[TraceLog]):
         # write rows
         for trace_log in trace_logs:
             writer.writerow(asdict(trace_log))
+
+
+def gen_random_name():
+    random_generator = random.Random()
+    adjective = random_generator.choice(ADJECTIVES)
+    noun = random_generator.choice(NOUNS)
+    return f"{adjective}-{noun}"
+
+
+def calculate_avg_as_string(values: list[Optional[float]]) -> str:
+    if not values:
+        return "N/A"
+    values = [x for x in values if x is not None]
+    avg = sum(values) / len(values)
+    return f"{avg:.2f}"
