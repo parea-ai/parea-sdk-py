@@ -72,10 +72,9 @@ class OpenAIWrapper:
             aconvert_cache_to_response=self.aconvert_cache_to_response,
         )
 
-    @staticmethod
-    def resolver(trace_id: str, _args: Sequence[Any], kwargs: dict[str, Any], response: Optional[Any]) -> Optional[Any]:
+    def resolver(self, trace_id: str, _args: Sequence[Any], kwargs: dict[str, Any], response: Optional[Any]) -> Optional[Any]:
         if response:
-            output = OpenAIWrapper._get_output(response)
+            output = self._get_output(response)
             if openai_version.startswith("0."):
                 usage = response["usage"]
                 input_tokens = usage.get("prompt_tokens", 0)
@@ -92,7 +91,7 @@ class OpenAIWrapper:
             output_tokens = 0
             total_tokens = 0
 
-        llm_configuration = OpenAIWrapper._kwargs_to_llm_configuration(kwargs)
+        llm_configuration = self._kwargs_to_llm_configuration(kwargs)
         model = response.model or llm_configuration.model
 
         trace_data.get()[trace_id].configuration = llm_configuration
@@ -103,20 +102,20 @@ class OpenAIWrapper:
         trace_data.get()[trace_id].output = output
         return response
 
-    @staticmethod
-    def gen_resolver(trace_id: str, _args: Sequence[Any], kwargs: dict[str, Any], response, final_log):
-        llm_configuration = OpenAIWrapper._kwargs_to_llm_configuration(kwargs)
+    def gen_resolver(self, trace_id: str, _args: Sequence[Any], kwargs: dict[str, Any], response, final_log):
+        llm_configuration = self._kwargs_to_llm_configuration(kwargs)
         trace_data.get()[trace_id].configuration = llm_configuration
 
-        accumulator = OpenAIWrapper._get_default_dict_streaming()
+        accumulated_content, accumulated_tools, model_from_response = self._get_default_dict_streaming()
         for chunk in response:
-            OpenAIWrapper._update_accumulator_streaming(accumulator, chunk)
+            self._update_accumulator_streaming(accumulated_content, accumulated_tools, model_from_response, chunk)
             yield chunk
 
-        trace_data.get()[trace_id].output = OpenAIWrapper._get_output(accumulator)
+        model, content, tool_calls = self._get_formatted_accumulated_stats(accumulated_content, accumulated_tools, model_from_response)
 
-        model = accumulator.get("model") or llm_configuration.model
-        output_tokens = _num_tokens_from_string(accumulator.get("content") or json_dumps(accumulator.get("function_call")), model)
+        trace_data.get()[trace_id].output = content or json_dumps(tool_calls, indent=4)  # self._get_output(accumulator)
+        model = model or llm_configuration.model
+        output_tokens = _num_tokens_from_string(content or json_dumps(tool_calls), model)
         input_tokens = _calculate_input_tokens(
             kwargs.get("messages", []),
             kwargs.get("functions", []) or [d["function"] for d in kwargs.get("tools", [])],
@@ -132,42 +131,65 @@ class OpenAIWrapper:
 
     @staticmethod
     def _get_default_dict_streaming():
-        return defaultdict(content="", role="", function_call=defaultdict(arguments="", name=""))
+        accumulated_content = []
+        model_from_response = {"model": ""}
+        accumulated_tools = defaultdict(lambda: {"function": {"arguments": [], "name": ""}})
+        return accumulated_content, accumulated_tools, model_from_response
+
+    def _get_formatted_accumulated_stats(self, accumulated_content, accumulated_tools, model_from_response):
+        model = model_from_response.get("model")
+        content = "".join(accumulated_content)
+
+        for tool in accumulated_tools.values():
+            tool["function"]["arguments"] = "".join(tool["function"]["arguments"])
+
+        tool_calls = [t["function"] for t in accumulated_tools.values()]
+        for tool in tool_calls:
+            tool["arguments"] = json.loads(tool["arguments"])
+
+        return model, content, tool_calls
 
     @staticmethod
-    def _update_accumulator_streaming(accumulator: defaultdict, chunk):
-        if chunk.model:
-            accumulator["model"] = chunk.model
+    def _update_accumulator_streaming(accumulated_content, accumulated_tools, model_from_response, chunk):
+        if chunk.model and not model_from_response.get("model"):
+            model_from_response["model"] = chunk.model
+
         if not chunk.choices:
             return
+
         if is_old_openai:
             delta_dict = chunk.choices[0].delta._previous
         else:
             delta_dict = chunk.choices[0].delta.model_dump()
-        if delta_dict.pop("tool_calls", None) is not None:
-            raise NotImplementedError("Tool calls are not supported yet for streaming. Please, contact the team")
-        for key, val in delta_dict.items():
-            if val:
-                if isinstance(val, dict):
-                    for k, v in val.items():
-                        if v:
-                            accumulator[key][k] += str(v)
-                elif isinstance(val, str):
-                    accumulator[key] += val
 
-    @staticmethod
-    async def agen_resolver(trace_id: str, _args: Sequence[Any], kwargs: dict[str, Any], response, final_log):
-        llm_configuration = OpenAIWrapper._kwargs_to_llm_configuration(kwargs)
+        if delta_dict.get("content"):
+            accumulated_content.append(delta_dict["content"])
+
+        if delta_dict.get("function_call"):
+            accumulated_tools[0]["function"]["name"] = delta_dict.get("function_call")["name"] or accumulated_tools[0]["function"]["name"]
+            if delta_dict.get("function_call", {}).get("arguments"):
+                accumulated_tools[0]["function"]["arguments"].append(delta_dict["function_call"]["arguments"])
+
+        for tool_call in delta_dict.get("tool_calls", []):
+            tool_id = tool_call["index"]
+            accumulated_tools[tool_id]["function"]["name"] = tool_call.get("function")["name"] or accumulated_tools[tool_id]["function"]["name"]
+            if tool_call.get("function", {}).get("arguments"):
+                accumulated_tools[tool_id]["function"]["arguments"].append(tool_call["function"]["arguments"])
+
+    async def agen_resolver(self, trace_id: str, _args: Sequence[Any], kwargs: dict[str, Any], response, final_log):
+        llm_configuration = self._kwargs_to_llm_configuration(kwargs)
         trace_data.get()[trace_id].configuration = llm_configuration
 
-        accumulator = OpenAIWrapper._get_default_dict_streaming()
+        accumulated_content, accumulated_tools, model_from_response = self._get_default_dict_streaming()
         async for chunk in response:
-            OpenAIWrapper._update_accumulator_streaming(accumulator, chunk)
+            self._update_accumulator_streaming(accumulated_content, accumulated_tools, model_from_response, chunk)
             yield chunk
 
-        trace_data.get()[trace_id].output = OpenAIWrapper._get_output(accumulator)
-        model = accumulator.get("model") or llm_configuration.model
-        output_tokens = _num_tokens_from_string(accumulator.get("content") or json_dumps(accumulator.get("function_call")), model)
+        model, content, tool_calls = self._get_formatted_accumulated_stats(accumulated_content, accumulated_tools, model_from_response)
+
+        trace_data.get()[trace_id].output = content or json_dumps(tool_calls, indent=4)  # self._get_output(accumulator)
+        model = model or llm_configuration.model
+        output_tokens = _num_tokens_from_string(content or json_dumps(tool_calls), model)
         input_tokens = _calculate_input_tokens(
             kwargs.get("messages", []),
             kwargs.get("functions", []) or [d["function"] for d in kwargs.get("tools", [])],
@@ -185,8 +207,7 @@ class OpenAIWrapper:
     def _kwargs_to_llm_configuration(kwargs):
         return _kwargs_to_llm_configuration(kwargs)
 
-    @staticmethod
-    def _get_output(result: Any) -> str:
+    def _get_output(self, result: Any) -> str:
         if not isinstance(result, OpenAIObject) and isinstance(result, dict):
             result = convert_to_openai_object(
                 {
@@ -195,12 +216,13 @@ class OpenAIWrapper:
                             "index": 0,
                             "message": result,
                         }
-                    ]
+                    ],
+                    "model": result.get("model", "model"),
                 }
             )
         response_message = result.choices[0].message
         if not response_message.get("content", None) if is_old_openai else not response_message.content:
-            completion = OpenAIWrapper._format_function_call(response_message)
+            completion = self._format_function_call(response_message)
         else:
             completion = response_message.content.strip()
         return completion
@@ -209,10 +231,9 @@ class OpenAIWrapper:
     def _format_function_call(response_message) -> str:
         return _format_function_call(response_message)
 
-    @staticmethod
-    def convert_kwargs_to_cache_request(_args: Sequence[Any], kwargs: dict[str, Any]) -> CacheRequest:
+    def convert_kwargs_to_cache_request(self, _args: Sequence[Any], kwargs: dict[str, Any]) -> CacheRequest:
         return CacheRequest(
-            configuration=OpenAIWrapper._kwargs_to_llm_configuration(kwargs),
+            configuration=self._kwargs_to_llm_configuration(kwargs),
         )
 
     @staticmethod
@@ -249,17 +270,15 @@ class OpenAIWrapper:
             }
         )
 
-    @staticmethod
-    def convert_cache_to_response(_args: Sequence[Any], kwargs: dict[str, Any], cache_response: TraceLog) -> Union[OpenAIObject, Iterator[OpenAIObject]]:
-        response = OpenAIWrapper._convert_cache_to_response(_args, kwargs, cache_response)
+    def convert_cache_to_response(self, _args: Sequence[Any], kwargs: dict[str, Any], cache_response: TraceLog) -> Union[OpenAIObject, Iterator[OpenAIObject]]:
+        response = self._convert_cache_to_response(_args, kwargs, cache_response)
         if kwargs.get("stream", False):
             return iter([response])
         else:
             return response
 
-    @staticmethod
-    def aconvert_cache_to_response(_args: Sequence[Any], kwargs: dict[str, Any], cache_response: TraceLog) -> Union[OpenAIObject, AsyncIterator[OpenAIObject]]:
-        response = OpenAIWrapper._convert_cache_to_response(_args, kwargs, cache_response)
+    def aconvert_cache_to_response(self, _args: Sequence[Any], kwargs: dict[str, Any], cache_response: TraceLog) -> Union[OpenAIObject, AsyncIterator[OpenAIObject]]:
+        response = self._convert_cache_to_response(_args, kwargs, cache_response)
         if kwargs.get("stream", False):
 
             def aiterator(iterable):
