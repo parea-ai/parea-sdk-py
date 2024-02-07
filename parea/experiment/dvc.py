@@ -22,7 +22,7 @@ def write_metrics_to_dvc(metrics: dict):
 
 
 def _check_has_been_committed(git_root: str, file: str) -> bool:
-    output = subprocess.check_output(["git", "log", '--', file], cwd=git_root, text=True, stderr=subprocess.STDOUT)
+    output = subprocess.check_output(["git", "log", "--", file], cwd=git_root, text=True, stderr=subprocess.STDOUT)
     return output and len(output) > 0
 
 
