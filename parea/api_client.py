@@ -1,9 +1,10 @@
+from typing import Any, Callable, Optional
+
 import asyncio
 import json
 import time
 from collections.abc import AsyncIterable
 from functools import wraps
-from typing import Any, Callable, Optional
 
 import httpx
 
