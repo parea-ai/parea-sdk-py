@@ -57,8 +57,13 @@ async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable
     if isinstance(data, str):
         print(f"Fetching test collection: {data}")
         test_collection = await p.aget_collection(data)
+        len_test_cases = test_collection.num_test_cases()
         print(f"Fetched {test_collection.num_test_cases()} test cases from collection: {data} \n")
         data: Iterable[dict] = test_collection.get_all_test_case_inputs()
+        targets = test_collection.get_all_test_case_targets()
+    else:
+        targets = [None] * len(data)
+        len_test_cases = len(data) if isinstance(data, list) else 0
 
     experiment_schema: ExperimentSchema = p.create_experiment(CreateExperimentRequest(name=name))
     experiment_uuid = experiment_schema.uuid
@@ -67,17 +72,17 @@ async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable
     max_parallel_calls = 10
     sem = asyncio.Semaphore(max_parallel_calls)
 
-    async def limit_concurrency(data_input):
+    async def limit_concurrency(data_input, target):
         async with sem:
-            return await func(**data_input)
+            return await func(_parea_target_field=target, **data_input)
 
     if inspect.iscoroutinefunction(func):
-        tasks = [limit_concurrency(data_input) for data_input in data]
-        for result in tqdm_asyncio(tasks):
+        tasks = [limit_concurrency(data_input, target) for data_input, target in zip(data, targets)]
+        for result in tqdm_asyncio(tasks, total=len_test_cases):
             await result
     else:
-        for data_input in tqdm(data):
-            func(**data_input)
+        for data_input, target in tqdm(zip(data, targets), total=len_test_cases):
+            func(_parea_target_field=target, **data_input)
 
     total_evals = len(thread_ids_running_evals.get())
     with tqdm(total=total_evals, dynamic_ncols=True) as pbar:
