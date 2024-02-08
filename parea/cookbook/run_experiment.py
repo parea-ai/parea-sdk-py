@@ -3,8 +3,8 @@ import os
 from dotenv import load_dotenv
 
 from parea import Parea, trace
-from parea.evals.utils import call_openai
-from parea.schemas.log import Log
+from parea.evals import call_openai
+from parea.schemas import Log
 
 load_dotenv()
 
@@ -33,16 +33,16 @@ def generate_random_number(n: str) -> str:
 
 
 # Define the experiment
-# You can use the CLI command to execute this experiment or call `.run()`
-p.experiment(
-    data=[{"n": "10"}],  # Data to run the experiment on (list of dicts)
-    func=generate_random_number,  # Function to run (callable)
-    #  name="random-numbers",     # optionally specify name of the experiment (str); must be unique for project; only alphanumeric, dashes and underscores
-)
+# You can use the CLI command "parea experiment parea/cookbook/run_experiment.py" to execute this experiment
+# or call `.run()`
+# p.experiment(
+#     data=[{"n": "10"}],  # Data to run the experiment on (list of dicts)
+#     func=generate_random_number,  # Function to run (callable)
+# )
 
 # You can optionally run the experiment manually by calling `.run()`
-# p.experiment(
-#    name="random-numbers",
-#    data=[{"n": "10"}],
-#    func=generate_random_number,
-# ).run()
+if __name__ == "__main__":
+    p.experiment(
+        data=[{"n": "10"}],
+        func=generate_random_number,
+    ).run()

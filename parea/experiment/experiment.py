@@ -2,7 +2,6 @@ from typing import Callable, Optional, Union
 
 import asyncio
 import inspect
-import json
 import os
 import time
 from collections import defaultdict
@@ -18,6 +17,7 @@ from parea.experiment.dvc import save_results_to_dvc_if_init
 from parea.helpers import gen_random_name
 from parea.schemas.models import CreateExperimentRequest, ExperimentSchema, ExperimentStatsSchema
 from parea.utils.trace_utils import thread_ids_running_evals
+from parea.utils.universal_encoder import json_dumps
 
 STAT_ATTRS = ["latency", "input_tokens", "output_tokens", "total_tokens", "cost"]
 
@@ -90,7 +90,7 @@ async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable
     time.sleep(2)
     experiment_stats: ExperimentStatsSchema = p.finish_experiment(experiment_uuid)
     stat_name_to_avg_std = calculate_avg_std_for_experiment(experiment_stats)
-    print(f"Experiment {name} stats:\n{json.dumps(stat_name_to_avg_std, indent=2)}\n\n")
+    print(f"Experiment {name} stats:\n{json_dumps(stat_name_to_avg_std, indent=2)}\n\n")
     print(f"View experiment & traces at: https://app.parea.ai/experiments/{experiment_uuid}\n")
     save_results_to_dvc_if_init(name, stat_name_to_avg_std)
     return experiment_stats

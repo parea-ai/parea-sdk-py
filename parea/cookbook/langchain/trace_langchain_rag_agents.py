@@ -8,8 +8,7 @@ from langchain.embeddings import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import FAISS
 
-from parea import Parea
-from parea.utils.trace_integrations.langchain import PareaAILangchainTracer
+from parea import Parea, PareaAILangchainTracer
 
 load_dotenv()
 

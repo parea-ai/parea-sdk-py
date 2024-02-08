@@ -3,11 +3,9 @@ import os
 import httpx
 from dotenv import load_dotenv
 
-from parea import Parea
+from parea import Parea, aprocess_stream_and_yield, convert_openai_raw_to_log, process_stream_and_yield, trace
 from parea.cookbook.data.openai_input_examples import functions_example, simple_example, tool_calling_example
-from parea.utils.trace_utils import trace
-from parea.wrapper.openai_raw_api_tracer import aprocess_stream_and_yield, get_formatted_openai_response, process_stream_and_yield
-from parea.wrapper.utils import convert_openai_raw_to_log
+from parea.wrapper import get_formatted_openai_response
 
 load_dotenv()
 

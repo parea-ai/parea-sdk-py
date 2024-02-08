@@ -7,6 +7,8 @@ from functools import lru_cache, wraps
 import tiktoken
 from openai import __version__ as openai_version
 
+from parea.constants import AZURE_MODEL_INFO, OPENAI_MODEL_INFO
+
 if openai_version.startswith("1."):
     from openai.types.chat import ChatCompletion
 
@@ -135,7 +137,7 @@ def _num_tokens_from_functions(functions, function_call, model="gpt-3.5-turbo-06
     num_tokens += 10
     function_call_tokens = len(encoding.encode("auto")) - 1
     if isinstance(function_call, dict):
-        function_call_tokens = len(encoding.encode(json.dumps(function_call))) - 1
+        function_call_tokens = len(encoding.encode(json_dumps(function_call))) - 1
     return num_tokens + function_call_tokens
 
 
@@ -158,14 +160,14 @@ def _calculate_input_tokens(
 ) -> int:
     is_azure = model.startswith("azure_") or model in AZURE_MODEL_INFO
     num_function_tokens = _num_tokens_from_functions(functions, function_call, model)
-    num_input_tokens = _num_tokens_from_string(json.dumps(messages), model) if model == "gpt-4-vision-preview" else _num_tokens_from_messages(messages, model, is_azure)
+    num_input_tokens = _num_tokens_from_string(json_dumps(messages), model) if model == "gpt-4-vision-preview" else _num_tokens_from_messages(messages, model, is_azure)
     return num_input_tokens + num_function_tokens
 
 
 def _format_function_call(response_message) -> str:
     def clean_json_string(s):
         """If OpenAI responds with improper newlines and multiple quotes, this will clean it up"""
-        return json.dumps(s.replace("'", '"').replace("\\n", "\\\\n"))
+        return json_dumps(s.replace("'", '"').replace("\\n", "\\\\n"))
 
     func_obj = response_message.tool_calls
     if response_message.function_call and response_message.function_call.name:
@@ -281,181 +283,3 @@ def convert_openai_raw_stream_to_log(content: list, tools: dict, data: dict, tra
 
 def convert_openai_raw_to_log(r: dict, data: dict):
     log_in_thread(_process_response, {"response": ChatCompletion(**r), "model_inputs": data, "trace_id": get_current_trace_id()})
-
-
-CHUNK_DONE_SENTINEL = "data: [DONE]"
-
-OPENAI_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, int]]]] = {
-    "gpt-3.5-turbo-0301": {
-        "prompt": 1.5,
-        "completion": 4.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
-    },
-    "gpt-3.5-turbo-0613": {
-        "prompt": 1.5,
-        "completion": 4.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
-    },
-    "gpt-3.5-turbo-16k": {
-        "prompt": 3.0,
-        "completion": 4.0,
-        "token_limit": {"max_completion_tokens": 16385, "max_prompt_tokens": 16385},
-    },
-    "gpt-3.5-turbo-16k-0301": {
-        "prompt": 3.0,
-        "completion": 4.0,
-        "token_limit": {"max_completion_tokens": 16385, "max_prompt_tokens": 16385},
-    },
-    "gpt-3.5-turbo-16k-0613": {
-        "prompt": 3.0,
-        "completion": 4.0,
-        "token_limit": {"max_completion_tokens": 16385, "max_prompt_tokens": 16385},
-    },
-    "gpt-3.5-turbo-1106": {
-        "prompt": 1.0,
-        "completion": 2.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
-    },
-    "gpt-3.5-turbo-0125": {
-        "prompt": 0.5,
-        "completion": 2.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 16385},
-    },
-    "gpt-3.5-turbo": {
-        "prompt": 0.5,
-        "completion": 2.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 16385},
-    },
-    "gpt-3.5-turbo-instruct": {
-        "prompt": 1.5,
-        "completion": 4.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
-    },
-    "gpt-4": {
-        "prompt": 30.0,
-        "completion": 60.0,
-        "token_limit": {"max_completion_tokens": 8192, "max_prompt_tokens": 8192},
-    },
-    "gpt-4-0314": {
-        "prompt": 30.0,
-        "completion": 60.0,
-        "token_limit": {"max_completion_tokens": 8192, "max_prompt_tokens": 8192},
-    },
-    "gpt-4-0613": {
-        "prompt": 30.0,
-        "completion": 60.0,
-        "token_limit": {"max_completion_tokens": 8192, "max_prompt_tokens": 8192},
-    },
-    "gpt-4-32k": {
-        "prompt": 60.0,
-        "completion": 120.0,
-        "token_limit": {"max_completion_tokens": 32768, "max_prompt_tokens": 32768},
-    },
-    "gpt-4-32k-0314": {
-        "prompt": 60.0,
-        "completion": 120.0,
-        "token_limit": {"max_completion_tokens": 32768, "max_prompt_tokens": 32768},
-    },
-    "gpt-4-32k-0613": {
-        "prompt": 60.0,
-        "completion": 120.0,
-        "token_limit": {"max_completion_tokens": 32768, "max_prompt_tokens": 32768},
-    },
-    "gpt-4-vision-preview": {
-        "prompt": 30.0,
-        "completion": 60.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
-    },
-    "gpt-4-turbo-preview": {
-        "prompt": 10.0,
-        "completion": 30.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
-    },
-    "gpt-4-1106-preview": {
-        "prompt": 10.0,
-        "completion": 30.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
-    },
-    "gpt-4-0125-preview": {
-        "prompt": 10.0,
-        "completion": 30.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
-    },
-}
-AZURE_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, int]]]] = {
-    "gpt-35-turbo": {
-        "prompt": 1.5,
-        "completion": 2.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
-    },
-    "gpt-35-turbo-0301": {
-        "prompt": 1.5,
-        "completion": 4.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
-    },
-    "gpt-35-turbo-0613": {
-        "prompt": 1.5,
-        "completion": 4.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
-    },
-    "gpt-35-turbo-16k": {
-        "prompt": 3.0,
-        "completion": 4.0,
-        "token_limit": {"max_completion_tokens": 16384, "max_prompt_tokens": 16384},
-    },
-    "gpt-35-turbo-16k-0301": {
-        "prompt": 3.0,
-        "completion": 4.0,
-        "token_limit": {"max_completion_tokens": 16384, "max_prompt_tokens": 16384},
-    },
-    "gpt-35-turbo-16k-0613": {
-        "prompt": 3.0,
-        "completion": 4.0,
-        "token_limit": {"max_completion_tokens": 16384, "max_prompt_tokens": 16384},
-    },
-    "gpt-4": {
-        "prompt": 30.0,
-        "completion": 60.0,
-        "token_limit": {"max_completion_tokens": 8192, "max_prompt_tokens": 8192},
-    },
-    "gpt-4-0314": {
-        "prompt": 30.0,
-        "completion": 60.0,
-        "token_limit": {"max_completion_tokens": 8192, "max_prompt_tokens": 8192},
-    },
-    "gpt-4-0613": {
-        "prompt": 30.0,
-        "completion": 60.0,
-        "token_limit": {"max_completion_tokens": 8192, "max_prompt_tokens": 8192},
-    },
-    "gpt-4-32k": {
-        "prompt": 60.0,
-        "completion": 120.0,
-        "token_limit": {"max_completion_tokens": 32768, "max_prompt_tokens": 32768},
-    },
-    "gpt-4-32k-0314": {
-        "prompt": 60.0,
-        "completion": 120.0,
-        "token_limit": {"max_completion_tokens": 32768, "max_prompt_tokens": 32768},
-    },
-    "gpt-4-32k-0613": {
-        "prompt": 60.0,
-        "completion": 120.0,
-        "token_limit": {"max_completion_tokens": 32768, "max_prompt_tokens": 32768},
-    },
-    "gpt-4-1106-preview": {
-        "prompt": 10.0,
-        "completion": 20.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
-    },
-    "gpt-4-vision": {
-        "prompt": 10.0,
-        "completion": 30.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
-    },
-    "gpt-35-turbo-instruct": {
-        "prompt": 10.0,
-        "completion": 30.0,
-        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
-    },
-}

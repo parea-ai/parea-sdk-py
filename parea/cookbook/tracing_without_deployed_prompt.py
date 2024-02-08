@@ -3,10 +3,8 @@ from datetime import datetime
 
 from dotenv import load_dotenv
 
-from parea import Parea
-from parea.schemas.log import LLMInputs, Message, ModelParams
-from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest
-from parea.utils.trace_utils import get_current_trace_id, trace
+from parea import Parea, get_current_trace_id, trace
+from parea.schemas import Completion, CompletionResponse, FeedbackRequest, LLMInputs, Message, ModelParams
 
 load_dotenv()
 

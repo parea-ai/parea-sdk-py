@@ -5,9 +5,8 @@ from datetime import datetime
 from attrs import asdict
 from dotenv import load_dotenv
 
-from parea import Parea
-from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest
-from parea.utils.trace_utils import get_current_trace_id, trace
+from parea import Parea, get_current_trace_id, trace
+from parea.schemas import Completion, CompletionResponse, FeedbackRequest
 
 load_dotenv()
 

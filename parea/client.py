@@ -1,4 +1,4 @@
-from typing import Callable, Union
+from typing import Any, Callable, Optional, Union
 
 import asyncio
 import os
@@ -14,6 +14,7 @@ from parea.api_client import HTTPClient
 from parea.cache import InMemoryCache, RedisCache
 from parea.cache.cache import Cache
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
+from parea.experiment.datasets import create_test_collection
 from parea.helpers import gen_trace_id
 from parea.parea_logger import parea_logger
 from parea.schemas.models import (
@@ -21,6 +22,7 @@ from parea.schemas.models import (
     CompletionResponse,
     CreateExperimentRequest,
     CreateGetProjectResponseSchema,
+    CreateTestCaseCollection,
     ExperimentSchema,
     ExperimentStatsSchema,
     FeedbackRequest,
@@ -42,6 +44,7 @@ EXPERIMENT_STATS_ENDPOINT = "/experiment/{experiment_uuid}/stats"
 EXPERIMENT_FINISHED_ENDPOINT = "/experiment/{experiment_uuid}/finished"
 PROJECT_ENDPOINT = "/project"
 GET_COLLECTION_ENDPOINT = "/collection/{test_collection_name}"
+CREATE_COLLECTION_ENDPOINT = "/collection"
 
 
 @define
@@ -281,6 +284,14 @@ class Parea:
             GET_COLLECTION_ENDPOINT.format(test_collection_name=test_collection_name),
         )
         return structure(r.json(), TestCaseCollection)
+
+    def create_test_collection(self, data: list[dict[str, Any]], name: Optional[str] = None) -> None:
+        request: CreateTestCaseCollection = create_test_collection(data, name)
+        self._client.request(
+            "POST",
+            CREATE_COLLECTION_ENDPOINT,
+            data=asdict(request),
+        )
 
     @property
     def project_uuid(self) -> str:

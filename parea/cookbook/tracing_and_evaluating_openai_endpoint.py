@@ -1,5 +1,3 @@
-from typing import Dict, List
-
 import json
 import os
 import time
@@ -8,12 +6,10 @@ import openai
 from attr import asdict
 from dotenv import load_dotenv
 
-from parea import InMemoryCache, Parea
+from parea import InMemoryCache, Parea, get_current_trace_id, trace, write_trace_logs_to_csv
+from parea.evals import call_openai
 from parea.evals.chat import goal_success_ratio_factory
-from parea.evals.utils import call_openai
-from parea.helpers import write_trace_logs_to_csv
-from parea.schemas.models import Log
-from parea.utils.trace_utils import get_current_trace_id, trace
+from parea.schemas import Log
 
 load_dotenv()
 

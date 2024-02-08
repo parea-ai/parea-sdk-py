@@ -5,8 +5,7 @@ from langchain.chains import create_extraction_chain
 from langchain.schema import HumanMessage
 from langchain_experimental.llms.anthropic_functions import AnthropicFunctions
 
-from parea import Parea
-from parea.utils.trace_integrations.langchain import PareaAILangchainTracer
+from parea import Parea, PareaAILangchainTracer
 
 load_dotenv()
 

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 import json
 import logging
@@ -11,6 +11,7 @@ from attr import asdict
 
 from parea.cache.cache import Cache
 from parea.schemas.models import CacheRequest, TraceLog
+from parea.utils.universal_encoder import json_dumps
 
 logger = logging.getLogger()
 
@@ -54,7 +55,7 @@ class RedisCache(Cache):
 
     def get(self, key: CacheRequest) -> Optional[TraceLog]:
         try:
-            result = self.r.get(json.dumps(asdict(key)))
+            result = self.r.get(json_dumps(asdict(key)))
             if result is not None:
                 return TraceLog(**json.loads(result))
         except redis.RedisError as e:
@@ -66,7 +67,7 @@ class RedisCache(Cache):
 
     def set(self, key: CacheRequest, value: TraceLog):
         try:
-            self.r.set(json.dumps(asdict(key)), json.dumps(asdict(value)), ex=self.ttl)
+            self.r.set(json_dumps(asdict(key)), json_dumps(asdict(value)), ex=self.ttl)
         except redis.RedisError as e:
             logger.error(f"Error setting key {key} in cache: {e}")
 
@@ -81,7 +82,7 @@ class RedisCache(Cache):
             key (CacheRequest): The cache key.
         """
         try:
-            self.r.delete(json.dumps(asdict(key)))
+            self.r.delete(json_dumps(asdict(key)))
         except redis.RedisError as e:
             logger.error(f"Error invalidating key {key} from cache: {e}")
 
@@ -94,7 +95,7 @@ class RedisCache(Cache):
             log_dict = asdict(value)
             if prev_logs:
                 log_dict = {**json.loads(prev_logs), **log_dict}
-            self.r.hset(self.key_logs, value.trace_id, json.dumps(log_dict))
+            self.r.hset(self.key_logs, value.trace_id, json_dumps(log_dict))
         except redis.RedisError as e:
             logger.error(f"Error adding to list in cache: {e}")
 
