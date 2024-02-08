@@ -76,7 +76,7 @@ def get_formatted_openai_response(r):
             "name": function_call["name"],
             "arguments": json.loads(function_call["arguments"]),
         }
-        return json.dumps(formatted_function_call, indent=4)
+        return json_dumps(formatted_function_call, indent=4)
     elif r["choices"][0]["message"].get("tool_calls"):
         formatted_tool_calls = []
         tool_calls = r["choices"][0]["message"]["tool_calls"]
@@ -86,5 +86,5 @@ def get_formatted_openai_response(r):
                 "arguments": json.loads(tool_call["function"]["arguments"]),
             }
             formatted_tool_calls.append(formatted_tool_call)
-        return json.dumps(formatted_tool_calls, indent=4)
-    return json.dumps(r, indent=4)
+        return json_dumps(formatted_tool_calls, indent=4)
+    return json_dumps(r, indent=4)

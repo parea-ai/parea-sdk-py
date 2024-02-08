@@ -1,4 +1,3 @@
-import json
 import os
 from datetime import datetime
 
@@ -8,6 +7,7 @@ from dotenv import load_dotenv
 from parea import Parea
 from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest
 from parea.utils.trace_utils import get_current_trace_id, trace
+from parea.utils.universal_encoder import json_dumps
 
 load_dotenv()
 
@@ -95,7 +95,7 @@ if __name__ == "__main__":
         "Whether coffee is good for you.",
         additional_description="Provide a concise, few sentence argument on why coffee is good for you.",
     )
-    print(json.dumps(asdict(result2), indent=2))
+    print(json_dumps(asdict(result2), indent=2))
     p.record_feedback(
         FeedbackRequest(
             trace_id=trace_id,

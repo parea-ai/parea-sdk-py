@@ -228,3 +228,18 @@ class TestCaseCollection:
 
     def get_all_test_inputs_and_targets(self) -> Iterable[tuple[dict[str, str], Optional[str]]]:
         return ((test_case.inputs, test_case.target) for test_case in self.test_cases.values())
+
+
+@define
+class CreateTestCase:
+    inputs: dict[str, str]
+    target: Optional[str] = None
+    tags: list[str] = field(factory=list)
+
+
+@define
+class CreateTestCaseCollection:
+    name: str
+    # column names excluding reserved names, target and tags
+    column_names: list[str] = field(factory=list)
+    test_cases: list[CreateTestCase] = field(factory=list)

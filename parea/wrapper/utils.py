@@ -135,7 +135,7 @@ def _num_tokens_from_functions(functions, function_call, model="gpt-3.5-turbo-06
     num_tokens += 10
     function_call_tokens = len(encoding.encode("auto")) - 1
     if isinstance(function_call, dict):
-        function_call_tokens = len(encoding.encode(json.dumps(function_call))) - 1
+        function_call_tokens = len(encoding.encode(json_dumps(function_call))) - 1
     return num_tokens + function_call_tokens
 
 
@@ -158,14 +158,14 @@ def _calculate_input_tokens(
 ) -> int:
     is_azure = model.startswith("azure_") or model in AZURE_MODEL_INFO
     num_function_tokens = _num_tokens_from_functions(functions, function_call, model)
-    num_input_tokens = _num_tokens_from_string(json.dumps(messages), model) if model == "gpt-4-vision-preview" else _num_tokens_from_messages(messages, model, is_azure)
+    num_input_tokens = _num_tokens_from_string(json_dumps(messages), model) if model == "gpt-4-vision-preview" else _num_tokens_from_messages(messages, model, is_azure)
     return num_input_tokens + num_function_tokens
 
 
 def _format_function_call(response_message) -> str:
     def clean_json_string(s):
         """If OpenAI responds with improper newlines and multiple quotes, this will clean it up"""
-        return json.dumps(s.replace("'", '"').replace("\\n", "\\\\n"))
+        return json_dumps(s.replace("'", '"').replace("\\n", "\\\\n"))
 
     func_obj = response_message.tool_calls
     if response_message.function_call and response_message.function_call.name:

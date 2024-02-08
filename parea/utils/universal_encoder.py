@@ -3,6 +3,7 @@ from typing import Any
 import dataclasses
 import datetime
 import json
+from decimal import Decimal
 from uuid import UUID
 
 import attrs
@@ -17,7 +18,29 @@ def is_attrs_instance(obj):
     return attrs.has(obj)
 
 
+def is_numpy_instance(obj):
+    try:
+        import numpy as np
+    except ImportError:
+        np = None
+
+    return np and isinstance(obj, np.ndarray)
+
+
+def is_pandas_instance(obj):
+    try:
+        import pandas as pd
+    except ImportError:
+        pd = None
+
+    return pd and isinstance(obj, pd.DataFrame)
+
+
 class UniversalEncoder(json.JSONEncoder):
+    """
+    A JSON encoder that can handle additional types such as dataclasses, attrs, and more.
+    """
+
     def default(self, obj: Any):
         if isinstance(obj, str):
             return obj
@@ -38,6 +61,16 @@ class UniversalEncoder(json.JSONEncoder):
             return obj.total_seconds()
         elif isinstance(obj, UUID):
             return str(obj)
+        elif isinstance(obj, Decimal):
+            return float(obj)
+        elif callable(obj):
+            return f"<callable {obj.__name__}>"
+        elif isinstance(obj, bytes):
+            return obj.decode(errors="ignore")
+        elif is_numpy_instance(obj):
+            return obj.tolist()
+        elif is_pandas_instance(obj):
+            return obj.to_dict(orient="records")
         else:
             return super().default(obj)
 

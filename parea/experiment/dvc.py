@@ -1,4 +1,3 @@
-import json
 import os
 import subprocess
 
@@ -18,7 +17,7 @@ def save_results_to_dvc_if_init(experiment_name: str, metrics: dict):
 def write_metrics_to_dvc(metrics: dict):
     git_root = subprocess.check_output(["git", "rev-parse", "--show-toplevel"], text=True, stderr=subprocess.STDOUT).strip()
     with open(os.path.join(git_root, PAREA_DVC_METRICS_FILE), "w") as f:
-        f.write(json.dumps(metrics, indent=2))
+        f.write(json_dumps(metrics, indent=2))
 
 
 def _check_has_been_committed(git_root: str, file: str) -> bool:
