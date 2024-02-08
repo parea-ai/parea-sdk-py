@@ -106,14 +106,13 @@ def trace(
     name: Optional[str] = None,
     tags: Optional[list[str]] = None,
     metadata: Optional[dict[str, Any]] = None,
-    target: Optional[str] = None,
     end_user_identifier: Optional[str] = None,
     eval_funcs_names: Optional[list[str]] = None,
     eval_funcs: Optional[list[Callable]] = None,
     access_output_of_func: Optional[Callable] = None,
     apply_eval_frac: Optional[float] = 1.0,
 ):
-    def init_trace(func_name, args, kwargs, func) -> tuple[str, float]:
+    def init_trace(func_name, _parea_target_field, args, kwargs, func) -> tuple[str, float]:
         start_time = time.time()
         trace_id = gen_trace_id()
         trace_context.get().append(trace_id)
@@ -139,7 +138,7 @@ def trace(
             trace_name=name or func_name,
             end_user_identifier=end_user_identifier,
             metadata=metadata,
-            target=target,
+            target=_parea_target_field,
             tags=tags,
             inputs=inputs,
             experiment_uuid=os.environ.get(PAREA_OS_ENV_EXPERIMENT_UUID, None),
@@ -174,7 +173,8 @@ def trace(
     def decorator(func):
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
-            trace_id, start_time = init_trace(func.__name__, args, kwargs, func)
+            _parea_target_field = kwargs.pop("_parea_target_field", None)
+            trace_id, start_time = init_trace(func.__name__, _parea_target_field, args, kwargs, func)
             output_as_list = check_multiple_return_values(func)
             try:
                 result = await func(*args, **kwargs)
@@ -189,7 +189,8 @@ def trace(
 
         @wraps(func)
         def wrapper(*args, **kwargs):
-            trace_id, start_time = init_trace(func.__name__, args, kwargs, func)
+            _parea_target_field = kwargs.pop("_parea_target_field", None)
+            trace_id, start_time = init_trace(func.__name__, _parea_target_field, args, kwargs, func)
             output_as_list = check_multiple_return_values(func)
             try:
                 result = func(*args, **kwargs)
