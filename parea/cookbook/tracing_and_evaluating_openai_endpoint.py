@@ -1,3 +1,4 @@
+import json
 import os
 import time
 
@@ -5,13 +6,10 @@ import openai
 from attr import asdict
 from dotenv import load_dotenv
 
-from parea import InMemoryCache, Parea
+from parea import InMemoryCache, Parea, get_current_trace_id, trace, write_trace_logs_to_csv
+from parea.evals import call_openai
 from parea.evals.chat import goal_success_ratio_factory
-from parea.evals.utils import call_openai
-from parea.helpers import write_trace_logs_to_csv
-from parea.schemas.models import Log
-from parea.utils.trace_utils import get_current_trace_id, trace
-from parea.utils.universal_encoder import json_dumps
+from parea.schemas import Log
 
 load_dotenv()
 
@@ -138,7 +136,7 @@ def main():
                 parent_trace = trace_log
                 break
         if parent_trace:
-            print(f"Overall score(s):\n{json_dumps(parent_trace.scores, default=asdict, indent=2)}")
+            print(f"Overall score(s):\n{json.dumps(parent_trace.scores, default=asdict, indent=2)}")
 
 
 if __name__ == "__main__":

@@ -5,10 +5,8 @@ import openai
 import requests
 from dotenv import load_dotenv
 
-from parea import Parea
-from parea.schemas.models import FeedbackRequest
-from parea.utils.trace_utils import get_current_trace_id, trace
-from parea.utils.universal_encoder import json_dumps
+from parea import Parea, get_current_trace_id, trace
+from parea.schemas import FeedbackRequest
 
 load_dotenv()
 
@@ -137,7 +135,7 @@ def provide_user_specific_recommendations(user_input, user_id, functions) -> tup
     if customer_profile is None:
         return "I couldn't find your profile. Could you please verify your user ID?", trace_id
 
-    customer_profile_str = json_dumps(customer_profile)
+    customer_profile_str = json.dumps(customer_profile)
 
     food_preference = customer_profile.get("preferences", {}).get("food", [])[0] if customer_profile.get("preferences", {}).get("food") else None
 

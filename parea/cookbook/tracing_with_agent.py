@@ -4,11 +4,8 @@ import time
 
 from dotenv import load_dotenv
 
-from parea import Parea
-from parea.helpers import to_date_and_time_string
-from parea.schemas.log import LLMInputs, Message, ModelParams, Role
-from parea.schemas.models import Completion, CompletionResponse, FeedbackRequest
-from parea.utils.trace_utils import get_current_trace_id, trace
+from parea import Parea, get_current_trace_id, to_date_and_time_string, trace
+from parea.schemas import Completion, CompletionResponse, FeedbackRequest, LLMInputs, Message, ModelParams, Role
 
 load_dotenv()
 

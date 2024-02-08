@@ -2,6 +2,7 @@ import os
 import subprocess
 
 from parea.constants import PAREA_DVC_DIR, PAREA_DVC_METRICS_FILE, PAREA_DVC_YAML_FILE
+from parea.utils.universal_encoder import json_dumps
 
 
 def save_results_to_dvc_if_init(experiment_name: str, metrics: dict):

@@ -121,8 +121,15 @@ def trace(
         sig = inspect.signature(func)
         parameters = sig.parameters
 
-        inputs = {k: json_dumps(v) for k, v in zip(parameters.keys(), args)}
+        inputs = {k: v for k, v in zip(parameters.keys(), args)}
         inputs.update(kwargs)
+
+        # filter out any values which aren't JSON serializable
+        for k, v in inputs.items():
+            try:
+                json.dumps(v)
+            except TypeError:
+                inputs[k] = json_dumps(v)
 
         trace_data.get()[trace_id] = TraceLog(
             trace_id=trace_id,

@@ -3,8 +3,7 @@ import os
 from dotenv import load_dotenv
 
 from parea import Parea, trace
-from parea.schemas.log import LLMInputs, Log, Message, ModelParams, Role
-from parea.schemas.models import Completion
+from parea.schemas import Completion, LLMInputs, Log, Message, ModelParams, Role
 
 load_dotenv()
 

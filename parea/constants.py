@@ -1,9 +1,190 @@
+from typing import Union
+
 import os
 
 PAREA_OS_ENV_EXPERIMENT_UUID = "_PAREA_EXPERIMENT_UUID"
 PAREA_DVC_DIR = ".parea"
 PAREA_DVC_METRICS_FILE = str(os.path.join(PAREA_DVC_DIR, "metrics.json"))
 PAREA_DVC_YAML_FILE = str(os.path.join(PAREA_DVC_DIR, "dvc.yaml"))
+
+
+CHUNK_DONE_SENTINEL = "data: [DONE]"
+
+OPENAI_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, int]]]] = {
+    "gpt-3.5-turbo-0301": {
+        "prompt": 1.5,
+        "completion": 4.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
+    },
+    "gpt-3.5-turbo-0613": {
+        "prompt": 1.5,
+        "completion": 4.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
+    },
+    "gpt-3.5-turbo-16k": {
+        "prompt": 3.0,
+        "completion": 4.0,
+        "token_limit": {"max_completion_tokens": 16385, "max_prompt_tokens": 16385},
+    },
+    "gpt-3.5-turbo-16k-0301": {
+        "prompt": 3.0,
+        "completion": 4.0,
+        "token_limit": {"max_completion_tokens": 16385, "max_prompt_tokens": 16385},
+    },
+    "gpt-3.5-turbo-16k-0613": {
+        "prompt": 3.0,
+        "completion": 4.0,
+        "token_limit": {"max_completion_tokens": 16385, "max_prompt_tokens": 16385},
+    },
+    "gpt-3.5-turbo-1106": {
+        "prompt": 1.0,
+        "completion": 2.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
+    },
+    "gpt-3.5-turbo-0125": {
+        "prompt": 0.5,
+        "completion": 2.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 16385},
+    },
+    "gpt-3.5-turbo": {
+        "prompt": 0.5,
+        "completion": 2.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 16385},
+    },
+    "gpt-3.5-turbo-instruct": {
+        "prompt": 1.5,
+        "completion": 4.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
+    },
+    "gpt-4": {
+        "prompt": 30.0,
+        "completion": 60.0,
+        "token_limit": {"max_completion_tokens": 8192, "max_prompt_tokens": 8192},
+    },
+    "gpt-4-0314": {
+        "prompt": 30.0,
+        "completion": 60.0,
+        "token_limit": {"max_completion_tokens": 8192, "max_prompt_tokens": 8192},
+    },
+    "gpt-4-0613": {
+        "prompt": 30.0,
+        "completion": 60.0,
+        "token_limit": {"max_completion_tokens": 8192, "max_prompt_tokens": 8192},
+    },
+    "gpt-4-32k": {
+        "prompt": 60.0,
+        "completion": 120.0,
+        "token_limit": {"max_completion_tokens": 32768, "max_prompt_tokens": 32768},
+    },
+    "gpt-4-32k-0314": {
+        "prompt": 60.0,
+        "completion": 120.0,
+        "token_limit": {"max_completion_tokens": 32768, "max_prompt_tokens": 32768},
+    },
+    "gpt-4-32k-0613": {
+        "prompt": 60.0,
+        "completion": 120.0,
+        "token_limit": {"max_completion_tokens": 32768, "max_prompt_tokens": 32768},
+    },
+    "gpt-4-vision-preview": {
+        "prompt": 30.0,
+        "completion": 60.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
+    "gpt-4-turbo-preview": {
+        "prompt": 10.0,
+        "completion": 30.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
+    "gpt-4-1106-preview": {
+        "prompt": 10.0,
+        "completion": 30.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
+    "gpt-4-0125-preview": {
+        "prompt": 10.0,
+        "completion": 30.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
+}
+AZURE_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, int]]]] = {
+    "gpt-35-turbo": {
+        "prompt": 1.5,
+        "completion": 2.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
+    },
+    "gpt-35-turbo-0301": {
+        "prompt": 1.5,
+        "completion": 4.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
+    },
+    "gpt-35-turbo-0613": {
+        "prompt": 1.5,
+        "completion": 4.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
+    },
+    "gpt-35-turbo-16k": {
+        "prompt": 3.0,
+        "completion": 4.0,
+        "token_limit": {"max_completion_tokens": 16384, "max_prompt_tokens": 16384},
+    },
+    "gpt-35-turbo-16k-0301": {
+        "prompt": 3.0,
+        "completion": 4.0,
+        "token_limit": {"max_completion_tokens": 16384, "max_prompt_tokens": 16384},
+    },
+    "gpt-35-turbo-16k-0613": {
+        "prompt": 3.0,
+        "completion": 4.0,
+        "token_limit": {"max_completion_tokens": 16384, "max_prompt_tokens": 16384},
+    },
+    "gpt-4": {
+        "prompt": 30.0,
+        "completion": 60.0,
+        "token_limit": {"max_completion_tokens": 8192, "max_prompt_tokens": 8192},
+    },
+    "gpt-4-0314": {
+        "prompt": 30.0,
+        "completion": 60.0,
+        "token_limit": {"max_completion_tokens": 8192, "max_prompt_tokens": 8192},
+    },
+    "gpt-4-0613": {
+        "prompt": 30.0,
+        "completion": 60.0,
+        "token_limit": {"max_completion_tokens": 8192, "max_prompt_tokens": 8192},
+    },
+    "gpt-4-32k": {
+        "prompt": 60.0,
+        "completion": 120.0,
+        "token_limit": {"max_completion_tokens": 32768, "max_prompt_tokens": 32768},
+    },
+    "gpt-4-32k-0314": {
+        "prompt": 60.0,
+        "completion": 120.0,
+        "token_limit": {"max_completion_tokens": 32768, "max_prompt_tokens": 32768},
+    },
+    "gpt-4-32k-0613": {
+        "prompt": 60.0,
+        "completion": 120.0,
+        "token_limit": {"max_completion_tokens": 32768, "max_prompt_tokens": 32768},
+    },
+    "gpt-4-1106-preview": {
+        "prompt": 10.0,
+        "completion": 20.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
+    "gpt-4-vision": {
+        "prompt": 10.0,
+        "completion": 30.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
+    "gpt-35-turbo-instruct": {
+        "prompt": 10.0,
+        "completion": 30.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
+}
+
 
 NOUNS = (
     "abac",

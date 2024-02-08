@@ -6,8 +6,10 @@ from collections.abc import AsyncGenerator, Generator
 
 from openai.types.chat import ChatCompletionChunk
 
+from parea.constants import CHUNK_DONE_SENTINEL
 from parea.utils.trace_utils import get_current_trace_id
-from parea.wrapper.utils import CHUNK_DONE_SENTINEL, convert_openai_raw_stream_to_log
+from parea.utils.universal_encoder import json_dumps
+from parea.wrapper.utils import convert_openai_raw_stream_to_log
 
 
 def process_stream_and_yield(response, data: dict) -> Generator:
