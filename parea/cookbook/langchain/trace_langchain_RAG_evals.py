@@ -17,7 +17,7 @@ from langchain.vectorstores import Chroma
 from langchain_community.llms.bedrock import Bedrock
 
 # Parea libs
-from parea import Parea, PareaAILangchainTracer
+from parea import Parea
 from parea.evals import EvalFuncTuple, run_evals_in_thread_and_log
 from parea.evals.general import answer_matches_target_llm_grader_factory
 from parea.evals.rag import (
@@ -27,6 +27,7 @@ from parea.evals.rag import (
     percent_target_supported_by_context_factory,
 )
 from parea.schemas import LLMInputs, Log
+from parea.utils.trace_integrations.langchain import PareaAILangchainTracer
 
 load_dotenv()
 

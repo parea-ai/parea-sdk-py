@@ -10,7 +10,8 @@ from langchain.vectorstores import Chroma
 from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
-from parea import Parea, PareaAILangchainTracer
+from parea import Parea
+from parea.utils.trace_integrations.langchain import PareaAILangchainTracer
 
 load_dotenv()
 
