@@ -9,7 +9,8 @@ from langchain.prompts import PromptTemplate
 from langchain.schema.output_parser import StrOutputParser
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-from parea import Parea, PareaAILangchainTracer
+from parea import Parea
+from parea.utils.trace_integrations.langchain import PareaAILangchainTracer
 
 load_dotenv()
 
