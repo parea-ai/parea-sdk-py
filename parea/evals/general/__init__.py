@@ -4,3 +4,4 @@ from .answer_relevancy import answer_relevancy_factory
 from .llm_grader import llm_grader_factory, llm_grader_gpt3t, llm_grader_gpt4
 from .lm_vs_lm import lm_vs_lm_factuality_factory, lm_vs_lm_factuality_gpt3t, lm_vs_lm_factuality_gpt4
 from .self_check import self_check
+from .semantic_similarity import semantic_similarity_factory, semantic_similarity_oai_3_large, semantic_similarity_oai_3_small, semantic_similarity_oai_ada_002
