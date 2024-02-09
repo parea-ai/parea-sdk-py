@@ -2,11 +2,15 @@ from typing import Any, Callable, Optional
 
 import asyncio
 import json
+import os
 import time
 from collections.abc import AsyncIterable
 from functools import wraps
 
 import httpx
+from dotenv import load_dotenv
+
+load_dotenv()
 
 MAX_RETRIES = 7
 BACKOFF_FACTOR = 0.5
@@ -43,7 +47,7 @@ def retry_on_502(func: Callable[..., Any]) -> Callable[..., Any]:
 
 class HTTPClient:
     _instance = None
-    base_url = "https://parea-ai-backend-us-9ac16cdbc7a7b006.onporter.run/api/parea/v1"
+    base_url = os.getenv("PAREA_BASE_URL", "https://parea-ai-backend-us-9ac16cdbc7a7b006.onporter.run/api/parea/v1")
     api_key = None
 
     def __new__(cls, *args, **kwargs):
