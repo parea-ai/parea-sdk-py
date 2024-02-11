@@ -79,8 +79,4 @@ class UniversalEncoder(json.JSONEncoder):
 
 
 def json_dumps(obj, **kwargs):
-    try:
-        return json.dumps(obj, cls=UniversalEncoder, **kwargs)
-    except TypeError as e:
-        logger.error(f"Failed to serialize object: {obj} with error: {e}")
-        return str(obj)
+    return json.dumps(obj, cls=UniversalEncoder, **kwargs)

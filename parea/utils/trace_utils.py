@@ -134,7 +134,11 @@ def trace(
             try:
                 json.dumps(v)
             except TypeError:
-                inputs[k] = json_dumps(v)
+                try:
+                    inputs[k] = json_dumps(v)
+                except TypeError:
+                    # if we can't serialize the value, just convert it to a string
+                    inputs[k] = str(v)
 
         trace_data.get()[trace_id] = TraceLog(
             trace_id=trace_id,
