@@ -1,5 +1,4 @@
 import os
-import queue
 
 from dotenv import load_dotenv
 from openai.lib.azure import AsyncAzureOpenAI, AzureOpenAI
@@ -26,7 +25,7 @@ p.wrap_openai_client(aclient)
 
 
 @trace
-def call_azure(q, data: dict):
+def call_azure(data: dict):
     response = client.chat.completions.create(**data)
     print(response)
 
@@ -46,9 +45,6 @@ async def acall_azure(data: dict):
     print(response)
 
 
-q = queue.Queue()
-
-
 @trace
 async def acall_azure_stream(data: dict):
     data["stream"] = True
@@ -59,10 +55,10 @@ async def acall_azure_stream(data: dict):
 
 
 if __name__ == "__main__":
-    azure_model = "gpt-model-0613"  # replace with your model name
+    azure_model = "AZURE_MODEL_NAME"  # replace with your model name
     functions_example["model"] = azure_model
     simple_example["model"] = azure_model
-    call_azure(q, functions_example)
+    call_azure(functions_example)
     # call_azure_stream(simple_example)
     # call_azure_stream(functions_example)
     # asyncio.run(acall_azure(simple_example))
