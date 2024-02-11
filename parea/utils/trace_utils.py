@@ -1,5 +1,3 @@
-from typing import Any, Callable, Optional
-
 import contextvars
 import inspect
 import json
@@ -11,6 +9,7 @@ from collections import ChainMap
 from collections.abc import AsyncGenerator, AsyncIterator, Generator, Iterator
 from functools import wraps
 from random import random
+from typing import Any, Callable, Optional
 
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.helpers import gen_trace_id, to_date_and_time_string
@@ -134,7 +133,11 @@ def trace(
             try:
                 json.dumps(v)
             except TypeError:
-                inputs[k] = json_dumps(v)
+                try:
+                    inputs[k] = json_dumps(v)
+                except TypeError:
+                    # if we can't serialize the value, just convert it to a string
+                    inputs[k] = str(v)
 
         trace_data.get()[trace_id] = TraceLog(
             trace_id=trace_id,
