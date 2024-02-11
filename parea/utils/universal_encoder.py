@@ -1,13 +1,15 @@
-from typing import Any
-
 import dataclasses
 import datetime
 import json
+import logging
 from decimal import Decimal
+from typing import Any
 from uuid import UUID
 
 import attrs
 from pydantic import BaseModel
+
+logger = logging.getLogger()
 
 
 def is_dataclass_instance(obj):
@@ -76,4 +78,8 @@ class UniversalEncoder(json.JSONEncoder):
 
 
 def json_dumps(obj, **kwargs):
-    return json.dumps(obj, cls=UniversalEncoder, **kwargs)
+    try:
+        return json.dumps(obj, cls=UniversalEncoder, **kwargs)
+    except TypeError as e:
+        logger.error(f"Failed to serialize object: {obj} with error: {e}")
+        return str(obj)
