@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 from dotenv import load_dotenv
@@ -61,7 +62,7 @@ if __name__ == "__main__":
     call_azure(functions_example)
     # call_azure_stream(simple_example)
     # call_azure_stream(functions_example)
-    # asyncio.run(acall_azure(simple_example))
+    asyncio.run(acall_azure(simple_example))
     # asyncio.run(acall_azure(functions_example))
     # asyncio.run(acall_azure_stream(simple_example))
-    # asyncio.run(acall_azure_stream(functions_example))
+    asyncio.run(acall_azure_stream(functions_example))
