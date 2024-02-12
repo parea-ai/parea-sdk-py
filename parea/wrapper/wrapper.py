@@ -2,6 +2,7 @@ from typing import Any, Callable
 
 import functools
 import inspect
+import logging
 import os
 import time
 from uuid import uuid4
@@ -13,6 +14,8 @@ from parea.helpers import date_and_time_string_to_timestamp
 from parea.schemas.models import TraceLog
 from parea.utils.trace_utils import call_eval_funcs_then_log, to_date_and_time_string, trace_context, trace_data
 from parea.wrapper.utils import skip_decorator_if_func_in_stack
+
+logger = logging.getLogger()
 
 
 class Wrapper:
@@ -105,62 +108,70 @@ class Wrapper:
     @skip_decorator_if_func_in_stack(call_eval_funcs_then_log, _make_evaluations)
     def async_decorator(self, orig_func: Callable) -> Callable:
         async def wrapper(*args, **kwargs):
-            trace_id, start_time = self._init_trace()
-            response = None
-            exception = None
-            error = None
-            cache_hit = False
-            cache_key = self.convert_kwargs_to_cache_request(args, kwargs)
             try:
-                if self.cache:
-                    cache_result = await self.cache.aget(cache_key)
-                    if cache_result is not None:
-                        response = self.aconvert_cache_to_response(args, kwargs, cache_result)
-                        cache_hit = True
-                if response is None:
-                    response = await orig_func(*args, **kwargs)
+                trace_id, start_time = self._init_trace()
+                response = None
+                exception = None
+                error = None
+                cache_hit = False
+                cache_key = self.convert_kwargs_to_cache_request(args, kwargs)
+                try:
+                    if self.cache:
+                        cache_result = await self.cache.aget(cache_key)
+                        if cache_result is not None:
+                            response = self.aconvert_cache_to_response(args, kwargs, cache_result)
+                            cache_hit = True
+                    if response is None:
+                        response = await orig_func(*args, **kwargs)
+                except Exception as e:
+                    exception = e
+                    error = str(e)
+                    if self.cache:
+                        await self.cache.ainvalidate(cache_key)
+                finally:
+                    if exception is not None:
+                        self._acleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
+                        raise exception
+                    else:
+                        return self._acleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
             except Exception as e:
-                exception = e
-                error = str(e)
-                if self.cache:
-                    await self.cache.ainvalidate(cache_key)
-            finally:
-                if exception is not None:
-                    self._acleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
-                    raise exception
-                else:
-                    return self._acleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
+                logger.debug(f"Error in openai async_decorator: {e}")
+                return await orig_func(*args, **kwargs)
 
         return wrapper
 
     @skip_decorator_if_func_in_stack(call_eval_funcs_then_log, _make_evaluations)
     def sync_decorator(self, orig_func: Callable) -> Callable:
         def wrapper(*args, **kwargs):
-            trace_id, start_time = self._init_trace()
-            response = None
-            error = None
-            cache_hit = False
-            cache_key = self.convert_kwargs_to_cache_request(args, kwargs)
-            exception = None
             try:
-                if self.cache:
-                    cache_result = self.cache.get(cache_key)
-                    if cache_result is not None:
-                        response = self.convert_cache_to_response(args, kwargs, cache_result)
-                        cache_hit = True
-                if response is None:
-                    response = orig_func(*args, **kwargs)
+                trace_id, start_time = self._init_trace()
+                response = None
+                error = None
+                cache_hit = False
+                cache_key = self.convert_kwargs_to_cache_request(args, kwargs)
+                exception = None
+                try:
+                    if self.cache:
+                        cache_result = self.cache.get(cache_key)
+                        if cache_result is not None:
+                            response = self.convert_cache_to_response(args, kwargs, cache_result)
+                            cache_hit = True
+                    if response is None:
+                        response = orig_func(*args, **kwargs)
+                except Exception as e:
+                    exception = e
+                    error = str(e)
+                    if self.cache:
+                        self.cache.invalidate(cache_key)
+                finally:
+                    if exception is not None:
+                        self._cleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
+                        raise exception
+                    else:
+                        return self._cleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
             except Exception as e:
-                exception = e
-                error = str(e)
-                if self.cache:
-                    self.cache.invalidate(cache_key)
-            finally:
-                if exception is not None:
-                    self._cleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
-                    raise exception
-                else:
-                    return self._cleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
+                logger.debug(f"Error in openai sync_decorator: {e}")
+                return orig_func(*args, **kwargs)
 
         return wrapper
 
