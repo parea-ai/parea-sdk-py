@@ -41,6 +41,14 @@ def skip_decorator_if_func_in_stack(*funcs_to_check: Callable) -> Callable:
     return decorator_wrapper
 
 
+def _safe_encode(encoding, text):
+    try:
+        return len(encoding.encode(text))
+    except Exception as e:
+        print(f"Error encoding text: {e}")
+        return 0
+
+
 def _num_tokens_from_messages(messages, model="gpt-3.5-turbo-0613", is_azure: bool = False):
     """Return the number of tokens used by a list of messages.
     source: https://cookbook.openai.com/examples/how_to_count_tokens_with_tiktoken
@@ -86,7 +94,7 @@ def _num_tokens_from_messages(messages, model="gpt-3.5-turbo-0613", is_azure: bo
     for message in messages:
         num_tokens += tokens_per_message
         for key, value in message.items():
-            num_tokens += len(encoding.encode(value))
+            num_tokens += _safe_encode(encoding, value)
             if key == "name":
                 num_tokens += tokens_per_name
     num_tokens += 3  # every reply is primed with <|start|>assistant<|message|>
@@ -107,27 +115,31 @@ def _num_tokens_from_functions(functions, function_call, model="gpt-3.5-turbo-06
 
     num_tokens = 3 if model in ["gpt-3.5-turbo-1106", "gpt-4-1106-preview"] else 0
     for function in functions:
-        function_tokens = len(encoding.encode(function.get("name", "")))
-        function_tokens += len(encoding.encode(function.get("description", "")))
+        try:
+            function_tokens = _safe_encode(encoding, function.get("name", ""))
+            function_tokens += _safe_encode(encoding, function.get("description", ""))
+        except Exception as e:
+            print(f"Error counting tokens: {e}")
+            function_tokens = 0
 
         if "parameters" in function:
             parameters = function["parameters"]
             if "properties" in parameters:
                 for propertiesKey in parameters["properties"]:
-                    function_tokens += len(encoding.encode(propertiesKey))
+                    function_tokens += _safe_encode(encoding, propertiesKey)
                     v = parameters["properties"][propertiesKey]
                     for field in v:
                         if field == "type":
                             function_tokens += 2
-                            function_tokens += len(encoding.encode(v["type"]))
+                            function_tokens += _safe_encode(encoding, v["type"])
                         elif field == "description":
                             function_tokens += 2
-                            function_tokens += len(encoding.encode(v["description"]))
+                            function_tokens += _safe_encode(encoding, v["description"])
                         elif field == "enum":
                             function_tokens -= 3
                             for o in v["enum"]:
                                 function_tokens += 3
-                                function_tokens += len(encoding.encode(o))
+                                function_tokens += _safe_encode(encoding, o)
                         else:
                             print(f"Warning: not supported field {field}")
                 function_tokens += 11
@@ -135,9 +147,9 @@ def _num_tokens_from_functions(functions, function_call, model="gpt-3.5-turbo-06
         num_tokens += function_tokens
 
     num_tokens += 10
-    function_call_tokens = len(encoding.encode("auto")) - 1
+    function_call_tokens = min(_safe_encode(encoding, "auto") - 1, 0)
     if isinstance(function_call, dict):
-        function_call_tokens = len(encoding.encode(json_dumps(function_call))) - 1
+        function_call_tokens = min(_safe_encode(encoding, json_dumps(function_call)) - 1, 0)
     return num_tokens + function_call_tokens
 
 
@@ -148,8 +160,7 @@ def _num_tokens_from_string(string: str, model_name: str = "gpt-3.5-turbo") -> i
     except KeyError:
         print(f"Warning: model {model_name} not found. Using cl100k_base encoding.")
         encoding = tiktoken.get_encoding("cl100k_base")
-    num_tokens = len(encoding.encode(string))
-    return num_tokens
+    return _safe_encode(encoding, string)
 
 
 def _calculate_input_tokens(

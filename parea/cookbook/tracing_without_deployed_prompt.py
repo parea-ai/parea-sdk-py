@@ -4,7 +4,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 from parea import Parea, get_current_trace_id, trace
-from parea.schemas import Completion, CompletionResponse, FeedbackRequest, LLMInputs, Message, ModelParams
+from parea.schemas import Completion, CompletionResponse, LLMInputs, Message, ModelParams, FeedbackRequest
 
 load_dotenv()
 
@@ -14,7 +14,7 @@ p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 @trace  # <--- If you want to log the inputs to the LLM call you can optionally add a trace decorator here
 def call_llm(
     data: list[dict],
-    model: str = "gpt-3.5-turbo",
+    model: str = "gpt-3.5-turbo-1106",
     provider: str = "openai",
     temperature: float = 0.0,
 ) -> CompletionResponse:
