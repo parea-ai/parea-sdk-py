@@ -1,6 +1,7 @@
+from typing import Callable, Union
+
 import json
 import warnings
-from typing import Callable, Union
 
 import openai
 import pysbd

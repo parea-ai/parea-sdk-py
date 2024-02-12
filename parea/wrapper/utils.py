@@ -1,7 +1,8 @@
+from typing import Callable, Optional, Union
+
 import json
 import sys
 from functools import lru_cache, wraps
-from typing import Callable, Optional, Union
 
 import tiktoken
 from openai import __version__ as openai_version
