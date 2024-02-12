@@ -1,7 +1,6 @@
-from typing import Callable, Union
-
 import json
 import warnings
+from typing import Callable, Union
 
 import openai
 import pysbd
@@ -12,6 +11,7 @@ from openai import __version__ as openai_version
 from parea.parea_logger import parea_logger
 from parea.schemas.log import Log
 from parea.schemas.models import NamedEvaluationScore, UpdateLog
+from parea.wrapper.utils import _safe_encode
 
 seg = pysbd.Segmenter(language="en", clean=False)
 
@@ -135,5 +135,5 @@ def get_tokens(model: str, text: str) -> Union[str, list[int]]:
         encoding = tiktoken.encoding_for_model(model)
     except KeyError:
         encoding = tiktoken.get_encoding("cl100k_base")
-    tokens = encoding.encode(text)
+    tokens = _safe_encode(encoding, text)
     return tokens
