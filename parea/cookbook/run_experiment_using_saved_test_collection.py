@@ -38,4 +38,4 @@ if __name__ == "__main__":
     p.experiment(
         data="Hello World Example",  # this is the name of my Test Collection in Parea (TestHub page)
         func=func,
-    ).run()
+    ).run(name="hello-world-example")

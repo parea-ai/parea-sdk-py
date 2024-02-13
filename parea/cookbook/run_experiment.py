@@ -43,6 +43,6 @@ def generate_random_number(n: str) -> str:
 # You can optionally run the experiment manually by calling `.run()`
 if __name__ == "__main__":
     p.experiment(
-        data=[{"n": "10"}],
+        data=[{"n": "10"}, {"n": "11"}, {"n": "12"}],
         func=generate_random_number,
     ).run()
