@@ -1,9 +1,8 @@
-from typing import Any, Callable, Optional, Union
-
 import asyncio
 import os
 import time
 from collections.abc import AsyncIterable, Iterable
+from typing import Any, Callable, Optional, Union
 
 import httpx
 from attrs import asdict, define, field
@@ -32,7 +31,8 @@ from parea.schemas.models import (
     UseDeployedPrompt,
     UseDeployedPromptResponse,
 )
-from parea.utils.trace_utils import get_current_trace_id, get_root_trace_id, logger_all_possible, logger_record_log, trace_data
+from parea.utils.trace_utils import get_current_trace_id, get_root_trace_id, logger_all_possible, logger_record_log, \
+    trace_data
 from parea.wrapper import OpenAIWrapper
 
 load_dotenv()
@@ -310,9 +310,8 @@ class Parea:
     def experiment(self, data: Union[str, Iterable[dict]], func: Callable, n_trials: int = 1):
         """
         :param data: If your dataset is defined locally it should be an iterable of k/v
-        pairs matching the expected inputs of your function. To reference a test collection you
+        pairs matching the expected inputs of your function. To reference a dataset you
         have saved on Parea, use the collection name as a string.
-
         :param func: The function to run. This function should accept inputs that match the keys of the data field.
         :param n_trials: The number of times to run the experiment on the same data.
         """

@@ -52,7 +52,13 @@ def async_wrapper(fn, **kwargs):
 
 
 async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable, p: Parea, n_trials: int = 1) -> ExperimentStatsSchema:
-    """Creates an experiment and runs the function on the data iterator."""
+    """Creates an experiment and runs the function on the data iterator.
+    param name: The name of the experiment. This name must be unique across experiment runs.
+    param data: The data to run the experiment on. This can be a list of dictionaries or a string representing the name of a dataset on Parea.
+    param func: The function to run. This function should accept inputs that match the keys of the data field.
+    param p: The Parea instance to use for running the experiment.
+    param n_trials: The number of times to run the experiment on the same data.
+    """
     if isinstance(data, str):
         print(f"Fetching test collection: {data}")
         test_collection = await p.aget_collection(data)
@@ -112,14 +118,15 @@ _experiments = []
 @define
 class Experiment:
     # If your dataset is defined locally it should be an iterable of k/v
-    # pairs matching the expected inputs of your function. To reference a test collection you
-    # have saved on Parea, use the collection name as a string.
+    # pairs matching the expected inputs of your function. To reference a dataset you
+    # have saved on Parea, use the dataset name as a string.
     data: Union[str, Iterable[dict]]
     # The function to run. This function should accept inputs that match the keys of the data field.
     func: Callable = field()
     experiment_stats: ExperimentStatsSchema = field(init=False, default=None)
     p: Parea = field(default=None)
     name: str = field(init=False)
+    # The number of times to run the experiment on the same data.
     n_trials: int = field(default=1)
 
     def __attrs_post_init__(self):
