@@ -1,11 +1,10 @@
-from typing import Callable, Optional, Union
-
 import asyncio
 import inspect
 import os
 import time
 from collections import defaultdict
 from collections.abc import Iterable
+from typing import Callable, Optional, Union
 
 from attrs import define, field
 from tqdm import tqdm
@@ -140,8 +139,5 @@ class Experiment:
         If no name is provided a memorable name will be generated automatically.
         param iterations: The number of times to run the experiment.
         """
-        try:
-            self._gen_name_if_none(name)
-            self.experiment_stats = asyncio.run(experiment(self.name, self.data, self.func, self.p, self.n_trials))
-        except Exception as e:
-            print(f"Error running experiment: {e}")
+        self._gen_name_if_none(name)
+        self.experiment_stats = asyncio.run(experiment(self.name, self.data, self.func, self.p, self.n_trials))
