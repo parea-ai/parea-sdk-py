@@ -84,7 +84,7 @@ class FeedbackRequest:
 @define
 class NamedEvaluationScore:
     name: str
-    score: float = field(validator=[validators.ge(0), validators.le(1)])
+    score: float
 
 
 @define
