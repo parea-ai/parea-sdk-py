@@ -4,6 +4,8 @@ import csv
 import random
 import time
 import uuid
+from collections.abc import Iterable
+from copy import deepcopy
 
 from attr import asdict, fields_dict
 
@@ -48,3 +50,7 @@ def calculate_avg_as_string(values: list[Optional[float]]) -> str:
     values = [x for x in values if x is not None]
     avg = sum(values) / len(values)
     return f"{avg:.2f}"
+
+
+def duplicate_dicts(data: Iterable[dict], n: int) -> Iterable[dict]:
+    return [deepcopy(item) for item in data for _ in range(n)]

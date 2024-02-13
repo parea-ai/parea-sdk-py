@@ -36,13 +36,15 @@ def generate_random_number(n: str) -> str:
 # You can use the CLI command "parea experiment parea/cookbook/run_experiment.py" to execute this experiment
 # or call `.run()`
 # p.experiment(
-#     data=[{"n": "10"}],  # Data to run the experiment on (list of dicts)
+#     data=[{"n": "11"}],  # Data to run the experiment on (list of dicts)
 #     func=generate_random_number,  # Function to run (callable)
+#     n_trials=1, # Number of times to run the experiment on the same data
 # )
 
 # You can optionally run the experiment manually by calling `.run()`
 if __name__ == "__main__":
     p.experiment(
-        data=[{"n": "10"}, {"n": "11"}, {"n": "12"}],
+        data=[{"n": "12"}],
         func=generate_random_number,
+        n_trials=3,
     ).run()

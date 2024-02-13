@@ -307,17 +307,17 @@ class Parea:
     def project_uuid(self) -> str:
         return self._project.uuid
 
-    def experiment(self, data: Union[str, Iterable[dict]], func: Callable):
+    def experiment(self, data: Union[str, Iterable[dict]], func: Callable, n_trials: int = 1):
         """
         :param data: If your dataset is defined locally it should be an iterable of k/v
-        pairs matching the expected inputs of your function. To reference a test collection you
+        pairs matching the expected inputs of your function. To reference a dataset you
         have saved on Parea, use the collection name as a string.
-
         :param func: The function to run. This function should accept inputs that match the keys of the data field.
+        :param n_trials: The number of times to run the experiment on the same data.
         """
         from parea import Experiment
 
-        return Experiment(data=data, func=func, p=self)
+        return Experiment(data=data, func=func, p=self, n_trials=n_trials)
 
 
 _initialized_parea_wrapper = False
