@@ -243,3 +243,9 @@ class CreateTestCaseCollection:
     # column names excluding reserved names, target and tags
     column_names: list[str] = field(factory=list)
     test_cases: list[CreateTestCase] = field(factory=list)
+
+
+@define
+class CreateTestCases:
+    name: str
+    test_cases: list[CreateTestCase] = field(factory=list)
