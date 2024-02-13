@@ -14,7 +14,7 @@ from parea.api_client import HTTPClient
 from parea.cache import InMemoryCache, RedisCache
 from parea.cache.cache import Cache
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
-from parea.experiment.datasets import create_test_collection
+from parea.experiment.datasets import create_test_cases, create_test_collection
 from parea.helpers import gen_trace_id
 from parea.parea_logger import parea_logger
 from parea.schemas.models import (
@@ -23,6 +23,7 @@ from parea.schemas.models import (
     CreateExperimentRequest,
     CreateGetProjectResponseSchema,
     CreateTestCaseCollection,
+    CreateTestCases,
     ExperimentSchema,
     ExperimentStatsSchema,
     FeedbackRequest,
@@ -45,6 +46,7 @@ EXPERIMENT_FINISHED_ENDPOINT = "/experiment/{experiment_uuid}/finished"
 PROJECT_ENDPOINT = "/project"
 GET_COLLECTION_ENDPOINT = "/collection/{test_collection_name}"
 CREATE_COLLECTION_ENDPOINT = "/collection"
+ADD_TEST_CASES_ENDPOINT = "/testcases"
 
 
 @define
@@ -290,6 +292,14 @@ class Parea:
         self._client.request(
             "POST",
             CREATE_COLLECTION_ENDPOINT,
+            data=asdict(request),
+        )
+
+    def add_test_cases(self, data: list[dict[str, Any]], name: str) -> None:
+        request = CreateTestCases(name=name, test_cases=create_test_cases(data))
+        self._client.request(
+            "POST",
+            ADD_TEST_CASES_ENDPOINT,
             data=asdict(request),
         )
 
