@@ -74,7 +74,7 @@ async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable
         data = duplicate_dicts(data, n_trials)
         targets = targets * n_trials
         len_test_cases = len(data) if isinstance(data, list) else 0
-        print(f"Running {n_trials} trials of the experiment with {len_test_cases} test cases, data: {data}, and targets: {targets} \n")
+        print(f"Running {n_trials} trials of the experiment \n")
 
     experiment_schema: ExperimentSchema = p.create_experiment(CreateExperimentRequest(name=name))
     experiment_uuid = experiment_schema.uuid
