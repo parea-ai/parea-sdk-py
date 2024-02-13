@@ -1,11 +1,10 @@
-from typing import Callable, Optional, Union
-
 import asyncio
 import inspect
 import os
 import time
 from collections import defaultdict
 from collections.abc import Iterable
+from typing import Callable, Optional, Union
 
 from attrs import define, field
 from tqdm import tqdm
@@ -145,7 +144,6 @@ class Experiment:
         """Run the experiment and save the results to DVC.
         param name: The name of the experiment. This name must be unique across experiment runs.
         If no name is provided a memorable name will be generated automatically.
-        param iterations: The number of times to run the experiment.
         """
         self._gen_name_if_none(name)
         self.experiment_stats = asyncio.run(experiment(self.name, self.data, self.func, self.p, self.n_trials))
