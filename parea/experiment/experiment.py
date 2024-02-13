@@ -66,7 +66,7 @@ async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable
 
     if n_trials > 1:
         data = duplicate_dicts(data, n_trials)
-        targets = targets * (n_trials)
+        targets = targets * n_trials
         len_test_cases = len(data) if isinstance(data, list) else 0
         print(f"Running {n_trials} trials of the experiment with {len_test_cases} test cases, data: {data}, and targets: {targets} \n")
 
