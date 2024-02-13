@@ -85,33 +85,27 @@ def trace_insert(data: dict[str, Any], trace_id: Optional[str] = None):
         data: Keys can be one of: trace_name, end_user_identifier, metadata, tags
         trace_id: The trace id to insert the data into. If not provided, the current trace id will be used.
     """
-    try:
-        current_trace_id = trace_id or get_current_trace_id()
-        current_trace_data: TraceLog = trace_data.get()[current_trace_id]
-        if not current_trace_data:
-            return
-        for key, new_value in data.items():
-            existing_value = current_trace_data.__getattribute__(key)
-            current_trace_data.__setattr__(key, merge(existing_value, new_value) if existing_value else new_value)
-    except Exception as e:
-        logger.debug(f"Error occurred inserting data into trace log: {e}", exc_info=e)
+    current_trace_id = trace_id or get_current_trace_id()
+    current_trace_data: TraceLog = trace_data.get()[current_trace_id]
+    if not current_trace_data:
+        return
+    for key, new_value in data.items():
+        existing_value = current_trace_data.__getattribute__(key)
+        current_trace_data.__setattr__(key, merge(existing_value, new_value) if existing_value else new_value)
 
 
 def fill_trace_data(trace_id: str, data: dict[str, Any], scenario: UpdateTraceScenario):
-    try:
-        if scenario == UpdateTraceScenario.RESULT:
-            if not isinstance(data["result"], (Generator, AsyncGenerator, AsyncIterator, Iterator)):
-                trace_data.get()[trace_id].output = make_output(data["result"], data.get("output_as_list", False))
-            trace_data.get()[trace_id].status = "success"
-            trace_data.get()[trace_id].evaluation_metric_names = data.get("eval_funcs_names")
-        elif scenario == UpdateTraceScenario.ERROR:
-            trace_data.get()[trace_id].error = data["error"]
-            trace_data.get()[trace_id].status = "error"
-        elif scenario == UpdateTraceScenario.CHAIN:
-            trace_data.get()[trace_id].parent_trace_id = data["parent_trace_id"]
-            trace_data.get()[data["parent_trace_id"]].children.append(trace_id)
-    except Exception:
-        return
+    if scenario == UpdateTraceScenario.RESULT:
+        if not isinstance(data["result"], (Generator, AsyncGenerator, AsyncIterator, Iterator)):
+            trace_data.get()[trace_id].output = make_output(data["result"], data.get("output_as_list", False))
+        trace_data.get()[trace_id].status = "success"
+        trace_data.get()[trace_id].evaluation_metric_names = data.get("eval_funcs_names")
+    elif scenario == UpdateTraceScenario.ERROR:
+        trace_data.get()[trace_id].error = data["error"]
+        trace_data.get()[trace_id].status = "error"
+    elif scenario == UpdateTraceScenario.CHAIN:
+        trace_data.get()[trace_id].parent_trace_id = data["parent_trace_id"]
+        trace_data.get()[data["parent_trace_id"]].children.append(trace_id)
 
 
 def trace(
@@ -189,43 +183,35 @@ def trace(
     def decorator(func):
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
+            _parea_target_field = kwargs.pop("_parea_target_field", None)
+            trace_id, start_time = init_trace(func.__name__, _parea_target_field, args, kwargs, func)
+            output_as_list = check_multiple_return_values(func)
             try:
-                _parea_target_field = kwargs.pop("_parea_target_field", None)
-                trace_id, start_time = init_trace(func.__name__, _parea_target_field, args, kwargs, func)
-                output_as_list = check_multiple_return_values(func)
-                try:
-                    result = await func(*args, **kwargs)
-                    fill_trace_data(trace_id, {"result": result, "output_as_list": output_as_list, "eval_funcs_names": eval_funcs_names}, UpdateTraceScenario.RESULT)
-                except Exception as e:
-                    logger.exception(f"Error occurred in function {func.__name__}, {e}")
-                    fill_trace_data(trace_id, {"error": str(e)}, UpdateTraceScenario.ERROR)
-                    raise e
-                finally:
-                    cleanup_trace(func.__name__, trace_id, start_time)
-                return result
+                result = await func(*args, **kwargs)
+                fill_trace_data(trace_id, {"result": result, "output_as_list": output_as_list, "eval_funcs_names": eval_funcs_names}, UpdateTraceScenario.RESULT)
             except Exception as e:
-                logger.debug(f"Trace decorator on {func.__name__} failed silently with error: {e}")
-                return await func(*args, **kwargs)
+                logger.exception(f"Error occurred in function {func.__name__}, {e}")
+                fill_trace_data(trace_id, {"error": str(e)}, UpdateTraceScenario.ERROR)
+                raise e
+            finally:
+                cleanup_trace(trace_id, start_time)
+            return result
 
         @wraps(func)
         def wrapper(*args, **kwargs):
+            _parea_target_field = kwargs.pop("_parea_target_field", None)
+            trace_id, start_time = init_trace(func.__name__, _parea_target_field, args, kwargs, func)
+            output_as_list = check_multiple_return_values(func)
             try:
-                _parea_target_field = kwargs.pop("_parea_target_field", None)
-                trace_id, start_time = init_trace(func.__name__, _parea_target_field, args, kwargs, func)
-                output_as_list = check_multiple_return_values(func)
-                try:
-                    result = func(*args, **kwargs)
-                    fill_trace_data(trace_id, {"result": result, "output_as_list": output_as_list, "eval_funcs_names": eval_funcs_names}, UpdateTraceScenario.RESULT)
-                except Exception as e:
-                    logger.exception(f"Error occurred in function {func.__name__}, {e}")
-                    fill_trace_data(trace_id, {"error": str(e)}, UpdateTraceScenario.ERROR)
-                    raise e
-                finally:
-                    cleanup_trace(func.__name__, trace_id, start_time)
-                return result
+                result = func(*args, **kwargs)
+                fill_trace_data(trace_id, {"result": result, "output_as_list": output_as_list, "eval_funcs_names": eval_funcs_names}, UpdateTraceScenario.RESULT)
             except Exception as e:
-                logger.debug(f"Trace decorator on {func.__name__} failed silently with error: {e}")
-                return func(*args, **kwargs)
+                logger.exception(f"Error occurred in function {func.__name__}, {e}")
+                fill_trace_data(trace_id, {"error": str(e)}, UpdateTraceScenario.ERROR)
+                raise e
+            finally:
+                cleanup_trace(trace_id, start_time)
+            return result
 
         if inspect.iscoroutinefunction(func):
             return async_wrapper

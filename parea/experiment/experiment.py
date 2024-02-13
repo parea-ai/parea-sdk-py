@@ -132,8 +132,5 @@ class Experiment:
         param name: The name of the experiment. This name must be unique across experiment runs.
         If no name is provided a memorable name will be generated automatically.
         """
-        try:
-            self._gen_name_if_none(name)
-            self.experiment_stats = asyncio.run(experiment(self.name, self.data, self.func, self.p))
-        except Exception as e:
-            print(f"Error running experiment: {e}")
+        self._gen_name_if_none(name)
+        self.experiment_stats = asyncio.run(experiment(self.name, self.data, self.func, self.p))

@@ -4,7 +4,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 from parea import Parea, get_current_trace_id, trace
-from parea.schemas import Completion, CompletionResponse, FeedbackRequest, LLMInputs, Message, ModelParams
+from parea.schemas import Completion, CompletionResponse, LLMInputs, Message, ModelParams, FeedbackRequest
 
 load_dotenv()
 
