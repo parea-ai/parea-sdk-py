@@ -44,7 +44,7 @@ openai = "*"
 redis = "^5.0.1"
 pysbd = "^0.3.4"
 cattrs = ">=22.1.0"
-tiktoken = "^0.6.0"
+tiktoken = "^0.5.2"
 
 [tool.poetry.dev-dependencies]
 bandit = "^1.7.1"
