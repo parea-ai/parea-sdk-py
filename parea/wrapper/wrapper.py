@@ -2,17 +2,20 @@ from typing import Any, Callable
 
 import functools
 import inspect
+import logging
 import os
 import time
 from uuid import uuid4
 
 from parea.cache.cache import Cache
-from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
+from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID, TURN_OFF_PAREA_LOGGING
 from parea.evals.utils import _make_evaluations
 from parea.helpers import date_and_time_string_to_timestamp
 from parea.schemas.models import TraceLog
 from parea.utils.trace_utils import call_eval_funcs_then_log, to_date_and_time_string, trace_context, trace_data
 from parea.wrapper.utils import skip_decorator_if_func_in_stack
+
+logger = logging.getLogger()
 
 
 class Wrapper:
@@ -62,32 +65,17 @@ class Wrapper:
     def _init_trace(self) -> tuple[str, float]:
         start_time = time.time()
         trace_id = str(uuid4())
-        trace_context.get().append(trace_id)
+        if TURN_OFF_PAREA_LOGGING:
+            return trace_id, start_time
+        try:
+            trace_context.get().append(trace_id)
 
-        trace_data.get()[trace_id] = TraceLog(
-            trace_id=trace_id,
-            parent_trace_id=trace_id,
-            root_trace_id=trace_id,
-            start_timestamp=to_date_and_time_string(start_time),
-            trace_name="LLM",
-            end_user_identifier=None,
-            metadata=None,
-            target=None,
-            tags=None,
-            inputs={},
-            experiment_uuid=os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None),
-        )
-
-        parent_trace_id = trace_context.get()[-2] if len(trace_context.get()) > 1 else None
-        if not parent_trace_id:
-            # we don't have a parent trace id, so we need to create one
-            parent_trace_id = str(uuid4())
-            trace_context.get().insert(0, parent_trace_id)
-            trace_data.get()[parent_trace_id] = TraceLog(
-                trace_id=parent_trace_id,
-                parent_trace_id=parent_trace_id,
-                root_trace_id=parent_trace_id,
+            trace_data.get()[trace_id] = TraceLog(
+                trace_id=trace_id,
+                parent_trace_id=trace_id,
+                root_trace_id=trace_id,
                 start_timestamp=to_date_and_time_string(start_time),
+                trace_name="LLM",
                 end_user_identifier=None,
                 metadata=None,
                 target=None,
@@ -95,10 +83,30 @@ class Wrapper:
                 inputs={},
                 experiment_uuid=os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None),
             )
-        trace_data.get()[trace_id].root_trace_id = trace_context.get()[0]
-        trace_data.get()[trace_id].parent_trace_id = parent_trace_id
-        trace_data.get()[parent_trace_id].children.append(trace_id)
-        self.log(parent_trace_id)
+
+            parent_trace_id = trace_context.get()[-2] if len(trace_context.get()) > 1 else None
+            if not parent_trace_id:
+                # we don't have a parent trace id, so we need to create one
+                parent_trace_id = str(uuid4())
+                trace_context.get().insert(0, parent_trace_id)
+                trace_data.get()[parent_trace_id] = TraceLog(
+                    trace_id=parent_trace_id,
+                    parent_trace_id=parent_trace_id,
+                    root_trace_id=parent_trace_id,
+                    start_timestamp=to_date_and_time_string(start_time),
+                    end_user_identifier=None,
+                    metadata=None,
+                    target=None,
+                    tags=None,
+                    inputs={},
+                    experiment_uuid=os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None),
+                )
+            trace_data.get()[trace_id].root_trace_id = trace_context.get()[0]
+            trace_data.get()[trace_id].parent_trace_id = parent_trace_id
+            trace_data.get()[parent_trace_id].children.append(trace_id)
+            self.log(parent_trace_id)
+        except Exception as e:
+            logger.debug(f"Error occurred initializing openai trace, {e}")
 
         return trace_id, start_time
 
@@ -193,21 +201,29 @@ class Wrapper:
         return final_log
 
     def _cleanup_trace(self, trace_id: str, start_time: float, error: str, cache_hit, args, kwargs, response):
-        final_log = self._cleanup_trace_core(trace_id, start_time, error, cache_hit, args, kwargs)
+        try:
+            final_log = self._cleanup_trace_core(trace_id, start_time, error, cache_hit, args, kwargs)
 
-        if self.should_use_gen_resolver(response):
-            return self.gen_resolver(trace_id, args, kwargs, response, final_log)
-        else:
-            self.resolver(trace_id, args, kwargs, response)
-            final_log()
+            if self.should_use_gen_resolver(response):
+                return self.gen_resolver(trace_id, args, kwargs, response, final_log)
+            else:
+                self.resolver(trace_id, args, kwargs, response)
+                final_log()
+                return response
+        except Exception as e:
+            logger.debug(f"Error occurred cleaning up openai trace, {e}")
             return response
 
     def _acleanup_trace(self, trace_id: str, start_time: float, error: str, cache_hit, args, kwargs, response):
-        final_log = self._cleanup_trace_core(trace_id, start_time, error, cache_hit, args, kwargs)
+        try:
+            final_log = self._cleanup_trace_core(trace_id, start_time, error, cache_hit, args, kwargs)
 
-        if self.should_use_gen_resolver(response):
-            return self.agen_resolver(trace_id, args, kwargs, response, final_log)
-        else:
-            self.resolver(trace_id, args, kwargs, response)
-            final_log()
+            if self.should_use_gen_resolver(response):
+                return self.agen_resolver(trace_id, args, kwargs, response, final_log)
+            else:
+                self.resolver(trace_id, args, kwargs, response)
+                final_log()
+                return response
+        except Exception as e:
+            logger.debug(f"Error occurred cleaning up openai trace, {e}")
             return response

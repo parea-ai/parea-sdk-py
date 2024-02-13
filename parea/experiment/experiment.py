@@ -12,7 +12,7 @@ from tqdm import tqdm
 from tqdm.asyncio import tqdm_asyncio
 
 from parea import Parea
-from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
+from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID, TURN_OFF_PAREA_LOGGING
 from parea.experiment.dvc import save_results_to_dvc_if_init
 from parea.helpers import duplicate_dicts, gen_random_name
 from parea.schemas.models import CreateExperimentRequest, ExperimentSchema, ExperimentStatsSchema
@@ -146,5 +146,12 @@ class Experiment:
         param name: The name of the experiment. This name must be unique across experiment runs.
         If no name is provided a memorable name will be generated automatically.
         """
-        self._gen_name_if_none(name)
-        self.experiment_stats = asyncio.run(experiment(self.name, self.data, self.func, self.p, self.n_trials))
+        if TURN_OFF_PAREA_LOGGING:
+            print("Parea logging is turned off. Experiment can't be run without logging. Set env var TURN_OFF_PAREA_LOGGING to False to enable.")
+            return
+
+        try:
+            self._gen_name_if_none(name)
+            self.experiment_stats = asyncio.run(experiment(self.name, self.data, self.func, self.p, self.n_trials))
+        except Exception as e:
+            print(f"Error running experiment: {e}")

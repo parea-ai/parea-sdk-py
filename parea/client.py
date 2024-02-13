@@ -1,6 +1,7 @@
 from typing import Any, Callable, Optional, Union
 
 import asyncio
+import logging
 import os
 import time
 from collections.abc import AsyncIterable, Iterable
@@ -36,6 +37,8 @@ from parea.utils.trace_utils import get_current_trace_id, get_root_trace_id, log
 from parea.wrapper import OpenAIWrapper
 
 load_dotenv()
+
+logger = logging.getLogger()
 
 COMPLETION_ENDPOINT = "/completion"
 DEPLOYED_PROMPT_ENDPOINT = "/deployed-prompt"
@@ -81,69 +84,25 @@ class Parea:
         return data_dict
 
     def completion(self, data: Completion) -> CompletionResponse:
-        parent_trace_id = get_current_trace_id()
-        inference_id = gen_trace_id()
-        data.inference_id = inference_id
-        data.parent_trace_id = parent_trace_id or inference_id
-        data.root_trace_id = get_root_trace_id()
-        data.project_uuid = self._project.uuid
-
-        if experiment_uuid := os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None):
-            data.experiment_uuid = experiment_uuid
-
+        data = self._update_data_and_trace(data)
         r = self._client.request(
             "POST",
             COMPLETION_ENDPOINT,
             data=asdict(data),
         )
-
-        if parent_trace_id:
-            trace_data.get()[parent_trace_id].children.append(inference_id)
-            trace_data.get()[parent_trace_id].experiment_uuid = experiment_uuid
-            logger_record_log(parent_trace_id)
-
         return structure(r.json(), CompletionResponse)
 
     async def acompletion(self, data: Completion) -> CompletionResponse:
-        parent_trace_id = get_current_trace_id()
-        inference_id = gen_trace_id()
-        data.inference_id = inference_id
-        data.parent_trace_id = parent_trace_id or inference_id
-        data.root_trace_id = get_root_trace_id()
-        data.project_uuid = self._project.uuid
-
-        if experiment_uuid := os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None):
-            data.experiment_uuid = experiment_uuid
-
+        data = self._update_data_and_trace(data)
         r = await self._client.request_async(
             "POST",
             COMPLETION_ENDPOINT,
             data=asdict(data),
         )
-
-        if parent_trace_id:
-            trace_data.get()[parent_trace_id].children.append(inference_id)
-            trace_data.get()[parent_trace_id].experiment_uuid = experiment_uuid
-            logger_record_log(parent_trace_id)
-
         return structure(r.json(), CompletionResponse)
 
     def stream(self, data: Completion) -> Iterable[bytes]:
-        parent_trace_id = get_current_trace_id()
-        inference_id = gen_trace_id()
-        data.inference_id = inference_id
-        data.parent_trace_id = parent_trace_id or inference_id
-        data.root_trace_id = get_root_trace_id()
-        data.project_uuid = self._project.uuid
-
-        if experiment_uuid := os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None):
-            data.experiment_uuid = experiment_uuid
-
-        if parent_trace_id:
-            trace_data.get()[parent_trace_id].children.append(inference_id)
-            trace_data.get()[parent_trace_id].experiment_uuid = experiment_uuid
-            logger_record_log(parent_trace_id)
-
+        data = self._update_data_and_trace(data)
         response = self._client.stream_request(
             "POST",
             f"{COMPLETION_ENDPOINT}/stream",
@@ -152,21 +111,7 @@ class Parea:
         yield from response
 
     async def astream(self, data: Completion) -> AsyncIterable[bytes]:
-        parent_trace_id = get_current_trace_id()
-        inference_id = gen_trace_id()
-        data.inference_id = inference_id
-        data.parent_trace_id = parent_trace_id or inference_id
-        data.root_trace_id = get_root_trace_id()
-        data.project_uuid = self._project.uuid
-
-        if experiment_uuid := os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None):
-            data.experiment_uuid = experiment_uuid
-
-        if parent_trace_id:
-            trace_data.get()[parent_trace_id].children.append(inference_id)
-            trace_data.get()[parent_trace_id].experiment_uuid = experiment_uuid
-            logger_record_log(parent_trace_id)
-
+        data = self._update_data_and_trace(data)
         response = self._client.stream_request_async(
             "POST",
             f"{COMPLETION_ENDPOINT}/stream",
@@ -192,6 +137,10 @@ class Parea:
         return structure(r.json(), UseDeployedPromptResponse)
 
     def record_feedback(self, data: FeedbackRequest) -> None:
+        if not data.trace_id:
+            logger.info("No trace_id found in feedback request")
+            return
+
         time.sleep(2)  # give logs time to update
         self._client.request(
             "POST",
@@ -200,6 +149,10 @@ class Parea:
         )
 
     async def arecord_feedback(self, data: FeedbackRequest) -> None:
+        if not data.trace_id:
+            logger.info("No trace_id found in feedback request")
+            return
+
         await asyncio.sleep(2)  # give logs time to update
         await self._client.request_async(
             "POST",
@@ -318,6 +271,28 @@ class Parea:
         from parea import Experiment
 
         return Experiment(data=data, func=func, p=self, n_trials=n_trials)
+
+    def _update_data_and_trace(self, data: Completion) -> Completion:
+        inference_id = gen_trace_id()
+        data.inference_id = inference_id
+        data.project_uuid = self._project.uuid
+
+        try:
+            parent_trace_id = get_current_trace_id()
+            data.parent_trace_id = parent_trace_id or inference_id
+            data.root_trace_id = get_root_trace_id()
+
+            if experiment_uuid := os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None):
+                data.experiment_uuid = experiment_uuid
+
+            if parent_trace_id:
+                trace_data.get()[parent_trace_id].children.append(inference_id)
+                trace_data.get()[parent_trace_id].experiment_uuid = experiment_uuid
+                logger_record_log(parent_trace_id)
+        except Exception as e:
+            logger.debug(f"Error updating trace ids for completion. Trace log will be absent: {e}")
+
+        return data
 
 
 _initialized_parea_wrapper = False
