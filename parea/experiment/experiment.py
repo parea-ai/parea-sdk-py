@@ -1,10 +1,11 @@
+from typing import Callable, Optional, Union
+
 import asyncio
 import inspect
 import os
 import time
 from collections import defaultdict
 from collections.abc import Iterable
-from typing import Callable, Optional, Union
 
 from attrs import define, field
 from tqdm import tqdm
