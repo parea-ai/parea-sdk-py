@@ -1,6 +1,5 @@
-from typing import Any, Iterable, Optional
-
 from enum import Enum
+from typing import Any, Iterable, Optional
 
 from attrs import define, field, validators
 
@@ -238,14 +237,12 @@ class CreateTestCase:
 
 
 @define
-class CreateTestCaseCollection:
+class CreateTestCases:
     name: str
-    # column names excluding reserved names, target and tags
-    column_names: list[str] = field(factory=list)
     test_cases: list[CreateTestCase] = field(factory=list)
 
 
 @define
-class CreateTestCases:
-    name: str
-    test_cases: list[CreateTestCase] = field(factory=list)
+class CreateTestCaseCollection(CreateTestCases):
+    # column names excluding reserved names, target and tags
+    column_names: list[str] = field(factory=list)
