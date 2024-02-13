@@ -14,7 +14,7 @@ from tqdm.asyncio import tqdm_asyncio
 from parea import Parea
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.experiment.dvc import save_results_to_dvc_if_init
-from parea.helpers import gen_random_name
+from parea.helpers import duplicate_dicts, gen_random_name
 from parea.schemas.models import CreateExperimentRequest, ExperimentSchema, ExperimentStatsSchema
 from parea.utils.trace_utils import thread_ids_running_evals
 from parea.utils.universal_encoder import json_dumps
@@ -52,7 +52,7 @@ def async_wrapper(fn, **kwargs):
     return asyncio.run(fn(**kwargs))
 
 
-async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable, p: Parea) -> ExperimentStatsSchema:
+async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable, p: Parea, n_trials: int = 1) -> ExperimentStatsSchema:
     """Creates an experiment and runs the function on the data iterator."""
     if isinstance(data, str):
         print(f"Fetching test collection: {data}")
@@ -64,6 +64,12 @@ async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable
     else:
         targets = [None] * len(data)
         len_test_cases = len(data) if isinstance(data, list) else 0
+
+    if n_trials > 1:
+        data = duplicate_dicts(data, n_trials)
+        targets = targets * (n_trials)
+        len_test_cases = len(data) if isinstance(data, list) else 0
+        print(f"Running {n_trials} trials of the experiment with {len_test_cases} test cases, data: {data}, and targets: {targets} \n")
 
     experiment_schema: ExperimentSchema = p.create_experiment(CreateExperimentRequest(name=name))
     experiment_uuid = experiment_schema.uuid
@@ -115,6 +121,7 @@ class Experiment:
     experiment_stats: ExperimentStatsSchema = field(init=False, default=None)
     p: Parea = field(default=None)
     name: str = field(init=False)
+    n_trials: int = field(default=1)
 
     def __attrs_post_init__(self):
         global _experiments
@@ -131,9 +138,10 @@ class Experiment:
         """Run the experiment and save the results to DVC.
         param name: The name of the experiment. This name must be unique across experiment runs.
         If no name is provided a memorable name will be generated automatically.
+        param iterations: The number of times to run the experiment.
         """
         try:
             self._gen_name_if_none(name)
-            self.experiment_stats = asyncio.run(experiment(self.name, self.data, self.func, self.p))
+            self.experiment_stats = asyncio.run(experiment(self.name, self.data, self.func, self.p, self.n_trials))
         except Exception as e:
             print(f"Error running experiment: {e}")
