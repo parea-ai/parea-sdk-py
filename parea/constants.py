@@ -2,6 +2,21 @@ from typing import Union
 
 import os
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if not v or not isinstance(v, str):
+        return False
+    return v.lower() in ("yes", "true", "t", "1")
+
+
+TURN_OFF_PAREA_LOGGING = str2bool(os.getenv("TURN_OFF_PAREA_LOGGING", False))
+
 PAREA_OS_ENV_EXPERIMENT_UUID = "_PAREA_EXPERIMENT_UUID"
 PAREA_DVC_DIR = ".parea"
 PAREA_DVC_METRICS_FILE = str(os.path.join(PAREA_DVC_DIR, "metrics.json"))
