@@ -1,5 +1,6 @@
-from enum import Enum
 from typing import Any, Iterable, Optional
+
+from enum import Enum
 
 from attrs import define, field, validators
 
