@@ -226,8 +226,11 @@ class TestCaseCollection:
     def get_all_test_case_targets(self) -> Iterable[str]:
         return (test_case.target for test_case in self.test_cases.values())
 
-    def get_all_test_inputs_and_targets(self) -> Iterable[tuple[dict[str, str], Optional[str]]]:
+    def get_all_test_inputs_and_targets_tuple(self) -> Iterable[tuple[dict[str, str], Optional[str]]]:
         return ((test_case.inputs, test_case.target) for test_case in self.test_cases.values())
+
+    def get_all_test_inputs_and_targets_dict(self) -> Iterable[dict[str, str]]:
+        return ({**test_case.inputs, "target": test_case.target} for test_case in self.test_cases.values())
 
 
 @define

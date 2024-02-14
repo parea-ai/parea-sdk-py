@@ -8,7 +8,7 @@ from parea.utils.universal_encoder import json_dumps
 def create_test_collection(data: list[dict[str, Any]], name: Optional[str] = None) -> CreateTestCaseCollection:
     """Create a test case collection from a dictionary of test cases.
     Args:
-        data: list of key-value pairs where keys represent prompt template input names.
+        data: list of key-value pairs where keys represent input names.
             Each item in the list represent a test case row.
             Target and Tags are reserved keys. There can only be one target and tags key per dict item.
             If target is present it will represent the target/expected response for the inputs.
@@ -29,7 +29,7 @@ def create_test_collection(data: list[dict[str, Any]], name: Optional[str] = Non
 def create_test_cases(data: list[dict[str, Any]]) -> list[CreateTestCase]:
     """Create a list of test cases from a dictionary.
     Args:
-        data: list of key-value pairs where keys represent prompt template input names.
+        data: list of key-value pairs where keys represent input names.
             Each item in the list represent a test case row.
             Target and Tags are reserved keys. There can only be one target and tags key per dict item.
             If target is present it will represent the target/expected response for the inputs.
