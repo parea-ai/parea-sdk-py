@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Any, Callable, Optional
 
 import contextvars
@@ -247,6 +248,19 @@ def trace(
 
 def call_eval_funcs_then_log(trace_id: str, eval_funcs: list[Callable] = None):
     data = trace_data.get()[trace_id]
+    data_evals = data
+    if data.target is not None and not isinstance(data.target, str):
+        data_evals = deepcopy(data)
+        target = data.target
+        try:
+            target = json.dumps(target)
+        except TypeError:
+            try:
+                target = json_dumps(target)
+            except TypeError:
+                # if we can't serialize the value, just convert it to a string
+                target = str(target)
+        data.target = target
     parea_logger.default_log(data=data)
 
     if eval_funcs and data.status == "success" and random() <= data.apply_eval_frac:
@@ -254,7 +268,7 @@ def call_eval_funcs_then_log(trace_id: str, eval_funcs: list[Callable] = None):
         scores = []
         for func in eval_funcs:
             try:
-                scores.append(NamedEvaluationScore(name=func.__name__, score=func(data)))
+                scores.append(NamedEvaluationScore(name=func.__name__, score=func(data_evals)))
             except Exception as e:
                 logger.exception(f"Error occurred calling evaluation function '{func.__name__}', {e}", exc_info=e)
         parea_logger.update_log(data=UpdateLog(trace_id=trace_id, field_name_to_value_map={"scores": scores}))
