@@ -56,6 +56,7 @@ async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable
     """Creates an experiment and runs the function on the data iterator.
     param name: The name of the experiment. This name must be unique across experiment runs.
     param data: The data to run the experiment on. This can be a list of dictionaries or a string representing the name of a dataset on Parea.
+        If it is a list of dictionaries, the key "target" is reserved for the target/expected output of that sample.
     param func: The function to run. This function should accept inputs that match the keys of the data field.
     param p: The Parea instance to use for running the experiment.
     param n_trials: The number of times to run the experiment on the same data.
@@ -65,15 +66,12 @@ async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable
         test_collection = await p.aget_collection(data)
         len_test_cases = test_collection.num_test_cases()
         print(f"Fetched {test_collection.num_test_cases()} test cases from collection: {data} \n")
-        data: Iterable[dict] = test_collection.get_all_test_case_inputs()
-        targets = test_collection.get_all_test_case_targets()
+        data: Iterable[dict] = test_collection.get_all_test_inputs_and_targets_dict()
     else:
-        targets = [None] * len(data)
         len_test_cases = len(data) if isinstance(data, list) else 0
 
     if n_trials > 1:
         data = duplicate_dicts(data, n_trials)
-        targets = targets * n_trials
         len_test_cases = len(data) if isinstance(data, list) else 0
         print(f"Running {n_trials} trials of the experiment \n")
 
@@ -84,17 +82,17 @@ async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable
     max_parallel_calls = 10
     sem = asyncio.Semaphore(max_parallel_calls)
 
-    async def limit_concurrency(data_input, target):
+    async def limit_concurrency(sample):
         async with sem:
-            return await func(_parea_target_field=target, **data_input)
+            return await func(_parea_target_field=sample.pop('target', None), **sample)
 
     if inspect.iscoroutinefunction(func):
-        tasks = [limit_concurrency(data_input, target) for data_input, target in zip(data, targets)]
+        tasks = [limit_concurrency(sample) for sample in data]
         for result in tqdm_asyncio(tasks, total=len_test_cases):
             await result
     else:
-        for data_input, target in tqdm(zip(data, targets), total=len_test_cases):
-            func(_parea_target_field=target, **data_input)
+        for sample in tqdm(data, total=len_test_cases):
+            func(_parea_target_field=sample.pop('target', None), **sample)
 
     total_evals = len(thread_ids_running_evals.get())
     with tqdm(total=total_evals, dynamic_ncols=True) as pbar:
