@@ -61,6 +61,8 @@ class PareaLogger:
         if self._redis_cache:
             self.write_log(data)
         if self._client:
+            if data.target:
+                data.target = json_dumps(data.target)
             self.record_log(data)
 
     def record_vendor_log(self, data: dict[str, Any], vendor: TraceIntegrations) -> None:
