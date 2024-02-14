@@ -78,5 +78,5 @@ class UniversalEncoder(json.JSONEncoder):
             return super().default(obj)
 
 
-def json_dumps(obj, **kwargs):
-    return json.dumps(obj, cls=UniversalEncoder, **kwargs)
+def json_dumps(obj, **kwargs) -> str:
+    return json.dumps(obj, cls=UniversalEncoder, **kwargs) if not isinstance(obj, str) else obj
