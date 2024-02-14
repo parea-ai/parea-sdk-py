@@ -84,7 +84,7 @@ async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable
 
     async def limit_concurrency(sample):
         async with sem:
-            return await func(_parea_target_field=sample.pop('target', None), **sample)
+            return await func(_parea_target_field=sample.pop("target", None), **sample)
 
     if inspect.iscoroutinefunction(func):
         tasks = [limit_concurrency(sample) for sample in data]
@@ -92,7 +92,7 @@ async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable
             await result
     else:
         for sample in tqdm(data, total=len_test_cases):
-            func(_parea_target_field=sample.pop('target', None), **sample)
+            func(_parea_target_field=sample.pop("target", None), **sample)
 
     total_evals = len(thread_ids_running_evals.get())
     with tqdm(total=total_evals, dynamic_ncols=True) as pbar:

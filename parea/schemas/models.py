@@ -230,7 +230,7 @@ class TestCaseCollection:
         return ((test_case.inputs, test_case.target) for test_case in self.test_cases.values())
 
     def get_all_test_inputs_and_targets_dict(self) -> Iterable[dict[str, str]]:
-        return ({**test_case.inputs, 'target': test_case.target} for test_case in self.test_cases.values())
+        return ({**test_case.inputs, "target": test_case.target} for test_case in self.test_cases.values())
 
 
 @define

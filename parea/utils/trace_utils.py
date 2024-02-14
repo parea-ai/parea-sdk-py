@@ -1,4 +1,3 @@
-from copy import deepcopy
 from typing import Any, Callable, Optional
 
 import contextvars
@@ -10,6 +9,7 @@ import threading
 import time
 from collections import ChainMap
 from collections.abc import AsyncGenerator, AsyncIterator, Generator, Iterator
+from copy import deepcopy
 from functools import wraps
 from random import random
 
