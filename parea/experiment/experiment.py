@@ -99,7 +99,7 @@ async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable
             target = sample_copy.pop("target", None)
             func(_parea_target_field=target, **sample_copy)
 
-    await asyncio.sleep(1)
+    await asyncio.sleep(0.2)
     total_evals = len(thread_ids_running_evals.get())
     with tqdm(total=total_evals, dynamic_ncols=True) as pbar:
         while thread_ids_running_evals.get():
