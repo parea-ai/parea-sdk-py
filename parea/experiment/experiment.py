@@ -99,6 +99,7 @@ async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable
             target = sample_copy.pop("target", None)
             func(_parea_target_field=target, **sample_copy)
 
+    await asyncio.sleep(1)
     total_evals = len(thread_ids_running_evals.get())
     with tqdm(total=total_evals, dynamic_ncols=True) as pbar:
         while thread_ids_running_evals.get():
@@ -106,8 +107,9 @@ async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable
             pbar.update(total_evals - len(thread_ids_running_evals.get()))
             total_evals = len(thread_ids_running_evals.get())
             await asyncio.sleep(0.5)
+        await asyncio.sleep(4)
+        pbar.update(total_evals)
 
-    await asyncio.sleep(4)
     experiment_stats: ExperimentStatsSchema = p.finish_experiment(experiment_uuid)
     stat_name_to_avg_std = calculate_avg_std_for_experiment(experiment_stats)
     print(f"Experiment {name} stats:\n{json_dumps(stat_name_to_avg_std, indent=2)}\n\n")
@@ -139,11 +141,11 @@ class Experiment:
         _experiments.append(self)
         if isinstance(self.data, str):
             if self.metadata is None:
-                self.metadata = {"dataset": self.data}
+                self.metadata = {"Dataset": self.data}
             else:
-                if "dataset" in self.metadata:
-                    raise ValueError("Metadata should not contain a key 'dataset' when using uploaded dataset (data is a string).")
-                self.metadata["dataset"] = self.data
+                if "Dataset" in self.metadata:
+                    raise ValueError("Metadata should not contain a key 'Dataset' when using uploaded dataset (data is a string).")
+                self.metadata["Dataset"] = self.data
 
     def _gen_name_if_none(self, name: Optional[str]):
         if not name:
