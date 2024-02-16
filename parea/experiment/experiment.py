@@ -3,7 +3,6 @@ from typing import Callable, Optional, Union
 import asyncio
 import inspect
 import os
-import time
 from collections import defaultdict
 from collections.abc import Iterable
 from copy import deepcopy
@@ -107,7 +106,7 @@ async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable
             total_evals = len(thread_ids_running_evals.get())
             await asyncio.sleep(0.5)
 
-    time.sleep(2)
+    await asyncio.sleep(4)
     experiment_stats: ExperimentStatsSchema = p.finish_experiment(experiment_uuid)
     stat_name_to_avg_std = calculate_avg_std_for_experiment(experiment_stats)
     print(f"Experiment {name} stats:\n{json_dumps(stat_name_to_avg_std, indent=2)}\n\n")
