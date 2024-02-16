@@ -255,7 +255,9 @@ def call_eval_funcs_then_log(trace_id: str, eval_funcs: list[Callable] = None):
         scores = []
         for func in eval_funcs:
             try:
-                scores.append(NamedEvaluationScore(name=func.__name__, score=func(data)))
+                score = func(data)
+                if score is not None:
+                    scores.append(NamedEvaluationScore(name=func.__name__, score=score))
             except Exception as e:
                 logger.exception(f"Error occurred calling evaluation function '{func.__name__}', {e}", exc_info=e)
         parea_logger.update_log(data=UpdateLog(trace_id=trace_id, field_name_to_value_map={"scores": scores}))
