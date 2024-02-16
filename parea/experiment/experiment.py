@@ -52,7 +52,7 @@ def async_wrapper(fn, **kwargs):
     return asyncio.run(fn(**kwargs))
 
 
-async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable, p: Parea, n_trials: int = 1, metadata: dict=None) -> ExperimentStatsSchema:
+async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable, p: Parea, n_trials: int = 1, metadata: dict = None) -> ExperimentStatsSchema:
     """Creates an experiment and runs the function on the data iterator.
     param name: The name of the experiment. This name must be unique across experiment runs.
     param data: The data to run the experiment on. This can be a list of dictionaries or a string representing the name of a dataset on Parea.
