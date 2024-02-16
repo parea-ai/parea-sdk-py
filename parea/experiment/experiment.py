@@ -52,7 +52,7 @@ def async_wrapper(fn, **kwargs):
     return asyncio.run(fn(**kwargs))
 
 
-async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable, p: Parea, n_trials: int = 1) -> ExperimentStatsSchema:
+async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable, p: Parea, n_trials: int = 1, metadata: dict = None) -> ExperimentStatsSchema:
     """Creates an experiment and runs the function on the data iterator.
     param name: The name of the experiment. This name must be unique across experiment runs.
     param data: The data to run the experiment on. This can be a list of dictionaries or a string representing the name of a dataset on Parea.
@@ -60,6 +60,7 @@ async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable
     param func: The function to run. This function should accept inputs that match the keys of the data field.
     param p: The Parea instance to use for running the experiment.
     param n_trials: The number of times to run the experiment on the same data.
+    param metadata: A dictionary of metadata to attach to the experiment.
     """
     if isinstance(data, str):
         print(f"Fetching test collection: {data}")
@@ -75,7 +76,7 @@ async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable
         len_test_cases = len(data) if isinstance(data, list) else 0
         print(f"Running {n_trials} trials of the experiment \n")
 
-    experiment_schema: ExperimentSchema = p.create_experiment(CreateExperimentRequest(name=name))
+    experiment_schema: ExperimentSchema = p.create_experiment(CreateExperimentRequest(name=name, metadata=metadata))
     experiment_uuid = experiment_schema.uuid
     os.environ[PAREA_OS_ENV_EXPERIMENT_UUID] = experiment_uuid
 
@@ -98,6 +99,7 @@ async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable
             target = sample_copy.pop("target", None)
             func(_parea_target_field=target, **sample_copy)
 
+    await asyncio.sleep(0.2)
     total_evals = len(thread_ids_running_evals.get())
     with tqdm(total=total_evals, dynamic_ncols=True) as pbar:
         while thread_ids_running_evals.get():
@@ -105,8 +107,9 @@ async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable
             pbar.update(total_evals - len(thread_ids_running_evals.get()))
             total_evals = len(thread_ids_running_evals.get())
             await asyncio.sleep(0.5)
+        await asyncio.sleep(4)
+        pbar.update(total_evals)
 
-    await asyncio.sleep(4)
     experiment_stats: ExperimentStatsSchema = p.finish_experiment(experiment_uuid)
     stat_name_to_avg_std = calculate_avg_std_for_experiment(experiment_stats)
     print(f"Experiment {name} stats:\n{json_dumps(stat_name_to_avg_std, indent=2)}\n\n")
@@ -127,6 +130,7 @@ class Experiment:
     # The function to run. This function should accept inputs that match the keys of the data field.
     func: Callable = field()
     experiment_stats: ExperimentStatsSchema = field(init=False, default=None)
+    metadata: Optional[dict[str, str]] = field(default=None)
     p: Parea = field(default=None)
     name: str = field(init=False)
     # The number of times to run the experiment on the same data.
@@ -135,6 +139,13 @@ class Experiment:
     def __attrs_post_init__(self):
         global _experiments
         _experiments.append(self)
+        if isinstance(self.data, str):
+            if self.metadata is None:
+                self.metadata = {"Dataset": self.data}
+            else:
+                if "Dataset" in self.metadata:
+                    raise ValueError("Metadata should not contain a key 'Dataset' when using uploaded dataset (data is a string).")
+                self.metadata["Dataset"] = self.data
 
     def _gen_name_if_none(self, name: Optional[str]):
         if not name:
@@ -154,6 +165,6 @@ class Experiment:
 
         try:
             self._gen_name_if_none(name)
-            self.experiment_stats = asyncio.run(experiment(self.name, self.data, self.func, self.p, self.n_trials))
+            self.experiment_stats = asyncio.run(experiment(self.name, self.data, self.func, self.p, self.n_trials, self.metadata))
         except Exception as e:
             print(f"Error running experiment: {e}")

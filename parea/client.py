@@ -260,17 +260,18 @@ class Parea:
     def project_uuid(self) -> str:
         return self._project.uuid
 
-    def experiment(self, data: Union[str, Iterable[dict]], func: Callable, n_trials: int = 1):
+    def experiment(self, data: Union[str, Iterable[dict]], func: Callable, n_trials: int = 1, metadata: dict = None):
         """
         :param data: If your dataset is defined locally it should be an iterable of k/v
         pairs matching the expected inputs of your function. To reference a dataset you
         have saved on Parea, use the collection name as a string.
         :param func: The function to run. This function should accept inputs that match the keys of the data field.
         :param n_trials: The number of times to run the experiment on the same data.
+        :param metadata: Optional metadata to attach to the experiment.
         """
         from parea import Experiment
 
-        return Experiment(data=data, func=func, p=self, n_trials=n_trials)
+        return Experiment(data=data, func=func, p=self, n_trials=n_trials, metadata=metadata)
 
     def _update_data_and_trace(self, data: Completion) -> Completion:
         inference_id = gen_trace_id()

@@ -138,12 +138,15 @@ class UpdateLog:
 @define
 class CreateExperimentRequest:
     name: str
+    metadata: Optional[dict[str, str]] = None
 
 
 @define
-class ExperimentSchema(CreateExperimentRequest):
+class ExperimentSchema:
+    name: str
     uuid: str
     created_at: str
+    metadata: Optional[dict[str, str]] = None
 
 
 @define
