@@ -36,6 +36,12 @@ def func(lang: str, framework: str) -> str:
 
 if __name__ == "__main__":
     p.experiment(
-        data="Hello World Example",  # this is the name of my Test Collection in Parea (TestHub page)
+        data="Hello World Example",  # this is the name of your Dataset in Parea (Dataset page)
         func=func,
     ).run(name="hello-world-example")
+
+    # Or use a dataset using its ID instead of the name
+    # p.experiment(
+    #     data=121,  # this is the id of your Dataset in Parea (Dataset page)
+    #     func=func,
+    # ).run(name="hello-world-example")

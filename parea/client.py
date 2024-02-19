@@ -47,7 +47,7 @@ EXPERIMENT_ENDPOINT = "/experiment"
 EXPERIMENT_STATS_ENDPOINT = "/experiment/{experiment_uuid}/stats"
 EXPERIMENT_FINISHED_ENDPOINT = "/experiment/{experiment_uuid}/finished"
 PROJECT_ENDPOINT = "/project"
-GET_COLLECTION_ENDPOINT = "/collection/{test_collection_name}"
+GET_COLLECTION_ENDPOINT = "/collection/{test_collection_identifier}"
 CREATE_COLLECTION_ENDPOINT = "/collection"
 ADD_TEST_CASES_ENDPOINT = "/testcases"
 
@@ -82,6 +82,10 @@ class Parea:
         data_dict = asdict(data)
         data_dict["project_uuid"] = self._project.uuid
         return data_dict
+
+    @property
+    def project_uuid(self) -> str:
+        return self._project.uuid
 
     def completion(self, data: Completion) -> CompletionResponse:
         data = self._update_data_and_trace(data)
@@ -226,17 +230,17 @@ class Parea:
         )
         return structure(r.json(), CreateGetProjectResponseSchema)
 
-    def get_collection(self, test_collection_name: str) -> TestCaseCollection:
+    def get_collection(self, test_collection_identifier: Union[str, int]) -> TestCaseCollection:
         r = self._client.request(
             "GET",
-            GET_COLLECTION_ENDPOINT.format(test_collection_name=test_collection_name),
+            GET_COLLECTION_ENDPOINT.format(test_collection_identifier=test_collection_identifier),
         )
         return structure(r.json(), TestCaseCollection)
 
-    async def aget_collection(self, test_collection_name: str) -> TestCaseCollection:
+    async def aget_collection(self, test_collection_identifier: Union[str, int]) -> TestCaseCollection:
         r = await self._client.request_async(
             "GET",
-            GET_COLLECTION_ENDPOINT.format(test_collection_name=test_collection_name),
+            GET_COLLECTION_ENDPOINT.format(test_collection_identifier=test_collection_identifier),
         )
         return structure(r.json(), TestCaseCollection)
 
@@ -248,23 +252,19 @@ class Parea:
             data=asdict(request),
         )
 
-    def add_test_cases(self, data: list[dict[str, Any]], name: str) -> None:
-        request = CreateTestCases(name=name, test_cases=create_test_cases(data))
+    def add_test_cases(self, data: list[dict[str, Any]], name: Optional[str] = None, dataset_id: Optional[int] = None) -> None:
+        request = CreateTestCases(id=dataset_id, name=name, test_cases=create_test_cases(data))
         self._client.request(
             "POST",
             ADD_TEST_CASES_ENDPOINT,
             data=asdict(request),
         )
 
-    @property
-    def project_uuid(self) -> str:
-        return self._project.uuid
-
-    def experiment(self, data: Union[str, Iterable[dict]], func: Callable, n_trials: int = 1, metadata: dict = None):
+    def experiment(self, data: Union[str, int, Iterable[dict]], func: Callable, n_trials: int = 1, metadata: Optional[dict[str, str]] = None):
         """
         :param data: If your dataset is defined locally it should be an iterable of k/v
         pairs matching the expected inputs of your function. To reference a dataset you
-        have saved on Parea, use the collection name as a string.
+        have saved on Parea, use the dataset name as a string or the dataset id as an int.
         :param func: The function to run. This function should accept inputs that match the keys of the data field.
         :param n_trials: The number of times to run the experiment on the same data.
         :param metadata: Optional metadata to attach to the experiment.

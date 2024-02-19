@@ -52,17 +52,20 @@ def async_wrapper(fn, **kwargs):
     return asyncio.run(fn(**kwargs))
 
 
-async def experiment(name: str, data: Union[str, Iterable[dict]], func: Callable, p: Parea, n_trials: int = 1, metadata: dict = None) -> ExperimentStatsSchema:
+async def experiment(
+    name: str, data: Union[str, int, Iterable[dict]], func: Callable, p: Parea, n_trials: int = 1, metadata: Optional[dict[str, str]] = None
+) -> ExperimentStatsSchema:
     """Creates an experiment and runs the function on the data iterator.
     param name: The name of the experiment. This name must be unique across experiment runs.
-    param data: The data to run the experiment on. This can be a list of dictionaries or a string representing the name of a dataset on Parea.
+    param data: The data to run the experiment on. This can be a list of dictionaries,
+        a string representing the name of a dataset on Parea or an int representing the id of a dataset on Parea.
         If it is a list of dictionaries, the key "target" is reserved for the target/expected output of that sample.
     param func: The function to run. This function should accept inputs that match the keys of the data field.
     param p: The Parea instance to use for running the experiment.
     param n_trials: The number of times to run the experiment on the same data.
     param metadata: A dictionary of metadata to attach to the experiment.
     """
-    if isinstance(data, str):
+    if isinstance(data, (str, int)):
         print(f"Fetching test collection: {data}")
         test_collection = await p.aget_collection(data)
         len_test_cases = test_collection.num_test_cases()
@@ -125,8 +128,8 @@ _experiments = []
 class Experiment:
     # If your dataset is defined locally it should be an iterable of k/v
     # pairs matching the expected inputs of your function. To reference a dataset you
-    # have saved on Parea, use the dataset name as a string.
-    data: Union[str, Iterable[dict]]
+    # have saved on Parea, use the dataset name as a string or the id as an int.
+    data: Union[str, int, Iterable[dict]]
     # The function to run. This function should accept inputs that match the keys of the data field.
     func: Callable = field()
     experiment_stats: ExperimentStatsSchema = field(init=False, default=None)
