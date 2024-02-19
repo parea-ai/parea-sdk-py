@@ -1,6 +1,5 @@
-from typing import Any, Iterable, Optional
-
 from enum import Enum
+from typing import Any, Iterable, Optional
 
 from attrs import define, field, validators
 
@@ -245,8 +244,14 @@ class CreateTestCase:
 
 @define
 class CreateTestCases:
-    name: str
+    id: Optional[int] = None
+    name: Optional[str] = None
     test_cases: list[CreateTestCase] = field(factory=list)
+
+    @validators.optional
+    def id_or_name_is_set(self, attribute, value):
+        if not (self.id or self.name):
+            raise ValueError("One of id or name must be set.")
 
 
 @define

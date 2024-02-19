@@ -20,3 +20,5 @@ new_data = [{"problem": "Evaluate the integral ∫x^2 dx from 0 to 3.", "target"
 # this will add the new test cases to the existing "Math problems" dataset.
 # New test cases must have the same columns as the existing dataset.
 p.add_test_cases(new_data, name="Math problems")
+# Or if you can use the dataset ID instead of the name
+p.add_test_cases(new_data, dataset_id=121)
