@@ -12,7 +12,7 @@ load_dotenv()
 p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
 # Parea SDK makes it easy to use different LLMs with the same apis structure and standardized request/response schemas.
-LLM_OPTIONS = [("gpt-3.5-turbo", "openai"), ("gpt-4", "openai"), ("claude-instant-1", "anthropic"), ("claude-2", "anthropic")]
+LLM_OPTIONS = [("gpt-3.5-turbo-0125", "openai"), ("gpt-4-0125-preview", "openai"), ("claude-instant-1", "anthropic"), ("claude-2.1", "anthropic")]
 LIMIT = 1
 
 
@@ -61,7 +61,7 @@ def generate_tasks(main_objective: str, expounded_initial_task: list[dict[str, s
     task_expansion = dump_task(expounded_initial_task)
     prompt = [
         Message(
-            role=Role.system,
+            role=Role.user,
             content=(
                 f"You are an AI who creates tasks based on the following MAIN OBJECTIVE: {main_objective}\n"
                 f"Create tasks pertaining directly to your previous research here:\n"

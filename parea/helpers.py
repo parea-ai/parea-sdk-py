@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional, Union
 
 import csv
 import random
@@ -10,7 +10,8 @@ from copy import deepcopy
 from attr import asdict, fields_dict
 
 from parea.constants import ADJECTIVES, NOUNS
-from parea.schemas.models import TraceLog
+from parea.schemas.models import Completion, TraceLog, UpdateLog
+from parea.utils.universal_encoder import json_dumps
 
 
 def gen_trace_id() -> str:
@@ -54,3 +55,18 @@ def calculate_avg_as_string(values: list[Optional[float]]) -> str:
 
 def duplicate_dicts(data: Iterable[dict], n: int) -> Iterable[dict]:
     return [deepcopy(item) for item in data for _ in range(n)]
+
+
+def serialize_metadata_values(log_data: Union[TraceLog, UpdateLog, Completion]) -> Union[TraceLog, UpdateLog, Completion]:
+    def serialize_values(metadata: dict[str, Any]) -> dict[str, str]:
+        return {k: json_dumps(v) for k, v in metadata.items()}
+
+    if isinstance(log_data, UpdateLog) and log_data.field_name_to_value_map:
+        if "metadata" in log_data.field_name_to_value_map:
+            serialized_values = serialize_values(log_data.field_name_to_value_map["metadata"])
+            log_data.field_name_to_value_map["metadata"] = serialized_values
+    elif log_data.metadata:
+        serialized_values = serialize_values(log_data.metadata)
+        log_data.metadata = serialized_values
+
+    return log_data

@@ -16,7 +16,7 @@ from parea.cache import InMemoryCache, RedisCache
 from parea.cache.cache import Cache
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.experiment.datasets import create_test_cases, create_test_collection
-from parea.helpers import gen_trace_id
+from parea.helpers import gen_trace_id, serialize_metadata_values
 from parea.parea_logger import parea_logger
 from parea.schemas.models import (
     Completion,
@@ -274,6 +274,7 @@ class Parea:
         return Experiment(data=data, func=func, p=self, n_trials=n_trials, metadata=metadata)
 
     def _update_data_and_trace(self, data: Completion) -> Completion:
+        data = serialize_metadata_values(data)
         inference_id = gen_trace_id()
         data.inference_id = inference_id
         data.project_uuid = self._project.uuid
