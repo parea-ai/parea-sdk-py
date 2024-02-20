@@ -17,32 +17,44 @@ BACKOFF_FACTOR = 0.5
 
 
 def retry_on_502(func: Callable[..., Any]) -> Callable[..., Any]:
+    """
+    A decorator to retry a function or coroutine on encountering a 502 error.
+    Parameters:
+        - func: The function or coroutine to be decorated.
+    Returns:
+        - A wrapper function that incorporates retry logic.
+    """
+
+    @wraps(func)
+    async def async_wrapper(*args, **kwargs):
+        for retry in range(MAX_RETRIES):
+            try:
+                return await func(*args, **kwargs)
+            except (httpx.HTTPStatusError, httpx.ConnectError) as e:
+                if not _should_retry(e, retry):
+                    raise
+                await asyncio.sleep(BACKOFF_FACTOR * (2**retry))
+
+    @wraps(func)
+    def sync_wrapper(*args, **kwargs):
+        for retry in range(MAX_RETRIES):
+            try:
+                return func(*args, **kwargs)
+            except (httpx.HTTPStatusError, httpx.ConnectError) as e:
+                if not _should_retry(e, retry):
+                    raise
+                time.sleep(BACKOFF_FACTOR * (2**retry))
+
+    def _should_retry(error, current_retry):
+        """Determines if the function should retry on error."""
+        is_502_error = isinstance(error, httpx.HTTPStatusError) and error.response.status_code == 502
+        is_last_retry = current_retry == MAX_RETRIES - 1
+        return not is_last_retry and (isinstance(error, httpx.ConnectError) or is_502_error)
+
     if asyncio.iscoroutinefunction(func):
-
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            for retry in range(MAX_RETRIES):
-                try:
-                    return await func(*args, **kwargs)
-                except (httpx.HTTPStatusError, httpx.ConnectError) as e:
-                    if (isinstance(e, httpx.HTTPStatusError) and e.response.status_code != 502) or retry == MAX_RETRIES - 1:
-                        raise
-                    await asyncio.sleep(BACKOFF_FACTOR * (2**retry))
-
-        return wrapper
+        return async_wrapper
     else:
-
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            for retry in range(MAX_RETRIES):
-                try:
-                    return func(*args, **kwargs)
-                except (httpx.HTTPStatusError, httpx.ConnectError) as e:
-                    if (isinstance(e, httpx.HTTPStatusError) and e.response.status_code != 502) or retry == MAX_RETRIES - 1:
-                        raise
-                    time.sleep(BACKOFF_FACTOR * (2**retry))
-
-        return wrapper
+        return sync_wrapper
 
 
 class HTTPClient:

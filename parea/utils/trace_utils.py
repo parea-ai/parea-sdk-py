@@ -9,7 +9,6 @@ import threading
 import time
 from collections import ChainMap
 from collections.abc import AsyncGenerator, AsyncIterator, Generator, Iterator
-from copy import deepcopy
 from functools import wraps
 from random import random
 
@@ -123,7 +122,7 @@ def trace(
     eval_funcs_names: Optional[list[str]] = None,
     eval_funcs: Optional[list[Callable]] = None,
     access_output_of_func: Optional[Callable] = None,
-    apply_eval_frac: Optional[float] = 1.0,
+    apply_eval_frac: float = 1.0,
 ):
     def init_trace(func_name, _parea_target_field, args, kwargs, func) -> tuple[str, float]:
         start_time = time.time()
