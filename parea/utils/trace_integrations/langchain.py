@@ -1,11 +1,10 @@
 from typing import Union
-
 from uuid import UUID
 
 from langchain_core.tracers import BaseTracer
 from langchain_core.tracers.schemas import ChainRun, LLMRun, Run, ToolRun
 
-from parea.client import TURN_OFF_PAREA_LOGGING
+from parea.constants import TURN_OFF_PAREA_LOGGING
 from parea.parea_logger import parea_logger
 from parea.schemas.log import TraceIntegrations
 
