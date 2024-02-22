@@ -6,14 +6,14 @@ import json
 import logging
 import os
 import threading
-import time
 from collections import ChainMap
 from collections.abc import AsyncGenerator, AsyncIterator, Generator, Iterator
+from datetime import datetime
 from functools import wraps
 from random import random
 
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID, TURN_OFF_PAREA_LOGGING
-from parea.helpers import gen_trace_id, to_date_and_time_string
+from parea.helpers import gen_trace_id, timezone_aware_now
 from parea.parea_logger import parea_logger
 from parea.schemas.models import NamedEvaluationScore, TraceLog, UpdateLog, UpdateTraceScenario
 from parea.utils.universal_encoder import json_dumps
@@ -124,8 +124,8 @@ def trace(
     access_output_of_func: Optional[Callable] = None,
     apply_eval_frac: float = 1.0,
 ):
-    def init_trace(func_name, _parea_target_field, args, kwargs, func) -> tuple[str, float]:
-        start_time = time.time()
+    def init_trace(func_name, _parea_target_field, args, kwargs, func) -> tuple[str, datetime]:
+        start_time = timezone_aware_now()
         trace_id = gen_trace_id()
 
         if TURN_OFF_PAREA_LOGGING:
@@ -155,7 +155,7 @@ def trace(
                 trace_id=trace_id,
                 parent_trace_id=trace_id,
                 root_trace_id=trace_context.get()[0],
-                start_timestamp=to_date_and_time_string(start_time),
+                start_timestamp=start_time.isoformat(),
                 trace_name=name or func_name,
                 end_user_identifier=end_user_identifier,
                 metadata=metadata,
@@ -173,10 +173,10 @@ def trace(
 
         return trace_id, start_time
 
-    def cleanup_trace(trace_id, start_time):
-        end_time = time.time()
-        trace_data.get()[trace_id].end_timestamp = to_date_and_time_string(end_time)
-        trace_data.get()[trace_id].latency = end_time - start_time
+    def cleanup_trace(trace_id: str, start_time: datetime):
+        end_time = timezone_aware_now()
+        trace_data.get()[trace_id].end_timestamp = end_time.isoformat()
+        trace_data.get()[trace_id].latency = (end_time - start_time).total_seconds()
 
         output = trace_data.get()[trace_id].output
         if trace_data.get()[trace_id].status == "success" and output:

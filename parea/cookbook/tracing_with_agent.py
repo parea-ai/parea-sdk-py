@@ -1,10 +1,11 @@
 import os
 import random
-import time
+from datetime import datetime
 
+import pytz
 from dotenv import load_dotenv
 
-from parea import Parea, get_current_trace_id, to_date_and_time_string, trace
+from parea import Parea, get_current_trace_id, trace
 from parea.schemas import Completion, CompletionResponse, FeedbackRequest, LLMInputs, Message, ModelParams, Role
 
 load_dotenv()
@@ -84,7 +85,7 @@ def generate_tasks(main_objective: str, expounded_initial_task: list[dict[str, s
     return new_tasks_list
 
 
-@trace(name=f"run_agent-{to_date_and_time_string(time.time())}")  # You can provide a custom name other than the function name
+@trace(name=f"run_agent-{datetime.now(pytz.utc)}")  # You can provide a custom name other than the function name
 def run_agent(main_objective: str, initial_task: str = "") -> tuple[list[dict[str, str]], str]:
     trace_id = get_current_trace_id()
     generated_tasks = []

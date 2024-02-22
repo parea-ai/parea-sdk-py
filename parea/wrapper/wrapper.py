@@ -4,15 +4,15 @@ import functools
 import inspect
 import logging
 import os
-import time
+from datetime import datetime
 from uuid import uuid4
 
 from parea.cache.cache import Cache
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID, TURN_OFF_PAREA_LOGGING
 from parea.evals.utils import _make_evaluations
-from parea.helpers import date_and_time_string_to_timestamp
+from parea.helpers import timezone_aware_now
 from parea.schemas.models import TraceLog
-from parea.utils.trace_utils import call_eval_funcs_then_log, to_date_and_time_string, trace_context, trace_data
+from parea.utils.trace_utils import call_eval_funcs_then_log, trace_context, trace_data
 from parea.wrapper.utils import skip_decorator_if_func_in_stack
 
 logger = logging.getLogger()
@@ -62,8 +62,8 @@ class Wrapper:
         else:
             return self.sync_decorator(original_func)
 
-    def _init_trace(self) -> tuple[str, float]:
-        start_time = time.time()
+    def _init_trace(self) -> tuple[str, datetime]:
+        start_time = timezone_aware_now()
         trace_id = str(uuid4())
         if TURN_OFF_PAREA_LOGGING:
             return trace_id, start_time
@@ -74,7 +74,7 @@ class Wrapper:
                 trace_id=trace_id,
                 parent_trace_id=trace_id,
                 root_trace_id=trace_id,
-                start_timestamp=to_date_and_time_string(start_time),
+                start_timestamp=start_time.isoformat(),
                 trace_name="LLM",
                 end_user_identifier=None,
                 metadata=None,
@@ -93,7 +93,7 @@ class Wrapper:
                     trace_id=parent_trace_id,
                     parent_trace_id=parent_trace_id,
                     root_trace_id=parent_trace_id,
-                    start_timestamp=to_date_and_time_string(start_time),
+                    start_timestamp=start_time.isoformat(),
                     end_user_identifier=None,
                     metadata=None,
                     target=None,
@@ -172,7 +172,7 @@ class Wrapper:
 
         return wrapper
 
-    def _cleanup_trace_core(self, trace_id: str, start_time: float, error: str, cache_hit, args, kwargs):
+    def _cleanup_trace_core(self, trace_id: str, start_time: datetime, error: str, cache_hit, args, kwargs):
         trace_data.get()[trace_id].cache_hit = cache_hit
 
         if error:
@@ -182,14 +182,14 @@ class Wrapper:
             trace_data.get()[trace_id].status = "success"
 
         def final_log():
-            end_time = time.time()
-            trace_data.get()[trace_id].end_timestamp = to_date_and_time_string(end_time)
-            trace_data.get()[trace_id].latency = end_time - start_time
+            end_time = timezone_aware_now()
+            trace_data.get()[trace_id].end_timestamp = end_time.isoformat()
+            trace_data.get()[trace_id].latency = (end_time - start_time).total_seconds()
 
             parent_id = trace_context.get()[-2]
-            trace_data.get()[parent_id].end_timestamp = to_date_and_time_string(end_time)
-            start_time_parent = date_and_time_string_to_timestamp(trace_data.get()[parent_id].start_timestamp)
-            trace_data.get()[parent_id].latency = end_time - start_time_parent
+            trace_data.get()[parent_id].end_timestamp = end_time.isoformat()
+            start_time_parent = datetime.fromisoformat(trace_data.get()[parent_id].start_timestamp)
+            trace_data.get()[parent_id].latency = (end_time - start_time_parent).total_seconds()
 
             if not error and self.cache:
                 self.cache.set(self.convert_kwargs_to_cache_request(args, kwargs), trace_data.get()[trace_id])
@@ -200,7 +200,7 @@ class Wrapper:
 
         return final_log
 
-    def _cleanup_trace(self, trace_id: str, start_time: float, error: str, cache_hit, args, kwargs, response):
+    def _cleanup_trace(self, trace_id: str, start_time: datetime, error: str, cache_hit, args, kwargs, response):
         try:
             final_log = self._cleanup_trace_core(trace_id, start_time, error, cache_hit, args, kwargs)
 
@@ -214,7 +214,7 @@ class Wrapper:
             logger.debug(f"Error occurred cleaning up openai trace, {e}")
             return response
 
-    def _acleanup_trace(self, trace_id: str, start_time: float, error: str, cache_hit, args, kwargs, response):
+    def _acleanup_trace(self, trace_id: str, start_time: datetime, error: str, cache_hit, args, kwargs, response):
         try:
             final_log = self._cleanup_trace_core(trace_id, start_time, error, cache_hit, args, kwargs)
 

@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 from dotenv import load_dotenv
@@ -25,5 +26,13 @@ def main():
     )
 
 
+def amain():
+    return chain.ainvoke(
+        {"input": "Write a Hello World program in Python using FastAPI."},
+        config={"callbacks": [handler]},
+    )
+
+
 if __name__ == "__main__":
     print(main())
+    print(asyncio.run(amain()))
