@@ -303,13 +303,12 @@ _initialized_parea_wrapper = False
 
 def create_subclass_with_new_init(openai_client, parea_client: Parea):
     """Creates a subclass of the given openai_client to always wrap it with Parea at instantiation."""
+
     def new_init(self, *args, **kwargs):
         openai_client.__init__(self, *args, **kwargs)
         parea_client.wrap_openai_client(self)
 
-    subclass = type(openai_client.__name__, (openai_client,), {
-        '__init__': new_init
-    })
+    subclass = type(openai_client.__name__, (openai_client,), {"__init__": new_init})
 
     return subclass
 
@@ -324,7 +323,7 @@ def _init_parea_wrapper(log: Callable = None, cache: Cache = None, parea_client:
 
     # for new versions of openai, we need to wrap the client classes at instantiation
     if not openai.__version__.startswith("0."):
-        from openai import OpenAI, AsyncOpenAI
+        from openai import AsyncOpenAI, OpenAI
         from openai.lib.azure import AsyncAzureOpenAI, AzureOpenAI
 
         openai.OpenAI = create_subclass_with_new_init(OpenAI, parea_client)
