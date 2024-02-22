@@ -2,11 +2,12 @@ from typing import Any, Optional, Union
 
 import csv
 import random
-import time
 import uuid
 from collections.abc import Iterable
 from copy import deepcopy
+from datetime import datetime
 
+import pytz
 from attr import asdict, fields_dict
 
 from parea.constants import ADJECTIVES, NOUNS
@@ -17,14 +18,6 @@ from parea.utils.universal_encoder import json_dumps
 def gen_trace_id() -> str:
     """Generate a unique trace id for each chain of requests"""
     return str(uuid.uuid4())
-
-
-def to_date_and_time_string(timestamp: float) -> str:
-    return time.strftime("%Y-%m-%d %H:%M:%S %Z", time.localtime(timestamp))
-
-
-def date_and_time_string_to_timestamp(date_and_time_string: str) -> float:
-    return time.mktime(time.strptime(date_and_time_string, "%Y-%m-%d %H:%M:%S %Z"))
 
 
 def write_trace_logs_to_csv(path_csv: str, trace_logs: list[TraceLog]):
@@ -70,3 +63,7 @@ def serialize_metadata_values(log_data: Union[TraceLog, UpdateLog, Completion]) 
         log_data.metadata = serialized_values
 
     return log_data
+
+
+def timezone_aware_now() -> datetime:
+    return datetime.now(pytz.utc)
