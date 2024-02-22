@@ -52,9 +52,18 @@ class Wrapper:
 
     def _wrapped_func(self, original_func: Callable) -> Callable:
         unwrapped_func = original_func
+        is_wrapped_attribute_name = "_is_already_wrapped_by_parea"
         while hasattr(unwrapped_func, "__wrapped__"):
+            if getattr(unwrapped_func, is_wrapped_attribute_name, False):
+                return original_func
             unwrapped_func = unwrapped_func.__wrapped__
-        return self._get_decorator(unwrapped_func, original_func)
+        if getattr(unwrapped_func, is_wrapped_attribute_name, False):
+            return original_func
+
+        wrapped_func = self._get_decorator(unwrapped_func, original_func)
+        setattr(wrapped_func, is_wrapped_attribute_name, True)
+
+        return wrapped_func
 
     def _get_decorator(self, unwrapped_func: Callable, original_func: Callable):
         if inspect.iscoroutinefunction(unwrapped_func):
