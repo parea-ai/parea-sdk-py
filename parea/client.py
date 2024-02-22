@@ -7,6 +7,7 @@ import time
 from collections.abc import AsyncIterable, Iterable
 
 import httpx
+import openai
 from attrs import asdict, define, field
 from cattrs import structure
 from dotenv import load_dotenv
@@ -72,7 +73,7 @@ class Parea:
             parea_logger.set_project_uuid(self.project_uuid)
         if isinstance(self.cache, (RedisCache, InMemoryCache)):
             parea_logger.set_redis_cache(self.cache)
-        _init_parea_wrapper(logger_all_possible, self.cache)
+        _init_parea_wrapper(logger_all_possible, self.cache, self)
 
     def wrap_openai_client(self, client: "OpenAI") -> None:
         """Only necessary for instance client with OpenAI version >= 1.0.0"""
@@ -300,9 +301,35 @@ class Parea:
 _initialized_parea_wrapper = False
 
 
-def _init_parea_wrapper(log: Callable = None, cache: Cache = None):
+def create_subclass_with_new_init(openai_client, parea_client: Parea):
+    """Creates a subclass of the given openai_client to always wrap it with Parea at instantiation."""
+    def new_init(self, *args, **kwargs):
+        openai_client.__init__(self, *args, **kwargs)
+        parea_client.wrap_openai_client(self)
+
+    subclass = type(openai_client.__name__, (openai_client,), {
+        '__init__': new_init
+    })
+
+    return subclass
+
+
+def _init_parea_wrapper(log: Callable = None, cache: Cache = None, parea_client: Parea = None):
     global _initialized_parea_wrapper
     if _initialized_parea_wrapper:
         return
+
+    # always wrap the module-level client
     OpenAIWrapper().init(log=log, cache=cache)
+
+    # for new versions of openai, we need to wrap the client classes at instantiation
+    if not openai.__version__.startswith("0."):
+        from openai import OpenAI, AsyncOpenAI
+        from openai.lib.azure import AsyncAzureOpenAI, AzureOpenAI
+
+        openai.OpenAI = create_subclass_with_new_init(OpenAI, parea_client)
+        openai.AzureOpenAI = create_subclass_with_new_init(AzureOpenAI, parea_client)
+        openai.AsyncOpenAI = create_subclass_with_new_init(AsyncOpenAI, parea_client)
+        openai.AsyncAzureOpenAI = create_subclass_with_new_init(AsyncAzureOpenAI, parea_client)
+
     _initialized_parea_wrapper = True
