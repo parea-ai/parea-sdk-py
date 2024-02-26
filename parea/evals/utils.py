@@ -10,9 +10,9 @@ from attrs import define
 from openai import __version__ as openai_version
 
 from parea.parea_logger import parea_logger
+from parea.schemas import EvaluationResult
 from parea.schemas.log import Log
 from parea.schemas.models import UpdateLog
-from parea.schemas import EvaluationResult
 from parea.wrapper.utils import _safe_encode
 
 seg = pysbd.Segmenter(language="en", clean=False)

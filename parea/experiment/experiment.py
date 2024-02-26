@@ -16,8 +16,7 @@ from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID, TURN_OFF_PAREA_LOGGING
 from parea.experiment.dvc import save_results_to_dvc_if_init
 from parea.helpers import duplicate_dicts, gen_random_name
 from parea.schemas import EvaluationResult
-from parea.schemas.models import CreateExperimentRequest, ExperimentSchema, ExperimentStatsSchema, \
-    FinishExperimentRequestSchema
+from parea.schemas.models import CreateExperimentRequest, ExperimentSchema, ExperimentStatsSchema, FinishExperimentRequestSchema
 from parea.utils.trace_utils import thread_ids_running_evals, trace_data
 from parea.utils.universal_encoder import json_dumps
 
@@ -72,7 +71,13 @@ def apply_dataset_eval(dataset_level_evals: list[Callable]) -> list[EvaluationRe
 
 
 async def experiment(
-    name: str, data: Union[str, int, Iterable[dict]], func: Callable, p: Parea, n_trials: int = 1, metadata: Optional[dict[str, str]] = None, dataset_level_evals: Optional[list[Callable]] = None
+    name: str,
+    data: Union[str, int, Iterable[dict]],
+    func: Callable,
+    p: Parea,
+    n_trials: int = 1,
+    metadata: Optional[dict[str, str]] = None,
+    dataset_level_evals: Optional[list[Callable]] = None,
 ) -> ExperimentStatsSchema:
     """Creates an experiment and runs the function on the data iterator.
     param name: The name of the experiment. This name must be unique across experiment runs.
@@ -138,10 +143,7 @@ async def experiment(
     else:
         dataset_level_eval_results = []
 
-    experiment_stats: ExperimentStatsSchema = p.finish_experiment(
-        experiment_uuid,
-        FinishExperimentRequestSchema(dataset_level_stats=dataset_level_eval_results)
-    )
+    experiment_stats: ExperimentStatsSchema = p.finish_experiment(experiment_uuid, FinishExperimentRequestSchema(dataset_level_stats=dataset_level_eval_results))
     stat_name_to_avg_std = calculate_avg_std_for_experiment(experiment_stats)
     if dataset_level_eval_results:
         stat_name_to_avg_std.update({eval_result.name: eval_result.score for eval_result in dataset_level_eval_results})

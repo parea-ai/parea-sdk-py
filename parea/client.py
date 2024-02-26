@@ -29,10 +29,11 @@ from parea.schemas.models import (
     ExperimentSchema,
     ExperimentStatsSchema,
     FeedbackRequest,
+    FinishExperimentRequestSchema,
     ProjectSchema,
     TestCaseCollection,
     UseDeployedPrompt,
-    UseDeployedPromptResponse, FinishExperimentRequestSchema,
+    UseDeployedPromptResponse,
 )
 from parea.utils.trace_utils import get_current_trace_id, get_root_trace_id, logger_all_possible, logger_record_log, trace_data
 from parea.wrapper import OpenAIWrapper
@@ -263,7 +264,14 @@ class Parea:
             data=asdict(request),
         )
 
-    def experiment(self, data: Union[str, int, Iterable[dict]], func: Callable, n_trials: int = 1, metadata: Optional[dict[str, str]] = None, dataset_level_evals: Optional[list[Callable]] = None):
+    def experiment(
+        self,
+        data: Union[str, int, Iterable[dict]],
+        func: Callable,
+        n_trials: int = 1,
+        metadata: Optional[dict[str, str]] = None,
+        dataset_level_evals: Optional[list[Callable]] = None,
+    ):
         """
         :param data: If your dataset is defined locally it should be an iterable of k/v
         pairs matching the expected inputs of your function. To reference a dataset you

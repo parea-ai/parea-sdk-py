@@ -15,8 +15,8 @@ from random import random
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID, TURN_OFF_PAREA_LOGGING
 from parea.helpers import gen_trace_id, timezone_aware_now
 from parea.parea_logger import parea_logger
-from parea.schemas.models import TraceLog, UpdateLog, UpdateTraceScenario
 from parea.schemas import EvaluationResult
+from parea.schemas.models import TraceLog, UpdateLog, UpdateTraceScenario
 from parea.utils.universal_encoder import json_dumps
 
 logger = logging.getLogger()

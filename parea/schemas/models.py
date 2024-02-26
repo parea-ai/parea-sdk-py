@@ -5,7 +5,7 @@ from enum import Enum
 from attrs import define, field, validators
 
 from parea.schemas import EvaluationResult
-from parea.schemas.log import LLMInputs, EvaluatedLog
+from parea.schemas.log import EvaluatedLog, LLMInputs
 
 
 @define

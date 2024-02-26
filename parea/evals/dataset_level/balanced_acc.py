@@ -13,6 +13,6 @@ def balanced_acc_factory(score_name: str):
                 total[log.target] += 1
         recalls = [correct[key] / total[key] for key in correct]
 
-        return EvaluationResult(name=f'balanced_acc_{score_name}', score=sum(recalls) / len(recalls))
+        return EvaluationResult(name=f"balanced_acc_{score_name}", score=sum(recalls) / len(recalls))
 
     return balanced_acc
