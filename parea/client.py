@@ -32,7 +32,7 @@ from parea.schemas.models import (
     ProjectSchema,
     TestCaseCollection,
     UseDeployedPrompt,
-    UseDeployedPromptResponse,
+    UseDeployedPromptResponse, FinishExperimentRequestSchema,
 )
 from parea.utils.trace_utils import get_current_trace_id, get_root_trace_id, logger_all_possible, logger_record_log, trace_data
 from parea.wrapper import OpenAIWrapper
@@ -209,17 +209,19 @@ class Parea:
         )
         return structure(r.json(), ExperimentStatsSchema)
 
-    def finish_experiment(self, experiment_uuid: str) -> ExperimentStatsSchema:
+    def finish_experiment(self, experiment_uuid: str, fin_eq: FinishExperimentRequestSchema) -> ExperimentStatsSchema:
         r = self._client.request(
             "POST",
             EXPERIMENT_FINISHED_ENDPOINT.format(experiment_uuid=experiment_uuid),
+            data=asdict(fin_eq),
         )
         return structure(r.json(), ExperimentStatsSchema)
 
-    async def afinish_experiment(self, experiment_uuid: str) -> ExperimentStatsSchema:
+    async def afinish_experiment(self, experiment_uuid: str, fin_req: FinishExperimentRequestSchema) -> ExperimentStatsSchema:
         r = await self._client.request_async(
             "POST",
             EXPERIMENT_FINISHED_ENDPOINT.format(experiment_uuid=experiment_uuid),
+            data=asdict(fin_req),
         )
         return structure(r.json(), ExperimentStatsSchema)
 
@@ -261,7 +263,7 @@ class Parea:
             data=asdict(request),
         )
 
-    def experiment(self, data: Union[str, int, Iterable[dict]], func: Callable, n_trials: int = 1, metadata: Optional[dict[str, str]] = None):
+    def experiment(self, data: Union[str, int, Iterable[dict]], func: Callable, n_trials: int = 1, metadata: Optional[dict[str, str]] = None, dataset_level_evals: Optional[list[Callable]] = None):
         """
         :param data: If your dataset is defined locally it should be an iterable of k/v
         pairs matching the expected inputs of your function. To reference a dataset you
@@ -269,10 +271,11 @@ class Parea:
         :param func: The function to run. This function should accept inputs that match the keys of the data field.
         :param n_trials: The number of times to run the experiment on the same data.
         :param metadata: Optional metadata to attach to the experiment.
+        :param dataset_level_evals: Optional list of functions to run on the dataset level. Each function should accept a list of EvaluatedLog objects and return a float or an EvaluationResult object
         """
         from parea import Experiment
 
-        return Experiment(data=data, func=func, p=self, n_trials=n_trials, metadata=metadata)
+        return Experiment(data=data, func=func, p=self, n_trials=n_trials, metadata=metadata, dataset_level_evals=dataset_level_evals)
 
     def _update_data_and_trace(self, data: Completion) -> Completion:
         data = serialize_metadata_values(data)

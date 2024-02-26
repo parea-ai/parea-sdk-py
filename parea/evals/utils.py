@@ -11,7 +11,8 @@ from openai import __version__ as openai_version
 
 from parea.parea_logger import parea_logger
 from parea.schemas.log import Log
-from parea.schemas.models import NamedEvaluationScore, UpdateLog
+from parea.schemas.models import UpdateLog
+from parea.schemas import EvaluationResult
 from parea.wrapper.utils import _safe_encode
 
 seg = pysbd.Segmenter(language="en", clean=False)
@@ -104,7 +105,7 @@ def ndcg(y_true, ranking):
 
 # note name is extra odd to make sure that skip_decorator_if_func_in_stack works in 99.9% of cases
 def _make_evaluations(trace_id: str, log: Log, eval_funcs: list[EvalFuncTuple], verbose: bool = False, sync: bool = False):
-    scores = [NamedEvaluationScore(name=eval.name, score=eval.func(log)) for eval in eval_funcs]
+    scores = [EvaluationResult(name=eval.name, score=eval.func(log)) for eval in eval_funcs]
     parea_logger.update_log(data=UpdateLog(trace_id=trace_id, field_name_to_value_map={"scores": scores, "target": log.target}))
     if verbose:
         print(f"###Eval Results###")
@@ -125,7 +126,7 @@ def run_evals_in_thread_and_log(trace_id: str, log: Log, eval_funcs: list[EvalFu
     logging_thread.start()
 
 
-def run_evals_synchronous(trace_id: str, log: Log, eval_funcs: list[EvalFuncTuple], verbose: bool = False) -> list[NamedEvaluationScore]:
+def run_evals_synchronous(trace_id: str, log: Log, eval_funcs: list[EvalFuncTuple], verbose: bool = False) -> list[EvaluationResult]:
     return _make_evaluations(trace_id, log, eval_funcs, verbose, True)
 
 

@@ -90,6 +90,9 @@ class HTTPClient:
             response.raise_for_status()
             return response
         except httpx.HTTPStatusError as e:
+            if e.response.status_code == 422:
+                # update the error message to include the validation errors
+                e.args = (f"{e.args[0]}: {e.response.json()}",)
             raise
 
     @retry_on_502

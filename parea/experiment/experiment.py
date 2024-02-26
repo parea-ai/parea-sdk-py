@@ -15,8 +15,10 @@ from parea import Parea
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID, TURN_OFF_PAREA_LOGGING
 from parea.experiment.dvc import save_results_to_dvc_if_init
 from parea.helpers import duplicate_dicts, gen_random_name
-from parea.schemas.models import CreateExperimentRequest, ExperimentSchema, ExperimentStatsSchema
-from parea.utils.trace_utils import thread_ids_running_evals
+from parea.schemas import EvaluationResult
+from parea.schemas.models import CreateExperimentRequest, ExperimentSchema, ExperimentStatsSchema, \
+    FinishExperimentRequestSchema
+from parea.utils.trace_utils import thread_ids_running_evals, trace_data
 from parea.utils.universal_encoder import json_dumps
 
 STAT_ATTRS = ["latency", "input_tokens", "output_tokens", "total_tokens", "cost"]
@@ -52,8 +54,25 @@ def async_wrapper(fn, **kwargs):
     return asyncio.run(fn(**kwargs))
 
 
+def apply_dataset_eval(dataset_level_evals: list[Callable]) -> list[EvaluationResult]:
+    root_traces = []
+    for trace in trace_data.get().values():
+        if trace.root_trace_id == trace.trace_id:
+            root_traces.append(trace)
+
+    results = []
+    for dataset_level_eval in dataset_level_evals:
+        result = dataset_level_eval(root_traces)
+        if isinstance(result, EvaluationResult):
+            results.append(result)
+        else:
+            results.append(EvaluationResult(name=dataset_level_eval.__name__, score=result))
+
+    return results
+
+
 async def experiment(
-    name: str, data: Union[str, int, Iterable[dict]], func: Callable, p: Parea, n_trials: int = 1, metadata: Optional[dict[str, str]] = None
+    name: str, data: Union[str, int, Iterable[dict]], func: Callable, p: Parea, n_trials: int = 1, metadata: Optional[dict[str, str]] = None, dataset_level_evals: Optional[list[Callable]] = None
 ) -> ExperimentStatsSchema:
     """Creates an experiment and runs the function on the data iterator.
     param name: The name of the experiment. This name must be unique across experiment runs.
@@ -64,6 +83,7 @@ async def experiment(
     param p: The Parea instance to use for running the experiment.
     param n_trials: The number of times to run the experiment on the same data.
     param metadata: A dictionary of metadata to attach to the experiment.
+    param dataset_level_evals: A list of functions to run on the dataset level. Each function should accept a list of EvaluatedLogs and return a float or a
     """
     if isinstance(data, (str, int)):
         print(f"Fetching test collection: {data}")
@@ -113,8 +133,18 @@ async def experiment(
         await asyncio.sleep(4)
         pbar.update(total_evals)
 
-    experiment_stats: ExperimentStatsSchema = p.finish_experiment(experiment_uuid)
+    if dataset_level_evals:
+        dataset_level_eval_results = apply_dataset_eval(dataset_level_evals)
+    else:
+        dataset_level_eval_results = []
+
+    experiment_stats: ExperimentStatsSchema = p.finish_experiment(
+        experiment_uuid,
+        FinishExperimentRequestSchema(dataset_level_stats=dataset_level_eval_results)
+    )
     stat_name_to_avg_std = calculate_avg_std_for_experiment(experiment_stats)
+    if dataset_level_eval_results:
+        stat_name_to_avg_std.update({eval_result.name: eval_result.score for eval_result in dataset_level_eval_results})
     print(f"Experiment {name} stats:\n{json_dumps(stat_name_to_avg_std, indent=2)}\n\n")
     print(f"View experiment & traces at: https://app.parea.ai/experiments/{experiment_uuid}\n")
     save_results_to_dvc_if_init(name, stat_name_to_avg_std)
@@ -134,6 +164,7 @@ class Experiment:
     func: Callable = field()
     experiment_stats: ExperimentStatsSchema = field(init=False, default=None)
     metadata: Optional[dict[str, str]] = field(default=None)
+    dataset_level_evals: Optional[list[Callable]] = field(default=None)
     p: Parea = field(default=None)
     name: str = field(init=False)
     # The number of times to run the experiment on the same data.
@@ -168,6 +199,6 @@ class Experiment:
 
         try:
             self._gen_name_if_none(name)
-            self.experiment_stats = asyncio.run(experiment(self.name, self.data, self.func, self.p, self.n_trials, self.metadata))
+            self.experiment_stats = asyncio.run(experiment(self.name, self.data, self.func, self.p, self.n_trials, self.metadata, self.dataset_level_evals))
         except Exception as e:
             print(f"Error running experiment: {e}")
