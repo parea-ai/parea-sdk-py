@@ -2,7 +2,7 @@ from typing import Any, Optional, Union
 
 from enum import Enum
 
-from attr import define
+from attrs import define, field
 
 
 class TraceIntegrations(str, Enum):
@@ -122,3 +122,20 @@ class Log:
     output_tokens: Optional[int] = 0
     total_tokens: Optional[int] = 0
     cost: Optional[float] = 0.0
+
+
+@define
+class EvaluationResult:
+    name: str
+    score: float
+
+
+@define
+class EvaluatedLog(Log):
+    scores: Optional[list[EvaluationResult]] = field(factory=list)
+
+    def get_score(self, name: str) -> Optional[EvaluationResult]:
+        for score in self.scores:
+            if score.name == name:
+                return score
+        return None

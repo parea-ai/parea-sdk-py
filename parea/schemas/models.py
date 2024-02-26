@@ -4,7 +4,8 @@ from enum import Enum
 
 from attrs import define, field, validators
 
-from parea.schemas.log import LLMInputs, Log
+from parea.schemas import EvaluationResult
+from parea.schemas.log import EvaluatedLog, LLMInputs
 
 
 @define
@@ -82,13 +83,7 @@ class FeedbackRequest:
 
 
 @define
-class NamedEvaluationScore:
-    name: str
-    score: float
-
-
-@define
-class TraceLog(Log):
+class TraceLog(EvaluatedLog):
     trace_id: Optional[str] = field(default=None, validator=validators.instance_of(str))
     parent_trace_id: Optional[str] = field(default=None, validator=validators.instance_of(str))
     root_trace_id: Optional[str] = field(default=None, validator=validators.instance_of(str))
@@ -103,7 +98,6 @@ class TraceLog(Log):
     cache_hit: bool = False
     output_for_eval_metrics: Optional[str] = None
     evaluation_metric_names: Optional[list[str]] = field(factory=list)
-    scores: Optional[list[NamedEvaluationScore]] = field(factory=list)
     apply_eval_frac: float = 1.0
     feedback_score: Optional[float] = None
 
@@ -150,7 +144,7 @@ class ExperimentSchema:
 
 
 @define
-class EvaluationScoreSchema(NamedEvaluationScore):
+class EvaluationResultSchema(EvaluationResult):
     id: Optional[int] = None
 
 
@@ -162,7 +156,7 @@ class TraceStatsSchema:
     output_tokens: Optional[int] = 0
     total_tokens: Optional[int] = 0
     cost: Optional[float] = None
-    scores: Optional[list[EvaluationScoreSchema]] = field(factory=list)
+    scores: Optional[list[EvaluationResultSchema]] = field(factory=list)
 
 
 @define
@@ -259,3 +253,8 @@ class CreateTestCases:
 class CreateTestCaseCollection(CreateTestCases):
     # column names excluding reserved names, target and tags
     column_names: list[str] = field(factory=list)
+
+
+@define
+class FinishExperimentRequestSchema:
+    dataset_level_stats: Optional[list[EvaluationResult]] = field(factory=list)

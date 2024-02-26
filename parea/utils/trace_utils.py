@@ -15,7 +15,8 @@ from random import random
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID, TURN_OFF_PAREA_LOGGING
 from parea.helpers import gen_trace_id, timezone_aware_now
 from parea.parea_logger import parea_logger
-from parea.schemas.models import NamedEvaluationScore, TraceLog, UpdateLog, UpdateTraceScenario
+from parea.schemas import EvaluationResult
+from parea.schemas.models import TraceLog, UpdateLog, UpdateTraceScenario
 from parea.utils.universal_encoder import json_dumps
 
 logger = logging.getLogger()
@@ -256,10 +257,11 @@ def call_eval_funcs_then_log(trace_id: str, eval_funcs: list[Callable] = None):
             try:
                 score = func(data)
                 if score is not None:
-                    scores.append(NamedEvaluationScore(name=func.__name__, score=score))
+                    scores.append(EvaluationResult(name=func.__name__, score=score))
             except Exception as e:
                 logger.exception(f"Error occurred calling evaluation function '{func.__name__}', {e}", exc_info=e)
         parea_logger.update_log(data=UpdateLog(trace_id=trace_id, field_name_to_value_map={"scores": scores}))
+        trace_data.get()[trace_id].scores = scores
         thread_ids_running_evals.get().remove(trace_id)
 
 
