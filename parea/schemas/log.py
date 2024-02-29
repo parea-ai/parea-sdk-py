@@ -37,6 +37,7 @@ class ModelParams:
     presence_penalty: float = 0.0
     max_length: Optional[int] = None
     response_format: Optional[dict] = None
+    safe_prompt: Optional[bool] = None
 
 
 @define
