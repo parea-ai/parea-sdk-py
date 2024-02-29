@@ -119,8 +119,8 @@ async def experiment(
 
     if inspect.iscoroutinefunction(func):
         tasks = [limit_concurrency(sample) for sample in data]
-        for result in tqdm_asyncio(tasks, total=len_test_cases):
-            await result
+        for _task in tqdm_asyncio.as_completed(tasks, total=len_test_cases):
+            await _task
     else:
         for sample in tqdm(data, total=len_test_cases):
             sample_copy = deepcopy(sample)
