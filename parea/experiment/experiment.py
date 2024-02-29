@@ -1,13 +1,13 @@
-from functools import partial
 from typing import Callable, Optional, Union
 
 import asyncio
 import inspect
 import os
-from concurrent.futures import ThreadPoolExecutor
 from collections import defaultdict
 from collections.abc import Iterable
+from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
+from functools import partial
 
 from attrs import define, field
 from tqdm import tqdm
