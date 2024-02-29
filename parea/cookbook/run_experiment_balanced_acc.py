@@ -1,3 +1,4 @@
+import asyncio
 import os
 from collections import defaultdict
 
@@ -37,7 +38,8 @@ def balanced_acc_is_correct(logs: list[EvaluatedLog]) -> float:
 
 
 @trace(eval_funcs=[is_correct])
-def starts_with_f(name: str) -> str:
+async def starts_with_f(name: str) -> str:
+    await asyncio.sleep(1)
     if name == "Foo":
         return "1"
     return "0"
@@ -61,4 +63,4 @@ data = [
 
 # You can optionally run the experiment manually by calling `.run()`
 if __name__ == "__main__":
-    p.experiment(data=data, func=starts_with_f, dataset_level_evals=[balanced_acc_is_correct]).run()
+    p.experiment(data=data, func=starts_with_f, dataset_level_evals=[balanced_acc_is_correct], n_workers=2).run()

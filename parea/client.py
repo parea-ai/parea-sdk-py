@@ -271,6 +271,7 @@ class Parea:
         n_trials: int = 1,
         metadata: Optional[dict[str, str]] = None,
         dataset_level_evals: Optional[list[Callable]] = None,
+        n_workers: int = 10,
     ):
         """
         :param data: If your dataset is defined locally it should be an iterable of k/v
@@ -280,10 +281,11 @@ class Parea:
         :param n_trials: The number of times to run the experiment on the same data.
         :param metadata: Optional metadata to attach to the experiment.
         :param dataset_level_evals: Optional list of functions to run on the dataset level. Each function should accept a list of EvaluatedLog objects and return a float or an EvaluationResult object
+        :param n_workers: The number of workers to use for running the experiment.
         """
         from parea import Experiment
 
-        return Experiment(data=data, func=func, p=self, n_trials=n_trials, metadata=metadata, dataset_level_evals=dataset_level_evals)
+        return Experiment(data=data, func=func, p=self, n_trials=n_trials, metadata=metadata, dataset_level_evals=dataset_level_evals, n_workers=n_workers)
 
     def _update_data_and_trace(self, data: Completion) -> Completion:
         data = serialize_metadata_values(data)

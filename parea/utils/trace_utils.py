@@ -125,16 +125,17 @@ def trace(
     access_output_of_func: Optional[Callable] = None,
     apply_eval_frac: float = 1.0,
 ):
-    def init_trace(func_name, _parea_target_field, args, kwargs, func) -> tuple[str, datetime]:
+    def init_trace(func_name, _parea_target_field, args, kwargs, func) -> tuple[str, datetime, contextvars.Token]:
         start_time = timezone_aware_now()
         trace_id = gen_trace_id()
 
+        new_trace_context = trace_context.get() + [trace_id]
+        token = trace_context.set(new_trace_context)
+
         if TURN_OFF_PAREA_LOGGING:
-            return trace_id, start_time
+            return trace_id, start_time, token
 
         try:
-            trace_context.get().append(trace_id)
-
             sig = inspect.signature(func)
             parameters = sig.parameters
 
@@ -155,7 +156,7 @@ def trace(
             trace_data.get()[trace_id] = TraceLog(
                 trace_id=trace_id,
                 parent_trace_id=trace_id,
-                root_trace_id=trace_context.get()[0],
+                root_trace_id=new_trace_context[0],
                 start_timestamp=start_time.isoformat(),
                 trace_name=name or func_name,
                 end_user_identifier=end_user_identifier,
@@ -166,15 +167,15 @@ def trace(
                 experiment_uuid=os.environ.get(PAREA_OS_ENV_EXPERIMENT_UUID, None),
                 apply_eval_frac=apply_eval_frac,
             )
-            parent_trace_id = trace_context.get()[-2] if len(trace_context.get()) > 1 else None
+            parent_trace_id = new_trace_context[-2] if len(new_trace_context) > 1 else None
             if parent_trace_id:
                 fill_trace_data(trace_id, {"parent_trace_id": parent_trace_id}, UpdateTraceScenario.CHAIN)
         except Exception as e:
             logger.debug(f"Error occurred initializing trace for function {func_name}, {e}")
 
-        return trace_id, start_time
+        return trace_id, start_time, token
 
-    def cleanup_trace(trace_id: str, start_time: datetime):
+    def cleanup_trace(trace_id: str, start_time: datetime, context_token: contextvars.Token):
         end_time = timezone_aware_now()
         trace_data.get()[trace_id].end_timestamp = end_time.isoformat()
         trace_data.get()[trace_id].latency = (end_time - start_time).total_seconds()
@@ -192,13 +193,13 @@ def trace(
             trace_data.get()[trace_id].output_for_eval_metrics = output_for_eval_metrics
 
         thread_eval_funcs_then_log(trace_id, eval_funcs)
-        trace_context.get().pop()
+        trace_context.reset(context_token)
 
     def decorator(func):
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
             _parea_target_field = kwargs.pop("_parea_target_field", None)
-            trace_id, start_time = init_trace(func.__name__, _parea_target_field, args, kwargs, func)
+            trace_id, start_time, context_token = init_trace(func.__name__, _parea_target_field, args, kwargs, func)
             output_as_list = check_multiple_return_values(func)
             try:
                 result = await func(*args, **kwargs)
@@ -210,14 +211,14 @@ def trace(
                 raise e
             finally:
                 try:
-                    cleanup_trace(trace_id, start_time)
+                    cleanup_trace(trace_id, start_time, context_token)
                 except Exception as e:
                     logger.debug(f"Error occurred cleaning up trace for function {func.__name__}, {e}", exc_info=e)
 
         @wraps(func)
         def wrapper(*args, **kwargs):
             _parea_target_field = kwargs.pop("_parea_target_field", None)
-            trace_id, start_time = init_trace(func.__name__, _parea_target_field, args, kwargs, func)
+            trace_id, start_time, context_token = init_trace(func.__name__, _parea_target_field, args, kwargs, func)
             output_as_list = check_multiple_return_values(func)
             try:
                 result = func(*args, **kwargs)
@@ -229,7 +230,7 @@ def trace(
                 raise e
             finally:
                 try:
-                    cleanup_trace(trace_id, start_time)
+                    cleanup_trace(trace_id, start_time, context_token)
                 except Exception as e:
                     logger.debug(f"Error occurred cleaning up trace for function {func.__name__}, {e}", exc_info=e)
 

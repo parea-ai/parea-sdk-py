@@ -5,7 +5,9 @@ import inspect
 import os
 from collections import defaultdict
 from collections.abc import Iterable
+from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
+from functools import partial
 
 from attrs import define, field
 from tqdm import tqdm
@@ -78,6 +80,7 @@ async def experiment(
     n_trials: int = 1,
     metadata: Optional[dict[str, str]] = None,
     dataset_level_evals: Optional[list[Callable]] = None,
+    n_workers: int = 10,
 ) -> ExperimentStatsSchema:
     """Creates an experiment and runs the function on the data iterator.
     param name: The name of the experiment. This name must be unique across experiment runs.
@@ -89,6 +92,8 @@ async def experiment(
     param n_trials: The number of times to run the experiment on the same data.
     param metadata: A dictionary of metadata to attach to the experiment.
     param dataset_level_evals: A list of functions to run on the dataset level. Each function should accept a list of EvaluatedLogs and return a float or a
+        EvaluationResult. If a float is returned, the name of the function will be used as the name of the evaluation.
+    param n_workers: The number of workers to use for running the experiment.
     """
     if isinstance(data, (str, int)):
         print(f"Fetching test collection: {data}")
@@ -108,8 +113,7 @@ async def experiment(
     experiment_uuid = experiment_schema.uuid
     os.environ[PAREA_OS_ENV_EXPERIMENT_UUID] = experiment_uuid
 
-    max_parallel_calls = 10
-    sem = asyncio.Semaphore(max_parallel_calls)
+    sem = asyncio.Semaphore(n_workers)
 
     async def limit_concurrency(sample):
         async with sem:
@@ -117,15 +121,19 @@ async def experiment(
             target = sample_copy.pop("target", None)
             return await func(_parea_target_field=target, **sample_copy)
 
+    def limit_concurrency_sync(sample):
+        sample_copy = deepcopy(sample)
+        target = sample_copy.pop("target", None)
+        return func(_parea_target_field=target, **sample_copy)
+
     if inspect.iscoroutinefunction(func):
         tasks = [limit_concurrency(sample) for sample in data]
-        for result in tqdm_asyncio(tasks, total=len_test_cases):
-            await result
     else:
-        for sample in tqdm(data, total=len_test_cases):
-            sample_copy = deepcopy(sample)
-            target = sample_copy.pop("target", None)
-            func(_parea_target_field=target, **sample_copy)
+        executor = ThreadPoolExecutor(max_workers=n_workers)
+        loop = asyncio.get_event_loop()
+        tasks = [loop.run_in_executor(executor, partial(limit_concurrency_sync, sample)) for sample in data]
+    for _task in tqdm_asyncio.as_completed(tasks, total=len_test_cases):
+        await _task
 
     await asyncio.sleep(0.2)
     total_evals = len(thread_ids_running_evals.get())
@@ -169,6 +177,7 @@ class Experiment:
     dataset_level_evals: Optional[list[Callable]] = field(default=None)
     p: Parea = field(default=None)
     name: str = field(init=False)
+    n_workers: int = field(default=10)
     # The number of times to run the experiment on the same data.
     n_trials: int = field(default=1)
 
@@ -201,6 +210,6 @@ class Experiment:
 
         try:
             self._gen_name_if_none(name)
-            self.experiment_stats = asyncio.run(experiment(self.name, self.data, self.func, self.p, self.n_trials, self.metadata, self.dataset_level_evals))
+            self.experiment_stats = asyncio.run(experiment(self.name, self.data, self.func, self.p, self.n_trials, self.metadata, self.dataset_level_evals, self.n_workers))
         except Exception as e:
             print(f"Error running experiment: {e}")
