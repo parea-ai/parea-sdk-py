@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional, Union, AsyncGenerator, TypeVar, Generator
+from typing import Any, AsyncGenerator, Callable, Generator, Optional, TypeVar, Union
 
 import json
 import os
@@ -136,8 +136,6 @@ class OpenAIWrapper:
                 OpenAIWrapper._update_accumulator_streaming,
                 gen_final_processing_and_logging,
             )
-
-
 
     @staticmethod
     def _get_default_dict_streaming():
