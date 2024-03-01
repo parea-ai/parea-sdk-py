@@ -4,8 +4,6 @@ import json
 from collections import defaultdict
 from collections.abc import AsyncGenerator, Generator
 
-from openai.types.chat import ChatCompletionChunk
-
 from parea.constants import CHUNK_DONE_SENTINEL
 from parea.utils.trace_utils import get_current_trace_id
 from parea.utils.universal_encoder import json_dumps
@@ -33,6 +31,8 @@ async def aprocess_stream_and_yield(response, data: dict) -> AsyncGenerator:
 
 
 def format_and_accumulate_streaming_chunk(trace_id: str, accumulated_content: list, accumulated_tools: dict, data: dict, chunk: Any) -> None:
+    from openai.types.chat import ChatCompletionChunk
+
     try:
         chunk = chunk.decode("utf-8")
     except AttributeError:
@@ -61,7 +61,8 @@ def format_and_accumulate_streaming_chunk(trace_id: str, accumulated_content: li
                         accumulated_tools[tool_id]["function"]["arguments"].append(tool_call.function.arguments)
 
 
-def raw_chunk_to_chat_completion_chunk(chunk: str) -> Union[ChatCompletionChunk, str]:
+def raw_chunk_to_chat_completion_chunk(chunk: str):
+    from openai.types.chat import ChatCompletionChunk
     try:
         return ChatCompletionChunk(**json.loads(chunk[6:].strip()))
     except json.JSONDecodeError:
