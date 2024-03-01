@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional, Union
+from typing import Any, AsyncGenerator, Callable, Generator, Optional, TypeVar, Union
 
 import json
 import os
@@ -8,8 +8,8 @@ from collections.abc import AsyncIterator, Iterator, Sequence
 import openai
 from openai import __version__ as openai_version
 
-from ..utils.universal_encoder import json_dumps
-from .utils import _calculate_input_tokens, _compute_cost, _format_function_call, _kwargs_to_llm_configuration, _num_tokens_from_string
+from parea.utils.universal_encoder import json_dumps
+from parea.wrapper.utils import _calculate_input_tokens, _compute_cost, _format_function_call, _kwargs_to_llm_configuration, _num_tokens_from_string
 
 if openai_version.startswith("0."):
     from openai.openai_object import OpenAIObject
@@ -34,14 +34,16 @@ else:
 
 from dotenv import load_dotenv
 
-from ..cache.cache import Cache
-from ..schemas.models import CacheRequest, TraceLog
-from ..utils.trace_utils import trace_data
-from .wrapper import Wrapper
+from parea.cache.cache import Cache
+from parea.schemas.models import CacheRequest, TraceLog
+from parea.utils.trace_utils import trace_data
+from parea.wrapper.wrapper import Wrapper
 
 load_dotenv()
 
 is_old_openai = openai_version.startswith("0.")
+
+_T = TypeVar("_T")
 
 
 class OpenAIWrapper:
@@ -107,15 +109,33 @@ class OpenAIWrapper:
         trace_data.get()[trace_id].configuration = llm_configuration
 
         accumulator, model_from_response = self._get_default_dict_streaming()
-        for chunk in response:
-            self._update_accumulator_streaming(accumulator, model_from_response, chunk)
-            yield chunk
 
-        self._format_accumulator_in_place(accumulator)
+        def gen_final_processing_and_logging(accumulator, model_from_response):
+            OpenAIWrapper._format_accumulator_in_place(accumulator)
 
-        model = model_from_response.get("model") or llm_configuration.model
-        self.update_trace_data_from_stream_response(trace_id, model, accumulator, kwargs)
-        final_log()
+            model = model_from_response.get("model") or llm_configuration.model
+            OpenAIWrapper.update_trace_data_from_stream_response(trace_id, model, accumulator, kwargs)
+            final_log()
+
+        if is_old_openai:
+            def logging_sync_generator(sync_gen: Generator[_T]) -> Generator[_T]:
+                for chunk in sync_gen:
+                    self._update_accumulator_streaming(accumulator, model_from_response, chunk)
+                    yield chunk
+                gen_final_processing_and_logging(accumulator, model_from_response)
+
+            return logging_sync_generator(response)
+
+        else:
+            from parea.wrapper.openai.OpenAIStreamWrapper import OpenAIStreamWrapper
+
+            return OpenAIStreamWrapper(
+                response,
+                accumulator,
+                model_from_response,
+                OpenAIWrapper._update_accumulator_streaming,
+                gen_final_processing_and_logging,
+            )
 
     @staticmethod
     def _get_default_dict_streaming():
@@ -183,23 +203,41 @@ class OpenAIWrapper:
                 if tool_call.get("function", {}).get("arguments"):
                     accumulator["tool_calls"][tool_id]["function"]["arguments"].append(tool_call["function"]["arguments"])
 
-    async def agen_resolver(self, trace_id: str, _args: Sequence[Any], kwargs: dict[str, Any], response, final_log):
+    def agen_resolver(self, trace_id: str, _args: Sequence[Any], kwargs: dict[str, Any], response, final_log):
         llm_configuration = self._kwargs_to_llm_configuration(kwargs)
         trace_data.get()[trace_id].configuration = llm_configuration
 
         accumulator, model_from_response = self._get_default_dict_streaming()
-        async for chunk in response:
-            self._update_accumulator_streaming(accumulator, model_from_response, chunk)
-            yield chunk
 
-        self._format_accumulator_in_place(accumulator)
+        def agen_final_processing_and_logging(accumulator, model_from_response):
+            OpenAIWrapper._format_accumulator_in_place(accumulator)
 
-        model = model_from_response.get("model") or llm_configuration.model
-        self.update_trace_data_from_stream_response(trace_id, model, accumulator, kwargs)
-        final_log()
+            model = model_from_response.get("model") or llm_configuration.model
+            OpenAIWrapper.update_trace_data_from_stream_response(trace_id, model, accumulator, kwargs)
+            final_log()
 
-    def update_trace_data_from_stream_response(self, trace_id, model, accumulator, kwargs):
-        output = self._get_output(accumulator, model)
+        if is_old_openai:
+            async def logging_async_generator(async_gen: AsyncGenerator[_T]) -> AsyncGenerator[_T]:
+                async for chunk in async_gen:
+                    self._update_accumulator_streaming(accumulator, model_from_response, chunk)
+                    yield chunk
+                agen_final_processing_and_logging(accumulator, model_from_response)
+
+            return logging_async_generator(response)
+        else:
+            from parea.wrapper.openai.OpenAIAsyncStreamWrapper import OpenAIAsyncStreamWrapper
+
+            return OpenAIAsyncStreamWrapper(
+                response,
+                accumulator,
+                model_from_response,
+                OpenAIWrapper._update_accumulator_streaming,
+                agen_final_processing_and_logging,
+            )
+
+    @staticmethod
+    def update_trace_data_from_stream_response(trace_id, model, accumulator, kwargs):
+        output = OpenAIWrapper._get_output(accumulator, model)
         trace_data.get()[trace_id].output = output
         output_tokens = _num_tokens_from_string(output, model)
         input_tokens = _calculate_input_tokens(
@@ -217,7 +255,8 @@ class OpenAIWrapper:
     def _kwargs_to_llm_configuration(kwargs):
         return _kwargs_to_llm_configuration(kwargs)
 
-    def _get_output(self, result: Any, model: Optional[str] = None) -> str:
+    @staticmethod
+    def _get_output(result: Any, model: Optional[str] = None) -> str:
         if not isinstance(result, OpenAIObject) and isinstance(result, dict):
             result = convert_to_openai_object(
                 {
@@ -232,7 +271,7 @@ class OpenAIWrapper:
             )
         response_message = result.choices[0].message
         if not response_message.get("content", None) if is_old_openai else not response_message.content:
-            completion = self._format_function_call(response_message)
+            completion = OpenAIWrapper._format_function_call(response_message)
         else:
             completion = response_message.content.strip()
         return completion
