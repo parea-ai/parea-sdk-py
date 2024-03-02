@@ -1,13 +1,14 @@
-from typing import Any, AsyncGenerator, Callable, Generator, Optional, TypeVar, Union
+from typing import Any, Callable, Optional, TypeVar, Union
 
 import json
 import os
 from collections import defaultdict
-from collections.abc import AsyncIterator, Iterator, Sequence
+from collections.abc import AsyncGenerator, AsyncIterator, Generator, Iterator, Sequence
 
 import openai
 from openai import __version__ as openai_version
 
+from parea.types import OpenAIAsyncStreamWrapper, OpenAIStreamWrapper
 from parea.utils.universal_encoder import json_dumps
 from parea.wrapper.utils import _calculate_input_tokens, _compute_cost, _format_function_call, _kwargs_to_llm_configuration, _num_tokens_from_string
 
@@ -118,6 +119,7 @@ class OpenAIWrapper:
             final_log()
 
         if is_old_openai:
+
             def logging_sync_generator(sync_gen: Generator[_T]) -> Generator[_T]:
                 for chunk in sync_gen:
                     self._update_accumulator_streaming(accumulator, model_from_response, chunk)
@@ -127,8 +129,6 @@ class OpenAIWrapper:
             return logging_sync_generator(response)
 
         else:
-            from parea.wrapper.openai.OpenAIStreamWrapper import OpenAIStreamWrapper
-
             return OpenAIStreamWrapper(
                 response,
                 accumulator,
@@ -217,6 +217,7 @@ class OpenAIWrapper:
             final_log()
 
         if is_old_openai:
+
             async def logging_async_generator(async_gen: AsyncGenerator[_T]) -> AsyncGenerator[_T]:
                 async for chunk in async_gen:
                     self._update_accumulator_streaming(accumulator, model_from_response, chunk)
@@ -225,8 +226,6 @@ class OpenAIWrapper:
 
             return logging_async_generator(response)
         else:
-            from parea.wrapper.openai.OpenAIAsyncStreamWrapper import OpenAIAsyncStreamWrapper
-
             return OpenAIAsyncStreamWrapper(
                 response,
                 accumulator,

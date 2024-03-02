@@ -1,5 +1,6 @@
-from typing import Any, Iterable, Optional
+from typing import Any, Optional
 
+from collections.abc import Iterable
 from enum import Enum
 
 from attrs import define, field, validators

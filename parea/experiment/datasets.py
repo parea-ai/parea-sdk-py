@@ -20,7 +20,7 @@ def create_test_collection(data: list[dict[str, Any]], name: Optional[str] = Non
     if not name:
         name = gen_random_name()
 
-    column_names = list(set(k for row in data for k in row.keys() if k not in ["target", "tags"]))
+    column_names = list({k for row in data for k in row.keys() if k not in ["target", "tags"]})
     test_cases = create_test_cases(data)
 
     return CreateTestCaseCollection(name=name, column_names=column_names, test_cases=test_cases)
