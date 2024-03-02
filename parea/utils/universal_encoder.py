@@ -5,10 +5,13 @@ import datetime
 import json
 import logging
 from decimal import Decimal
+from enum import Enum
 from uuid import UUID
 
 import attrs
 from pydantic import BaseModel
+
+from parea.types import OpenAIAsyncStreamWrapper, OpenAIStreamWrapper
 
 logger = logging.getLogger()
 
@@ -49,6 +52,13 @@ class UniversalEncoder(json.JSONEncoder):
             return obj
         elif isinstance(obj, set):
             return list(obj)
+        elif isinstance(obj, Enum):
+            try:
+                return str(obj.value)
+            except Exception:
+                return str(obj)
+        elif isinstance(obj, (OpenAIStreamWrapper, OpenAIAsyncStreamWrapper)):
+            return str(obj)
         elif is_dataclass_instance(obj):
             return dataclasses.asdict(obj)
         elif is_attrs_instance(obj):
