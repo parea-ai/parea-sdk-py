@@ -63,6 +63,7 @@ def format_and_accumulate_streaming_chunk(trace_id: str, accumulated_content: li
 
 def raw_chunk_to_chat_completion_chunk(chunk: str):
     from openai.types.chat import ChatCompletionChunk
+
     try:
         return ChatCompletionChunk(**json.loads(chunk[6:].strip()))
     except json.JSONDecodeError:

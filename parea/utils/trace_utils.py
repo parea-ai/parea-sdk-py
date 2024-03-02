@@ -56,13 +56,17 @@ def check_multiple_return_values(func) -> bool:
 
 
 def make_output(result, islist) -> str:
-    if islist:
-        json_list = [json_dumps(r) for r in result]
-        return json_dumps(json_list)
-    elif isinstance(result, str):
-        return result
-    else:
-        return json_dumps(result)
+    try:
+        if islist:
+            json_list = [json_dumps(r) for r in result]
+            return json_dumps(json_list)
+        elif isinstance(result, str):
+            return result
+        else:
+            return json_dumps(result)
+    except Exception as e:
+        logger.exception(f"Error occurred making output with result: {result}. Error: {e}", exc_info=e)
+        return str(result)
 
 
 def get_current_trace_id() -> str:
@@ -111,6 +115,8 @@ def fill_trace_data(trace_id: str, data: dict[str, Any], scenario: UpdateTraceSc
         elif scenario == UpdateTraceScenario.CHAIN:
             trace_data.get()[trace_id].parent_trace_id = data["parent_trace_id"]
             trace_data.get()[data["parent_trace_id"]].children.append(trace_id)
+        else:
+            logger.debug(f"Error occurred filling trace data. Scenario not valid: {scenario}")
     except Exception as e:
         logger.debug(f"Error occurred filling trace data for trace id {trace_id}, {e}", exc_info=e)
 
