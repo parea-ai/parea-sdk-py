@@ -9,11 +9,12 @@ from openai import __version__ as openai_version
 
 from parea.constants import AZURE_MODEL_INFO, OPENAI_MODEL_INFO
 
-if openai_version.startswith("1."):
-    from openai.types.chat import ChatCompletion
+is_openai_1 = openai_version.startswith("1.")
+if is_openai_1:
+    from openai.types.chat import ChatCompletion, ChatCompletionMessage
 
 from parea.parea_logger import parea_logger
-from parea.schemas.log import LLMInputs, ModelParams
+from parea.schemas.log import LLMInputs, Message, ModelParams
 from parea.schemas.models import UpdateLog
 from parea.utils.trace_utils import get_current_trace_id, log_in_thread, trace_insert
 from parea.utils.universal_encoder import json_dumps
@@ -200,13 +201,13 @@ def _format_function_call(response_message) -> str:
     return json_dumps(calls, indent=4)
 
 
-def _kwargs_to_llm_configuration(kwargs, model=None):
+def _kwargs_to_llm_configuration(kwargs, model=None) -> LLMInputs:
     functions = kwargs.get("functions", None) or [d["function"] for d in kwargs.get("tools", [])]
     function_call_default = "auto" if functions else None
     return LLMInputs(
         model=model or kwargs.get("model", None),
         provider="openai",
-        messages=kwargs.get("messages", None),
+        messages=_convert_oai_messages(kwargs.get("messages", None)),
         functions=functions,
         function_call=kwargs.get("function_call", function_call_default) or kwargs.get("tool_choice", function_call_default),
         model_params=ModelParams(
@@ -218,6 +219,26 @@ def _kwargs_to_llm_configuration(kwargs, model=None):
             response_format=kwargs.get("response_format", None),
         ),
     )
+
+
+def _convert_oai_messages(messages: list) -> Union[list[Union[dict, Message]], None]:
+    if not messages:
+        return messages
+    if is_openai_1:
+        cleaned_messages = []
+        for m in messages:
+            if isinstance(m, ChatCompletionMessage):
+                cleaned_messages.append(
+                    Message(
+                        role=m.role,
+                        content=m.content if m.content else _format_function_call(m),
+                    )
+                )
+            else:
+                cleaned_messages.append(m)
+        return cleaned_messages
+    else:
+        return messages
 
 
 @lru_cache(maxsize=128)
