@@ -15,6 +15,7 @@ class Role(str, Enum):
     system = "system"
     example_user = "example_user"
     example_assistant = "example_assistant"
+    tool = "tool"
 
 
 @define
