@@ -87,7 +87,7 @@ def trace_insert(data: dict[str, Any], trace_id: Optional[str] = None):
     """
     Insert data into the trace log for the current or specified trace id. Data should be a dictionary with keys that correspond to the fields of the TraceLog model.
     Args:
-        data: Keys can be one of: trace_name, end_user_identifier, metadata, tags
+        data: Keys can be one of: trace_name, end_user_identifier, metadata, tags, deployment_id
         trace_id: The trace id to insert the data into. If not provided, the current trace id will be used.
     """
     try:
@@ -130,6 +130,7 @@ def trace(
     eval_funcs: Optional[list[Callable]] = None,
     access_output_of_func: Optional[Callable] = None,
     apply_eval_frac: float = 1.0,
+    deployment_id: Optional[str] = None,
 ):
     def init_trace(func_name, _parea_target_field, args, kwargs, func) -> tuple[str, datetime, contextvars.Token]:
         start_time = timezone_aware_now()
@@ -172,6 +173,7 @@ def trace(
                 inputs=inputs,
                 experiment_uuid=os.environ.get(PAREA_OS_ENV_EXPERIMENT_UUID, None),
                 apply_eval_frac=apply_eval_frac,
+                deployment_id=deployment_id,
             )
             parent_trace_id = new_trace_context[-2] if len(new_trace_context) > 1 else None
             if parent_trace_id:
