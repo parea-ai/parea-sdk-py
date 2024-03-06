@@ -1,7 +1,6 @@
-from typing import Any, Optional
-
 from collections.abc import Iterable
 from enum import Enum
+from typing import Any, Optional
 
 from attrs import define, field, validators
 
@@ -84,6 +83,12 @@ class FeedbackRequest:
 
 
 @define
+class TraceLogImage:
+    url: str
+    caption: Optional[str] = None
+
+
+@define
 class TraceLog(EvaluatedLog):
     trace_id: Optional[str] = field(default=None, validator=validators.instance_of(str))
     parent_trace_id: Optional[str] = field(default=None, validator=validators.instance_of(str))
@@ -112,6 +117,7 @@ class TraceLog(EvaluatedLog):
     metadata: Optional[dict[str, Any]] = None
     tags: Optional[list[str]] = field(factory=list)
     experiment_uuid: Optional[str] = None
+    images: Optional[list[TraceLogImage]] = field(factory=list)
 
 
 @define
