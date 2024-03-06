@@ -1,6 +1,7 @@
+from typing import Optional
+
 import json
 import os
-from typing import Optional
 
 from dotenv import load_dotenv
 from openai import OpenAI

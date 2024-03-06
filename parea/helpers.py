@@ -1,10 +1,11 @@
+from typing import Any, Optional, Union
+
 import csv
 import random
 import uuid
 from collections.abc import Iterable
 from copy import deepcopy
 from datetime import datetime
-from typing import Any, Optional, Union
 
 import pytz
 from attr import asdict, fields_dict
