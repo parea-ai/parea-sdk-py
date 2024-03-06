@@ -86,8 +86,9 @@ def get_root_trace_id() -> str:
 def trace_insert(data: dict[str, Any], trace_id: Optional[str] = None):
     """
     Insert data into the trace log for the current or specified trace id. Data should be a dictionary with keys that correspond to the fields of the TraceLog model.
+    If the field already has an existing value that is extensible (dict, set, list, etc.), the new value will be merged with the existing value.
     Args:
-        data: Keys can be one of: trace_name, end_user_identifier, metadata, tags, deployment_id
+        data: Keys can be one of: trace_name, end_user_identifier, metadata, tags, deployment_id, images
         trace_id: The trace id to insert the data into. If not provided, the current trace id will be used.
     """
     try:
