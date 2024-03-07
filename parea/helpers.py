@@ -58,7 +58,9 @@ def serialize_metadata_values(log_data: Union[TraceLog, UpdateLog, Completion]) 
         if "metadata" in log_data.field_name_to_value_map:
             serialized_values = serialize_values(log_data.field_name_to_value_map["metadata"])
             log_data.field_name_to_value_map["metadata"] = serialized_values
-    elif log_data.metadata:
+        return log_data
+
+    if log_data.metadata:
         serialized_values = serialize_values(log_data.metadata)
         log_data.metadata = serialized_values
 

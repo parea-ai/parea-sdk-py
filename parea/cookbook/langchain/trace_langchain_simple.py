@@ -26,8 +26,8 @@ def main():
     )
 
 
-def amain():
-    return chain.ainvoke(
+async def amain():
+    return await chain.ainvoke(
         {"input": "Write a Hello World program in Python using FastAPI."},
         config={"callbacks": [handler]},
     )

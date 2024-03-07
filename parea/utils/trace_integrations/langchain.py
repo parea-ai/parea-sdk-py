@@ -23,3 +23,9 @@ class PareaAILangchainTracer(BaseTracer):
 
     def get_parent_trace_id(self) -> UUID:
         return self.parent_trace_id
+
+    def _on_llm_end(self, run: Run) -> None:
+        self._persist_run(run)
+
+    def _on_chain_end(self, run: Run) -> None:
+        self._persist_run(run)
