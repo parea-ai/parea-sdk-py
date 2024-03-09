@@ -235,7 +235,15 @@ def _convert_oai_messages(messages: list) -> Union[list[Union[dict, Message]], N
                     )
                 )
             else:
-                cleaned_messages.append(m)
+                if 'tool_calls' in m:
+                    cleaned_messages.append(
+                        Message(
+                            role=m["role"],
+                            content=_format_function_call(ChatCompletionMessage(**m)),
+                        )
+                    )
+                else:
+                    cleaned_messages.append(m)
         return cleaned_messages
     else:
         return messages
