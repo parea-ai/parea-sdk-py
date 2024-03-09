@@ -42,8 +42,8 @@ completion = client.chat.completions.create(
     tools=tools,
     tool_choice="auto",
 )
-# messages.append({k: v for k, v in completion.choices[0].message.model_dump().items() if v is not None})
-messages.append(completion.choices[0].message)
+messages.append({k: v for k, v in completion.choices[0].message.model_dump().items() if v is not None})
+# messages.append(completion.choices[0].message)
 messages.append(
     {
         "role": "tool",
