@@ -67,7 +67,7 @@ def serialize_metadata_values(log_data: Union[TraceLog, UpdateLog, Completion]) 
     # Support openai vision content format
     if log_data.configuration:
         for message in log_data.configuration.messages or []:
-            if not isinstance(message.get("content"), str):
+            if isinstance(message, dict) and "content" in message and not isinstance(message["content"], str):
                 message["content"] = json_dumps(message["content"])
 
     return log_data
