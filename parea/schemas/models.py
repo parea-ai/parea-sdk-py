@@ -171,6 +171,16 @@ class TraceStatsSchema:
 class ExperimentStatsSchema:
     parent_trace_stats: list[TraceStatsSchema] = field(factory=list)
 
+    @property
+    def avg_scores(self) -> dict[str, float]:
+        accumulators = {}
+        counts = {}
+        for trace_stat in self.parent_trace_stats:
+            for score in trace_stat.scores:
+                accumulators[score.name] = accumulators.get(score.name, 0.0) + score.score
+                counts[score.name] = counts.get(score.name, 0) + 1
+        return {name: accumulators[name] / counts[name] for name in accumulators}
+
     def cumulative_avg_score(self) -> float:
         """Returns the average score across all evals."""
         scores = [score.score for trace_stat in self.parent_trace_stats for score in trace_stat.scores]

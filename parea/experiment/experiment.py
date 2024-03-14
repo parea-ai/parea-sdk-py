@@ -213,3 +213,9 @@ class Experiment:
             self.experiment_stats = asyncio.run(experiment(self.name, self.data, self.func, self.p, self.n_trials, self.metadata, self.dataset_level_evals, self.n_workers))
         except Exception as e:
             print(f"Error running experiment: {e}")
+
+    @property
+    def avg_scores(self) -> dict[str, float]:
+        """Returns the average score across all evals."""
+        return self.experiment_stats.avg_scores if self.experiment_stats else {}
+
