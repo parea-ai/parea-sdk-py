@@ -86,11 +86,12 @@ def _num_tokens_from_messages(messages, model="gpt-3.5-turbo-0613", is_azure: bo
         print("Warning: gpt-4 may update over time. Returning num tokens assuming gpt-4-0613.")
         return _num_tokens_from_messages(messages, model="gpt-4-0613")
     else:
-        raise NotImplementedError(
-            f"""num_tokens_from_messages() is not implemented for model {model}.
+        print(
+            f"""Warning: num_tokens_from_messages() is not implemented for model {model}.
             See https://github.com/openai/openai-python/blob/main/chatml.md for
-            information on how messages are converted to tokens."""
+            information on how messages are converted to tokens. Will use default model"""
         )
+        return _num_tokens_from_messages(messages)
     num_tokens = 0
     for message in messages:
         num_tokens += tokens_per_message
