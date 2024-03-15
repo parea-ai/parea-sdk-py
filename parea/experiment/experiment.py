@@ -218,4 +218,3 @@ class Experiment:
     def avg_scores(self) -> dict[str, float]:
         """Returns the average score across all evals."""
         return self.experiment_stats.avg_scores if self.experiment_stats else {}
-
