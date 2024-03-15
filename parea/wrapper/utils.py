@@ -236,7 +236,7 @@ def _convert_oai_messages(messages: list) -> Union[list[Union[dict, Message]], N
                     )
                 )
             else:
-                if 'tool_calls' in m:
+                if "tool_calls" in m:
                     cleaned_messages.append(
                         Message(
                             role=m["role"],
