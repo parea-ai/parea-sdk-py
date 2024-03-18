@@ -196,6 +196,7 @@ class UpdateTraceScenario(str, Enum):
     RESULT: str = "result"
     ERROR: str = "error"
     CHAIN: str = "chain"
+    USAGE: str = "usage"
 
 
 @define

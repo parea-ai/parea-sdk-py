@@ -8,16 +8,15 @@ import tiktoken
 from openai import __version__ as openai_version
 
 from parea.constants import AZURE_MODEL_INFO, OPENAI_MODEL_INFO
-
-is_openai_1 = openai_version.startswith("1.")
-if is_openai_1:
-    from openai.types.chat import ChatCompletion, ChatCompletionMessage
-
 from parea.parea_logger import parea_logger
 from parea.schemas.log import LLMInputs, Message, ModelParams
 from parea.schemas.models import UpdateLog
 from parea.utils.trace_utils import get_current_trace_id, log_in_thread, trace_insert
 from parea.utils.universal_encoder import json_dumps
+
+is_openai_1 = openai_version.startswith("1.")
+if is_openai_1:
+    from openai.types.chat import ChatCompletion, ChatCompletionMessage
 
 
 # https://gist.github.com/JettJones/c236494013f22723c1822126df944b12
@@ -203,7 +202,7 @@ def _format_function_call(response_message) -> str:
 
 
 def _kwargs_to_llm_configuration(kwargs, model=None) -> LLMInputs:
-    functions = kwargs.get("functions", None) or [d["function"] for d in kwargs.get("tools", [])]
+    functions = kwargs.get("functions", None) or [d.get("function", {}) for d in kwargs.get("tools", [])]
     function_call_default = "auto" if functions else None
     return LLMInputs(
         model=model or kwargs.get("model", None),
