@@ -270,7 +270,7 @@ class ThreadsWrapper(BaseWrapper):
             self.delete_method = client.beta.threads.delete
             self.wrapped = True
         except Exception as e:
-            logger.debug(f"Error occurred initializing AssistantsWrapper, {e}")
+            logger.debug(f"Error occurred initializing ThreadsWrapper, {e}")
 
     def create(self, *args, **kwargs):
         func = self.create_method
@@ -295,7 +295,7 @@ class ThreadsWrapper(BaseWrapper):
         func = self.delete_method
         return self._wrap_steps(self.module_name, func, *args, **kwargs)
 
-    async def aacreate(self, *args, **kwargs):
+    async def acreate(self, *args, **kwargs):
         func = self.create_method
         return await self._awrap_steps(self.module_name, func, *args, **kwargs)
 
@@ -323,7 +323,7 @@ class ThreadsWrapper(BaseWrapper):
             return
 
         methods = {
-            self.create_method: self.aacreate if self.is_async else self.create,
+            self.create_method: self.acreate if self.is_async else self.create,
             self.retrieve_method: self.aretrieve if self.is_async else self.retrieve,
             self.update_method: self.aupdate if self.is_async else self.update,
             self.create_and_run_method: self.acreate_and_run if self.is_async else self.create_and_run,
@@ -349,11 +349,11 @@ class ThreadRunsWrapper(BaseWrapper):
             self.cancel_method = client.beta.threads.runs.cancel
             self.wrapped = True
         except Exception as e:
-            logger.debug(f"Error occurred initializing AssistantsWrapper, {e}")
+            logger.debug(f"Error occurred initializing ThreadRunsWrapper, {e}")
 
     def create(self, *args, **kwargs):
         if kwargs.get("stream", False):
-            logger.debug("Stream is not supported for create_and_run method")
+            logger.debug("Stream is not supported for create method")
             return None
         func = self.create_method
         return self._wrap_steps(self.module_name, func, *args, **kwargs)
@@ -376,14 +376,14 @@ class ThreadRunsWrapper(BaseWrapper):
 
     def submit_tool_outputs(self, *args, **kwargs):
         if kwargs.get("stream", False):
-            logger.debug("Stream is not supported for create_and_run method")
+            logger.debug("Stream is not supported for submit_tool_outputs method")
             return None
         func = self.submit_tool_outputs_method
         return self._wrap_steps(self.module_name, func, *args, **kwargs)
 
-    async def aacreate(self, *args, **kwargs):
+    async def acreate(self, *args, **kwargs):
         if kwargs.get("stream", False):
-            logger.debug("Stream is not supported for create_and_run method")
+            logger.debug("Stream is not supported for create method")
             return None
         func = self.create_method
         return await self._awrap_steps(self.module_name, func, *args, **kwargs)
@@ -406,7 +406,7 @@ class ThreadRunsWrapper(BaseWrapper):
 
     async def asubmit_tool_outputs(self, *args, **kwargs):
         if kwargs.get("stream", False):
-            logger.debug("Stream is not supported for create_and_run method")
+            logger.debug("Stream is not supported for submit_tool_outputs method")
             return None
         func = self.submit_tool_outputs_method
         return await self._awrap_steps(self.module_name, func, *args, **kwargs)
@@ -416,7 +416,7 @@ class ThreadRunsWrapper(BaseWrapper):
             return
 
         methods = {
-            self.create_method: self.aacreate if self.is_async else self.create,
+            self.create_method: self.acreate if self.is_async else self.create,
             self.retrieve_method: self.aretrieve if self.is_async else self.retrieve,
             self.update_method: self.aupdate if self.is_async else self.update,
             self.list_method: self.alist if self.is_async else self.list,
@@ -441,7 +441,7 @@ class ThreadMessagesWrapper(BaseWrapper):
             self.list_method = client.beta.threads.messages.list
             self.wrapped = True
         except Exception as e:
-            logger.debug(f"Error occurred initializing AssistantsWrapper, {e}")
+            logger.debug(f"Error occurred initializing ThreadMessagesWrapper, {e}")
 
     def create(self, *args, **kwargs):
         func = self.create_method
@@ -459,7 +459,7 @@ class ThreadMessagesWrapper(BaseWrapper):
         func = self.list_method
         return self._wrap_steps(self.module_name, func, *args, **kwargs)
 
-    async def aacreate(self, *args, **kwargs):
+    async def acreate(self, *args, **kwargs):
         func = self.create_method
         return await self._awrap_steps(self.module_name, func, *args, **kwargs)
 
@@ -480,7 +480,7 @@ class ThreadMessagesWrapper(BaseWrapper):
             return
 
         methods = {
-            self.create_method: self.aacreate if self.is_async else self.create,
+            self.create_method: self.acreate if self.is_async else self.create,
             self.retrieve_method: self.aretrieve if self.is_async else self.retrieve,
             self.update_method: self.aupdate if self.is_async else self.update,
             self.list_method: self.alist if self.is_async else self.list,
@@ -501,7 +501,7 @@ class ThreadRunsStepsWrapper(BaseWrapper):
             self.list_method = client.beta.threads.runs.steps.list
             self.wrapped = True
         except Exception as e:
-            logger.debug(f"Error occurred initializing AssistantsWrapper, {e}")
+            logger.debug(f"Error occurred initializing ThreadRunsStepsWrapper, {e}")
 
     def retrieve(self, *args, **kwargs):
         func = self.retrieve_method
@@ -543,7 +543,7 @@ class ThreadMessagesFilesWrapper(BaseWrapper):
             self.list_method = client.beta.threads.messages.files.list
             self.wrapped = True
         except Exception as e:
-            logger.debug(f"Error occurred initializing AssistantsWrapper, {e}")
+            logger.debug(f"Error occurred initializing ThreadMessagesFilesWrapper, {e}")
 
     def retrieve(self, *args, **kwargs):
         func = self.retrieve_method

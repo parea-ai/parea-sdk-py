@@ -79,7 +79,8 @@ class Parea:
     def wrap_openai_client(self, client: "OpenAI") -> None:
         """Only necessary for instance client with OpenAI version >= 1.0.0"""
         OpenAIWrapper().init(log=logger_all_possible, cache=self.cache, module_client=client)
-        BetaWrappers(client).init()
+        if PAREA_BETA_LOGGING:
+            BetaWrappers(client).init()
 
     def _add_project_uuid_to_data(self, data) -> dict:
         data_dict = asdict(data)
