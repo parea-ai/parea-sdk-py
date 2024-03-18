@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 from parea.api_client import HTTPClient
 from parea.cache import InMemoryCache, RedisCache
 from parea.cache.cache import Cache
-from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
+from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID, PAREA_BETA_LOGGING
 from parea.experiment.datasets import create_test_cases, create_test_collection
 from parea.helpers import gen_trace_id, serialize_metadata_values
 from parea.parea_logger import parea_logger
