@@ -36,6 +36,7 @@ from parea.schemas.models import (
 )
 from parea.utils.trace_utils import get_current_trace_id, get_root_trace_id, logger_all_possible, logger_record_log, trace_data
 from parea.wrapper import OpenAIWrapper
+from parea.wrapper.openai_beta_wrapper import BetaWrappers
 
 load_dotenv()
 
@@ -78,6 +79,7 @@ class Parea:
     def wrap_openai_client(self, client: "OpenAI") -> None:
         """Only necessary for instance client with OpenAI version >= 1.0.0"""
         OpenAIWrapper().init(log=logger_all_possible, cache=self.cache, module_client=client)
+        BetaWrappers(client).init()
 
     def _add_project_uuid_to_data(self, data) -> dict:
         data_dict = asdict(data)
@@ -255,7 +257,12 @@ class Parea:
             data=asdict(request),
         )
 
-    def add_test_cases(self, data: list[dict[str, Any]], name: Optional[str] = None, dataset_id: Optional[int] = None) -> None:
+    def add_test_cases(
+        self,
+        data: list[dict[str, Any]],
+        name: Optional[str] = None,
+        dataset_id: Optional[int] = None,
+    ) -> None:
         request = CreateTestCases(id=dataset_id, name=name, test_cases=create_test_cases(data))
         self._client.request(
             "POST",
@@ -284,7 +291,15 @@ class Parea:
         """
         from parea import Experiment
 
-        return Experiment(data=data, func=func, p=self, n_trials=n_trials, metadata=metadata, dataset_level_evals=dataset_level_evals, n_workers=n_workers)
+        return Experiment(
+            data=data,
+            func=func,
+            p=self,
+            n_trials=n_trials,
+            metadata=metadata,
+            dataset_level_evals=dataset_level_evals,
+            n_workers=n_workers,
+        )
 
     def _update_data_and_trace(self, data: Completion) -> Completion:
         data = serialize_metadata_values(data)
