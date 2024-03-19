@@ -16,7 +16,6 @@ def str2bool(v):
 
 
 TURN_OFF_PAREA_LOGGING = str2bool(os.getenv("TURN_OFF_PAREA_LOGGING", False))
-PAREA_BETA_LOGGING = str2bool(os.getenv("PAREA_BETA_LOGGING", False))
 
 PAREA_OS_ENV_EXPERIMENT_UUID = "_PAREA_EXPERIMENT_UUID"
 PAREA_DVC_DIR = ".parea"

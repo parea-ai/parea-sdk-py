@@ -34,5 +34,5 @@ async def acall_llm_stream():
 
 
 if __name__ == "__main__":
-    # call_llm_stream()
-    asyncio.run(acall_llm_stream())
+    call_llm_stream()
+    # asyncio.run(acall_llm_stream())
