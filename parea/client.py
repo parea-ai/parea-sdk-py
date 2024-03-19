@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 from parea.api_client import HTTPClient
 from parea.cache import InMemoryCache, RedisCache
 from parea.cache.cache import Cache
-from parea.constants import PAREA_BETA_LOGGING, PAREA_OS_ENV_EXPERIMENT_UUID
+from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.experiment.datasets import create_test_cases, create_test_collection
 from parea.helpers import gen_trace_id, serialize_metadata_values
 from parea.parea_logger import parea_logger
@@ -79,8 +79,7 @@ class Parea:
     def wrap_openai_client(self, client: "OpenAI") -> None:
         """Only necessary for instance client with OpenAI version >= 1.0.0"""
         OpenAIWrapper().init(log=logger_all_possible, cache=self.cache, module_client=client)
-        if PAREA_BETA_LOGGING:
-            BetaWrappers(client).init()
+        BetaWrappers(client).init()
 
     def _add_project_uuid_to_data(self, data) -> dict:
         data_dict = asdict(data)
