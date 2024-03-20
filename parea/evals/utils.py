@@ -130,12 +130,15 @@ def run_evals_synchronous(trace_id: str, log: Log, eval_funcs: list[EvalFuncTupl
     return _make_evaluations(trace_id, log, eval_funcs, verbose, True)
 
 
-def get_tokens(model: str, text: str) -> Union[str, list[int]]:
+def get_tokens(model: str, text: str) -> list[int]:
     if not text:
         return []
     try:
         encoding = tiktoken.encoding_for_model(model)
     except KeyError:
         encoding = tiktoken.get_encoding("cl100k_base")
-    tokens = _safe_encode(encoding, text)
-    return tokens
+    try:
+        return encoding.encode(text)
+    except Exception as e:
+        print(f"Error encoding text: {e}")
+        return []
