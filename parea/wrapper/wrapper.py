@@ -1,5 +1,6 @@
 from typing import Any, Callable
 
+import contextvars
 import functools
 import inspect
 import logging
@@ -11,8 +12,8 @@ from parea.cache.cache import Cache
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID, TURN_OFF_PAREA_LOGGING
 from parea.evals.utils import _make_evaluations
 from parea.helpers import timezone_aware_now
-from parea.schemas.models import TraceLog
-from parea.utils.trace_utils import call_eval_funcs_then_log, trace_context, trace_data
+from parea.schemas.models import TraceLog, UpdateTraceScenario
+from parea.utils.trace_utils import call_eval_funcs_then_log, fill_trace_data, trace_context, trace_data
 from parea.wrapper.utils import skip_decorator_if_func_in_stack
 
 logger = logging.getLogger()
@@ -71,18 +72,20 @@ class Wrapper:
         else:
             return self.sync_decorator(original_func)
 
-    def _init_trace(self) -> tuple[str, datetime]:
+    def _init_trace(self) -> tuple[str, datetime, contextvars.Token]:
         start_time = timezone_aware_now()
         trace_id = str(uuid4())
-        if TURN_OFF_PAREA_LOGGING:
-            return trace_id, start_time
-        try:
-            trace_context.get().append(trace_id)
 
+        new_trace_context = trace_context.get() + [trace_id]
+        token = trace_context.set(new_trace_context)
+
+        if TURN_OFF_PAREA_LOGGING:
+            return trace_id, start_time, token
+        try:
             trace_data.get()[trace_id] = TraceLog(
                 trace_id=trace_id,
-                parent_trace_id=trace_id,
-                root_trace_id=trace_id,
+                parent_trace_id=new_trace_context[0],
+                root_trace_id=new_trace_context[0],
                 start_timestamp=start_time.isoformat(),
                 trace_name="LLM",
                 end_user_identifier=None,
@@ -93,37 +96,19 @@ class Wrapper:
                 experiment_uuid=os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None),
             )
 
-            parent_trace_id = trace_context.get()[-2] if len(trace_context.get()) > 1 else None
-            if not parent_trace_id:
-                # we don't have a parent trace id, so we need to create one
-                parent_trace_id = str(uuid4())
-                trace_context.get().insert(0, parent_trace_id)
-                trace_data.get()[parent_trace_id] = TraceLog(
-                    trace_id=parent_trace_id,
-                    parent_trace_id=parent_trace_id,
-                    root_trace_id=parent_trace_id,
-                    start_timestamp=start_time.isoformat(),
-                    end_user_identifier=None,
-                    metadata=None,
-                    target=None,
-                    tags=None,
-                    inputs={},
-                    experiment_uuid=os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None),
-                )
-            trace_data.get()[trace_id].root_trace_id = trace_context.get()[0]
-            trace_data.get()[trace_id].parent_trace_id = parent_trace_id
-            trace_data.get()[parent_trace_id].children.append(trace_id)
-            self.log(parent_trace_id)
+            parent_trace_id = new_trace_context[-2] if len(new_trace_context) > 1 else None
+            if parent_trace_id:
+                fill_trace_data(trace_id, {"parent_trace_id": parent_trace_id}, UpdateTraceScenario.CHAIN)
         except Exception as e:
             logger.debug(f"Error occurred initializing openai trace, {e}")
 
-        return trace_id, start_time
+        return trace_id, start_time, token
 
     @skip_decorator_if_func_in_stack(call_eval_funcs_then_log, _make_evaluations)
     def async_decorator(self, orig_func: Callable) -> Callable:
         @functools.wraps(orig_func)
         async def wrapper(*args, **kwargs):
-            trace_id, start_time = self._init_trace()
+            trace_id, start_time, context_token = self._init_trace()
             response = None
             exception = None
             error = None
@@ -144,10 +129,10 @@ class Wrapper:
                     await self.cache.ainvalidate(cache_key)
             finally:
                 if exception is not None:
-                    self._acleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
+                    self._acleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response, context_token)
                     raise exception
                 else:
-                    return self._acleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
+                    return self._acleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response, context_token)
 
         return wrapper
 
@@ -155,7 +140,7 @@ class Wrapper:
     def sync_decorator(self, orig_func: Callable) -> Callable:
         @functools.wraps(orig_func)
         def wrapper(*args, **kwargs):
-            trace_id, start_time = self._init_trace()
+            trace_id, start_time, context_token = self._init_trace()
             response = None
             error = None
             cache_hit = False
@@ -176,17 +161,17 @@ class Wrapper:
                     self.cache.invalidate(cache_key)
             finally:
                 if exception is not None:
-                    self._cleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
+                    self._cleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response, context_token)
                     raise exception
                 else:
-                    return self._cleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response)
+                    return self._cleanup_trace(trace_id, start_time, error, cache_hit, args, kwargs, response, context_token)
 
         return wrapper
 
-    def _cleanup_trace_core(self, trace_id: str, start_time: datetime, error: str, cache_hit, args, kwargs):
+    def _cleanup_trace_core(self, trace_id: str, start_time: datetime, error: str, cache_hit, args, kwargs, context_token: contextvars.Token):
         trace_data.get()[trace_id].cache_hit = cache_hit
 
-        parent_id = trace_context.get()[-2]
+        parent_id = trace_context.get()[-2] if len(trace_context.get()) > 1 else None
         if error:
             trace_data.get()[trace_id].error = error
             trace_data.get()[trace_id].status = "error"
@@ -197,25 +182,27 @@ class Wrapper:
             end_time = timezone_aware_now()
             trace_data.get()[trace_id].end_timestamp = end_time.isoformat()
             trace_data.get()[trace_id].latency = (end_time - start_time).total_seconds()
-            trace_data.get()[parent_id].end_timestamp = end_time.isoformat()
-            start_time_parent = datetime.fromisoformat(trace_data.get()[parent_id].start_timestamp)
-            trace_data.get()[parent_id].latency = (end_time - start_time_parent).total_seconds()
+            if parent_id:
+                trace_data.get()[parent_id].end_timestamp = end_time.isoformat()
+                start_time_parent = datetime.fromisoformat(trace_data.get()[parent_id].start_timestamp)
+                trace_data.get()[parent_id].latency = (end_time - start_time_parent).total_seconds()
 
             if not error and self.cache:
                 self.cache.set(self.convert_kwargs_to_cache_request(args, kwargs), trace_data.get()[trace_id])
 
             self.log(trace_id)
-            self.log(parent_id)
+            if parent_id:
+                self.log(parent_id)
             try:
-                trace_context.get().pop()
+                trace_context.reset(context_token)
             except IndexError:
                 pass
 
         return final_log
 
-    def _cleanup_trace(self, trace_id: str, start_time: datetime, error: str, cache_hit, args, kwargs, response):
+    def _cleanup_trace(self, trace_id: str, start_time: datetime, error: str, cache_hit, args, kwargs, response, context_token: contextvars.Token):
         try:
-            final_log = self._cleanup_trace_core(trace_id, start_time, error, cache_hit, args, kwargs)
+            final_log = self._cleanup_trace_core(trace_id, start_time, error, cache_hit, args, kwargs, context_token)
 
             if self.should_use_gen_resolver(response):
                 return self.gen_resolver(trace_id, args, kwargs, response, final_log)
@@ -227,9 +214,9 @@ class Wrapper:
             logger.debug(f"Error occurred cleaning up openai trace, {e}")
             return response
 
-    def _acleanup_trace(self, trace_id: str, start_time: datetime, error: str, cache_hit, args, kwargs, response):
+    def _acleanup_trace(self, trace_id: str, start_time: datetime, error: str, cache_hit, args, kwargs, response, context_token: contextvars.Token):
         try:
-            final_log = self._cleanup_trace_core(trace_id, start_time, error, cache_hit, args, kwargs)
+            final_log = self._cleanup_trace_core(trace_id, start_time, error, cache_hit, args, kwargs, context_token)
 
             if self.should_use_gen_resolver(response):
                 return self.agen_resolver(trace_id, args, kwargs, response, final_log)
