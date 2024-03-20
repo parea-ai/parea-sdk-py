@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any, Callable, Optional, TypeVar, Union
 
 import json
@@ -8,6 +9,7 @@ from collections.abc import AsyncGenerator, AsyncIterator, Generator, Iterator, 
 import openai
 from openai import __version__ as openai_version
 
+from parea.helpers import timezone_aware_now
 from parea.utils.universal_encoder import json_dumps
 from parea.wrapper.utils import _calculate_input_tokens, _compute_cost, _format_function_call, _kwargs_to_llm_configuration, _num_tokens_from_string
 
@@ -108,22 +110,22 @@ class OpenAIWrapper:
         llm_configuration = self._kwargs_to_llm_configuration(kwargs)
         trace_data.get()[trace_id].configuration = llm_configuration
 
-        accumulator, model_from_response = self._get_default_dict_streaming()
+        accumulator, info_from_response = self._get_default_dict_streaming()
 
-        def gen_final_processing_and_logging(accumulator, model_from_response):
+        def gen_final_processing_and_logging(accumulator, info_from_response):
             OpenAIWrapper._format_accumulator_in_place(accumulator)
 
-            model = model_from_response.get("model") or llm_configuration.model
-            OpenAIWrapper.update_trace_data_from_stream_response(trace_id, model, accumulator, kwargs)
+            model = info_from_response.get("model") or llm_configuration.model
+            OpenAIWrapper.update_trace_data_from_stream_response(trace_id, model, accumulator, kwargs, info_from_response["first_token_timestamp"])
             final_log()
 
         if is_old_openai:
 
             def logging_sync_generator(sync_gen: Generator[_T]) -> Generator[_T]:
                 for chunk in sync_gen:
-                    self._update_accumulator_streaming(accumulator, model_from_response, chunk)
+                    self._update_accumulator_streaming(accumulator, info_from_response, chunk)
                     yield chunk
-                gen_final_processing_and_logging(accumulator, model_from_response)
+                gen_final_processing_and_logging(accumulator, info_from_response)
 
             return logging_sync_generator(response)
 
@@ -133,17 +135,17 @@ class OpenAIWrapper:
             return OpenAIStreamWrapper(
                 response,
                 accumulator,
-                model_from_response,
+                info_from_response,
                 OpenAIWrapper._update_accumulator_streaming,
                 gen_final_processing_and_logging,
             )
 
     @staticmethod
     def _get_default_dict_streaming():
-        model_from_response = {"model": ""}
+        info_from_response = {"model": "", "first_token_timestamp": None}
         accumulated_tools = defaultdict(lambda: {"id": "", "function": {"arguments": [], "name": ""}, "type": "function"})
         accumulator = defaultdict(content=[], role="assistant", function_call=defaultdict(arguments=[], name=""), tool_calls=accumulated_tools)
-        return accumulator, model_from_response
+        return accumulator, info_from_response
 
     @staticmethod
     def _format_accumulator_in_place(accumulator):
@@ -169,9 +171,13 @@ class OpenAIWrapper:
         return accumulator
 
     @staticmethod
-    def _update_accumulator_streaming(accumulator, model_from_response, chunk):
-        if chunk.model and not model_from_response.get("model"):
-            model_from_response["model"] = chunk.model
+    def _update_accumulator_streaming(accumulator, info_from_response, chunk):
+        def _set_timestamp_if_not_set():
+            if not info_from_response.get("first_token_timestamp"):
+                info_from_response["first_token_timestamp"] = timezone_aware_now()
+
+        if chunk.model and not info_from_response.get("model"):
+            info_from_response["model"] = chunk.model
 
         if not chunk.choices:
             return
@@ -185,14 +191,17 @@ class OpenAIWrapper:
             accumulator["role"] = delta_dict.get("role")
 
         if delta_dict.get("content"):
+            _set_timestamp_if_not_set()
             accumulator["content"].append(delta_dict["content"])
 
         if delta_dict.get("function_call"):
+            _set_timestamp_if_not_set()
             accumulator["function_call"]["name"] = delta_dict.get("function_call")["name"] or accumulator["function_call"]["name"]
             if delta_dict.get("function_call", {}).get("arguments"):
                 accumulator["function_call"]["arguments"].append(delta_dict["function_call"]["arguments"])
 
         if tool_calls := delta_dict.get("tool_calls", []):
+            _set_timestamp_if_not_set()
             for tool_call in tool_calls:
                 tool_id = tool_call["index"]
 
@@ -208,22 +217,22 @@ class OpenAIWrapper:
         llm_configuration = self._kwargs_to_llm_configuration(kwargs)
         trace_data.get()[trace_id].configuration = llm_configuration
 
-        accumulator, model_from_response = self._get_default_dict_streaming()
+        accumulator, info_from_response = self._get_default_dict_streaming()
 
-        def agen_final_processing_and_logging(accumulator, model_from_response):
+        def agen_final_processing_and_logging(accumulator, info_from_response):
             OpenAIWrapper._format_accumulator_in_place(accumulator)
 
-            model = model_from_response.get("model") or llm_configuration.model
-            OpenAIWrapper.update_trace_data_from_stream_response(trace_id, model, accumulator, kwargs)
+            model = info_from_response.get("model") or llm_configuration.model
+            OpenAIWrapper.update_trace_data_from_stream_response(trace_id, model, accumulator, kwargs, info_from_response["first_token_timestamp"])
             final_log()
 
         if is_old_openai:
 
             async def logging_async_generator(async_gen: AsyncGenerator[_T]) -> AsyncGenerator[_T]:
                 async for chunk in async_gen:
-                    self._update_accumulator_streaming(accumulator, model_from_response, chunk)
+                    self._update_accumulator_streaming(accumulator, info_from_response, chunk)
                     yield chunk
-                agen_final_processing_and_logging(accumulator, model_from_response)
+                agen_final_processing_and_logging(accumulator, info_from_response)
 
             return logging_async_generator(response)
         else:
@@ -232,13 +241,13 @@ class OpenAIWrapper:
             return OpenAIAsyncStreamWrapper(
                 response,
                 accumulator,
-                model_from_response,
+                info_from_response,
                 OpenAIWrapper._update_accumulator_streaming,
                 agen_final_processing_and_logging,
             )
 
     @staticmethod
-    def update_trace_data_from_stream_response(trace_id, model, accumulator, kwargs):
+    def update_trace_data_from_stream_response(trace_id, model, accumulator, kwargs, first_token_timestamp):
         output = OpenAIWrapper._get_output(accumulator, model)
         trace_data.get()[trace_id].output = output
         output_tokens = _num_tokens_from_string(output, model)
@@ -252,6 +261,9 @@ class OpenAIWrapper:
         trace_data.get()[trace_id].output_tokens = output_tokens
         trace_data.get()[trace_id].total_tokens = input_tokens + output_tokens
         trace_data.get()[trace_id].cost = _compute_cost(input_tokens, output_tokens, model)
+        trace_data.get()[trace_id].time_to_first_token = (
+            first_token_timestamp - datetime.fromisoformat(trace_data.get()[trace_id].start_timestamp)
+        ).total_seconds()
 
     @staticmethod
     def _kwargs_to_llm_configuration(kwargs):

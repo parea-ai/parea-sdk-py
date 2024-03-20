@@ -120,6 +120,7 @@ class Log:
     output: Optional[str] = None
     target: Optional[str] = None
     latency: Optional[float] = 0.0
+    time_to_first_token: Optional[float] = None
     input_tokens: Optional[int] = 0
     output_tokens: Optional[int] = 0
     total_tokens: Optional[int] = 0
