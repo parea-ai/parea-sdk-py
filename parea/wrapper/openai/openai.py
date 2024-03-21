@@ -1,10 +1,10 @@
-from datetime import datetime
 from typing import Any, Callable, Optional, TypeVar, Union
 
 import json
 import os
 from collections import defaultdict
 from collections.abc import AsyncGenerator, AsyncIterator, Generator, Iterator, Sequence
+from datetime import datetime
 
 import openai
 from openai import __version__ as openai_version
@@ -261,9 +261,7 @@ class OpenAIWrapper:
         trace_data.get()[trace_id].output_tokens = output_tokens
         trace_data.get()[trace_id].total_tokens = input_tokens + output_tokens
         trace_data.get()[trace_id].cost = _compute_cost(input_tokens, output_tokens, model)
-        trace_data.get()[trace_id].time_to_first_token = (
-            first_token_timestamp - datetime.fromisoformat(trace_data.get()[trace_id].start_timestamp)
-        ).total_seconds()
+        trace_data.get()[trace_id].time_to_first_token = (first_token_timestamp - datetime.fromisoformat(trace_data.get()[trace_id].start_timestamp)).total_seconds()
 
     @staticmethod
     def _kwargs_to_llm_configuration(kwargs):
