@@ -13,8 +13,6 @@ p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 p.wrap_openai_client(client)
 
 
-p.wrap_openai_client(client)
-
 tools = [
     {
         "type": "function",
