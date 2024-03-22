@@ -9,7 +9,7 @@ from openai import __version__ as openai_version
 
 from parea.constants import AZURE_MODEL_INFO, OPENAI_MODEL_INFO
 from parea.parea_logger import parea_logger
-from parea.schemas.log import LLMInputs, Message, ModelParams
+from parea.schemas.log import LLMInputs, Message, ModelParams, Role
 from parea.schemas.models import UpdateLog
 from parea.utils.trace_utils import get_current_trace_id, log_in_thread, trace_insert
 from parea.utils.universal_encoder import json_dumps
@@ -191,13 +191,23 @@ def _format_function_call(response_message) -> str:
 
     for call in func_obj:
         if call:
+            is_tool_call = hasattr(call, "id")
             body = getattr(call, "function", None) or call
             function_name = body.name
             try:
                 function_args = json.loads(body.arguments)
             except json.decoder.JSONDecodeError:
                 function_args = json.loads(clean_json_string(body.arguments))
-            calls.append({"name": function_name, "arguments": function_args})
+            if is_tool_call:
+                calls.append(
+                    {
+                        "id": call.id,
+                        "type": call.type,
+                        "function": {"name": function_name, "arguments": function_args},
+                    }
+                )
+            else:
+                calls.append({"name": function_name, "arguments": function_args})
     return json_dumps(calls, indent=4)
 
 
@@ -227,7 +237,12 @@ def _convert_oai_messages(messages: list) -> Union[list[Union[dict, Message]], N
     if is_openai_1:
         cleaned_messages = []
         for m in messages:
-            if isinstance(m, ChatCompletionMessage):
+            is_chat_completion = isinstance(m, ChatCompletionMessage)
+            if (is_chat_completion and m.role == "tool") or (isinstance(m, dict) and m.get("role") == "tool"):
+                tool_call_id = m.tool_call_id if is_chat_completion else m.get("tool_call_id")
+                content = m.content if is_chat_completion else m.get("content", "")
+                cleaned_messages.append(Message(role=Role.tool, content=json_dumps({"tool_call_id": tool_call_id, "content": content}, indent=4)))
+            elif is_chat_completion:
                 cleaned_messages.append(
                     Message(
                         role=m.role,
