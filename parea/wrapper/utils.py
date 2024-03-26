@@ -7,7 +7,7 @@ from functools import lru_cache, wraps
 import tiktoken
 from openai import __version__ as openai_version
 
-from parea.constants import AZURE_MODEL_INFO, ALL_NON_AZURE_MODELS_INFO
+from parea.constants import ALL_NON_AZURE_MODELS_INFO, AZURE_MODEL_INFO
 from parea.parea_logger import parea_logger
 from parea.schemas.log import LLMInputs, Message, ModelParams, Role
 from parea.schemas.models import UpdateLog

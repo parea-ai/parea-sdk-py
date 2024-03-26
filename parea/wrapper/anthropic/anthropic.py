@@ -1,17 +1,17 @@
+from typing import Any, Callable, Optional, Sequence
+
 from collections import defaultdict
 from datetime import datetime
-from typing import Callable, Sequence, Any, Optional
 
-from anthropic import Client, Stream, MessageStreamManager, AsyncStream, AsyncMessageStreamManager
-from anthropic.types import Message, MessageStartEvent, ContentBlockDeltaEvent, MessageDeltaEvent
+from anthropic import AsyncMessageStreamManager, AsyncStream, Client, MessageStreamManager, Stream
+from anthropic.types import ContentBlockDeltaEvent, Message, MessageDeltaEvent, MessageStartEvent
 
 from parea.cache.cache import Cache
 from parea.helpers import timezone_aware_now
-from parea.schemas import LLMInputs, CacheRequest, TraceLog, ModelParams
+from parea.schemas import CacheRequest, LLMInputs, ModelParams, TraceLog
 from parea.utils.trace_utils import trace_data
 from parea.wrapper import Wrapper
-from parea.wrapper.anthropic.stream_wrapper import AnthropicStreamWrapper, MessageStreamManagerWrapper, \
-    AnthropicAsyncStreamWrapper, MessageAsyncStreamManagerWrapper
+from parea.wrapper.anthropic.stream_wrapper import AnthropicAsyncStreamWrapper, AnthropicStreamWrapper, MessageAsyncStreamManagerWrapper, MessageStreamManagerWrapper
 from parea.wrapper.utils import _compute_cost
 
 
@@ -62,13 +62,9 @@ class AnthropicWrapper:
 
             def gen_final_processing_and_logging(accumulator, info_from_response):
                 model = info_from_response.get("model") or llm_configuration.model
-                self.update_trace_data_from_stream_response(
-                    trace_id,
-                    model,
-                    accumulator,
-                    info_from_response
-                )
+                self.update_trace_data_from_stream_response(trace_id, model, accumulator, info_from_response)
                 final_log()
+
             return AnthropicStreamWrapper(
                 response,
                 accumulator,
@@ -77,6 +73,7 @@ class AnthropicWrapper:
                 gen_final_processing_and_logging,
             )
         else:  # needed for stream context manager; this will need to handle both sync and async; as messages.stream is always sync
+
             def resolve_and_log(m: Message):
                 self.resolver(trace_id, _args, kwargs, m)
                 final_log()
@@ -93,12 +90,7 @@ class AnthropicWrapper:
 
         def gen_final_processing_and_logging(accumulator, info_from_response):
             model = info_from_response.get("model") or llm_configuration.model
-            self.update_trace_data_from_stream_response(
-                trace_id,
-                model,
-                accumulator,
-                info_from_response
-            )
+            self.update_trace_data_from_stream_response(trace_id, model, accumulator, info_from_response)
             final_log()
 
         return AnthropicAsyncStreamWrapper(
@@ -164,7 +156,7 @@ class AnthropicWrapper:
         if isinstance(chunk, MessageStartEvent):
             info_from_response["input_tokens"] = chunk.message.usage.input_tokens
         elif isinstance(chunk, ContentBlockDeltaEvent):
-            accumulator['content'].append(chunk.delta.text)
+            accumulator["content"].append(chunk.delta.text)
             if not info_from_response.get("first_token_timestamp"):
                 info_from_response["first_token_timestamp"] = timezone_aware_now()
         elif isinstance(chunk, MessageDeltaEvent):

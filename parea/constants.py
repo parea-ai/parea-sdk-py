@@ -203,80 +203,104 @@ instant_pricing = {"prompt": 1.63, "completion": 5.51}
 claude_pricing = {"prompt": 8.00, "completion": 24.00}
 ANTHROPIC_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, float]]]] = {
     "claude-instant-1.1": {
-        "token_limit": {"max_prompt_tokens": 9000,
-                        "max_completion_tokens": 4096, },
+        "token_limit": {
+            "max_prompt_tokens": 9000,
+            "max_completion_tokens": 4096,
+        },
         **instant_pricing,
     },
     "claude-instant-1": {
-        "token_limit": {"max_prompt_tokens": 100000,
-                        "max_completion_tokens": 4096, },
+        "token_limit": {
+            "max_prompt_tokens": 100000,
+            "max_completion_tokens": 4096,
+        },
         **instant_pricing,
     },
     "claude-instant-1.2": {
-        "token_limit": {"max_prompt_tokens": 100000,
-                        "max_completion_tokens": 4096, },
+        "token_limit": {
+            "max_prompt_tokens": 100000,
+            "max_completion_tokens": 4096,
+        },
         **instant_pricing,
     },
     "claude-instant-1-100k": {
-        "token_limit": {"max_prompt_tokens": 100000,
-                        "max_completion_tokens": 4096, },
+        "token_limit": {
+            "max_prompt_tokens": 100000,
+            "max_completion_tokens": 4096,
+        },
         **instant_pricing,
     },
     "claude-instant-1.1-100k": {
-        "token_limit": {"max_prompt_tokens": 100000,
-                        "max_completion_tokens": 4096, },
+        "token_limit": {
+            "max_prompt_tokens": 100000,
+            "max_completion_tokens": 4096,
+        },
         **instant_pricing,
     },
     "claude-1": {
-        "token_limit": {"max_prompt_tokens": 9000,
-                        "max_completion_tokens": 4096, },
+        "token_limit": {
+            "max_prompt_tokens": 9000,
+            "max_completion_tokens": 4096,
+        },
         **claude_pricing,
     },
     "claude-2": {
-        "token_limit": {"max_prompt_tokens": 100000,
-                        "max_completion_tokens": 4096, },
+        "token_limit": {
+            "max_prompt_tokens": 100000,
+            "max_completion_tokens": 4096,
+        },
         **claude_pricing,
     },
     "claude-1-100k": {
-        "token_limit": {"max_prompt_tokens": 100000,
-                        "max_completion_tokens": 4096, },
+        "token_limit": {
+            "max_prompt_tokens": 100000,
+            "max_completion_tokens": 4096,
+        },
         **claude_pricing,
     },
     "claude-1.2": {
-        "token_limit": {"max_prompt_tokens": 9000,
-                        "max_completion_tokens": 4096, },
+        "token_limit": {
+            "max_prompt_tokens": 9000,
+            "max_completion_tokens": 4096,
+        },
         **claude_pricing,
     },
     "claude-1.3": {
-        "token_limit": {"max_prompt_tokens": 9000,
-                        "max_completion_tokens": 4096, },
+        "token_limit": {
+            "max_prompt_tokens": 9000,
+            "max_completion_tokens": 4096,
+        },
         **claude_pricing,
     },
     "claude-1.3-100k": {
-        "token_limit": {"max_prompt_tokens": 100000,
-                        "max_completion_tokens": 4096, },
+        "token_limit": {
+            "max_prompt_tokens": 100000,
+            "max_completion_tokens": 4096,
+        },
         **claude_pricing,
     },
     "claude-2.1": {
-        "token_limit": {"max_prompt_tokens": 200000,
-                        "max_completion_tokens": 4096, },
+        "token_limit": {
+            "max_prompt_tokens": 200000,
+            "max_completion_tokens": 4096,
+        },
         **claude_pricing,
     },
     "claude-3-opus-20240229": {
-        "token_limit": {"max_prompt_tokens": 200000,
-                        "max_completion_tokens": 4096, },
+        "token_limit": {
+            "max_prompt_tokens": 200000,
+            "max_completion_tokens": 4096,
+        },
         "prompt": 15.00,
         "completion": 75.00,
     },
     "claude-3-sonnet-20240229": {
-        "token_limit": {"max_prompt_tokens": 200000,
-                        "max_completion_tokens": 4096},
+        "token_limit": {"max_prompt_tokens": 200000, "max_completion_tokens": 4096},
         "prompt": 3.00,
         "completion": 15.00,
     },
     "claude-3-haiku-20240307": {
-        "token_limit": {"max_prompt_tokens": 200000,
-                        "max_completion_tokens": 4096},
+        "token_limit": {"max_prompt_tokens": 200000, "max_completion_tokens": 4096},
         "prompt": 0.25,
         "completion": 1.25,
     },

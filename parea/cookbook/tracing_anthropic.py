@@ -13,18 +13,12 @@ load_dotenv()
 client = anthropic.Anthropic()
 aclient = anthropic.AsyncAnthropic()
 
-p = Parea(api_key=os.getenv("PAREA_API_KEY"), project_name='testing')
+p = Parea(api_key=os.getenv("PAREA_API_KEY"), project_name="testing")
 p.wrap_anthropic_client(client)
 p.wrap_anthropic_client(aclient)
 
 
-client_kwargs = {
-    "model": "claude-3-opus-20240229",
-    "max_tokens": 1024,
-    "messages": [
-        {"role": "user", "content": "Hello, Claude"}
-    ]
-}
+client_kwargs = {"model": "claude-3-opus-20240229", "max_tokens": 1024, "messages": [{"role": "user", "content": "Hello, Claude"}]}
 
 
 def anthropic_sync():

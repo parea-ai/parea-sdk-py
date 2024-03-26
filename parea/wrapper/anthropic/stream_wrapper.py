@@ -3,7 +3,7 @@ from __future__ import annotations
 from types import TracebackType
 from typing import Callable
 
-from anthropic import Stream, MessageStreamManager, AsyncMessageStreamManager
+from anthropic import AsyncMessageStreamManager, MessageStreamManager, Stream
 from anthropic.types import Message
 
 
@@ -53,7 +53,7 @@ class MessageStreamManagerWrapper(MessageStreamManager):
         self._resolve_and_log = resolve_and_log
 
     def __getattr__(self, attr):
-        if attr != '_private_stream':
+        if attr != "_private_stream":
             return getattr(self._msm_instance, attr)
         else:
             return self._private_stream
@@ -79,7 +79,7 @@ class MessageAsyncStreamManagerWrapper(AsyncMessageStreamManager):
         self._resolve_and_log = resolve_and_log
 
     def __getattr__(self, attr):
-        if attr != '_private_stream':
+        if attr != "_private_stream":
             return getattr(self._msm_instance, attr)
         else:
             return self._private_stream
