@@ -35,9 +35,6 @@ from parea.schemas.models import (
     UseDeployedPromptResponse,
 )
 from parea.utils.trace_utils import get_current_trace_id, get_root_trace_id, logger_all_possible, logger_record_log, trace_data
-from parea.wrapper import OpenAIWrapper
-from parea.wrapper.anthropic.anthropic import AnthropicWrapper
-from parea.wrapper.openai_beta_wrapper import BetaWrappers
 
 load_dotenv()
 
@@ -75,14 +72,18 @@ class Parea:
             parea_logger.set_project_uuid(self.project_uuid)
         if isinstance(self.cache, (RedisCache, InMemoryCache)):
             parea_logger.set_redis_cache(self.cache)
-        _init_parea_wrapper(logger_all_possible, self.cache, self)
 
     def wrap_openai_client(self, client: "OpenAI") -> None:
         """Only necessary for instance client with OpenAI version >= 1.0.0"""
+        from parea.wrapper import OpenAIWrapper
+        from parea.wrapper.openai_beta_wrapper import BetaWrappers
+
         OpenAIWrapper().init(log=logger_all_possible, cache=self.cache, module_client=client)
         BetaWrappers(client).init()
 
     def wrap_anthropic_client(self, client: "Anthropic") -> None:
+        from parea.wrapper.anthropic.anthropic import AnthropicWrapper
+
         AnthropicWrapper().init(log=logger_all_possible, cache=self.cache, client=client)
 
     def _add_project_uuid_to_data(self, data) -> dict:
@@ -342,14 +343,3 @@ def create_subclass_with_new_init(openai_client, parea_client: Parea):
     subclass = type(openai_client.__name__, (openai_client,), {"__init__": new_init})
 
     return subclass
-
-
-def _init_parea_wrapper(log: Callable = None, cache: Cache = None, parea_client: Parea = None):
-    global _initialized_parea_wrapper
-    if _initialized_parea_wrapper:
-        return
-
-    # always wrap the module-level client
-    OpenAIWrapper().init(log=log, cache=cache)
-
-    _initialized_parea_wrapper = True
