@@ -36,6 +36,7 @@ from parea.schemas.models import (
 )
 from parea.utils.trace_utils import get_current_trace_id, get_root_trace_id, logger_all_possible, logger_record_log, trace_data
 from parea.wrapper import OpenAIWrapper
+from parea.wrapper.anthropic.anthropic import AnthropicWrapper
 from parea.wrapper.openai_beta_wrapper import BetaWrappers
 
 load_dotenv()
@@ -80,6 +81,9 @@ class Parea:
         """Only necessary for instance client with OpenAI version >= 1.0.0"""
         OpenAIWrapper().init(log=logger_all_possible, cache=self.cache, module_client=client)
         BetaWrappers(client).init()
+
+    def wrap_anthropic_client(self, client: "Anthropic") -> None:
+        AnthropicWrapper().init(log=logger_all_possible, cache=self.cache, client=client)
 
     def _add_project_uuid_to_data(self, data) -> dict:
         data_dict = asdict(data)

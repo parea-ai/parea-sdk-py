@@ -7,7 +7,7 @@ from functools import lru_cache, wraps
 import tiktoken
 from openai import __version__ as openai_version
 
-from parea.constants import AZURE_MODEL_INFO, OPENAI_MODEL_INFO
+from parea.constants import ALL_NON_AZURE_MODELS_INFO, AZURE_MODEL_INFO
 from parea.parea_logger import parea_logger
 from parea.schemas.log import LLMInputs, Message, ModelParams, Role
 from parea.schemas.models import UpdateLog
@@ -269,7 +269,7 @@ def _compute_cost(prompt_tokens: int, completion_tokens: int, model: str) -> flo
     if model in AZURE_MODEL_INFO:
         cost_per_token = AZURE_MODEL_INFO[model]
     else:
-        cost_per_token = OPENAI_MODEL_INFO.get(model, {"prompt": 0, "completion": 0})
+        cost_per_token = ALL_NON_AZURE_MODELS_INFO.get(model, {"prompt": 0, "completion": 0})
     cost = ((prompt_tokens * cost_per_token["prompt"]) + (completion_tokens * cost_per_token["completion"])) / 1_000_000
     cost = round(cost, 10)
     return cost
