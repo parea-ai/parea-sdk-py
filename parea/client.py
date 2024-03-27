@@ -86,6 +86,14 @@ class Parea:
 
         AnthropicWrapper().init(log=logger_all_possible, cache=self.cache, client=client)
 
+    def auto_trace_guidance(self) -> None:
+        import openai
+
+        openai.OpenAI = patch_openai_client_classes(openai.OpenAI, self)
+        openai.AsyncOpenAI = patch_openai_client_classes(openai.AsyncOpenAI, self)
+        openai.AzureOpenAI = patch_openai_client_classes(openai.AzureOpenAI, self)
+        openai.AsyncAzureOpenAI = patch_openai_client_classes(openai.AsyncAzureOpenAI, self)
+
     def _add_project_uuid_to_data(self, data) -> dict:
         data_dict = asdict(data)
         data_dict["project_uuid"] = self._project.uuid
@@ -333,7 +341,7 @@ class Parea:
 _initialized_parea_wrapper = False
 
 
-def create_subclass_with_new_init(openai_client, parea_client: Parea):
+def patch_openai_client_classes(openai_client, parea_client: Parea):
     """Creates a subclass of the given openai_client to always wrap it with Parea at instantiation."""
 
     def new_init(self, *args, **kwargs):
