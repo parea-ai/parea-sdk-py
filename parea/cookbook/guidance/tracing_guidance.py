@@ -1,14 +1,13 @@
 import os
 
 from dotenv import load_dotenv
+from guidance import assistant, gen, models, select, user
 
 from parea import Parea, trace
-from guidance import models, user, assistant, gen, select
-
 
 load_dotenv()
 
-p = Parea(api_key=os.getenv("PAREA_API_KEY"), project_name='testing')
+p = Parea(api_key=os.getenv("PAREA_API_KEY"), project_name="testing")
 p.auto_trace_guidance()
 
 
