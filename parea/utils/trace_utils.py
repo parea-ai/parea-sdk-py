@@ -134,6 +134,8 @@ def trace(
     access_output_of_func: Optional[Callable] = None,
     apply_eval_frac: float = 1.0,
     deployment_id: Optional[str] = None,
+    log_omit_inputs: Optional[bool] = False,
+    log_omit_outputs: Optional[bool] = False,
 ):
     def init_trace(func_name, _parea_target_field, args, kwargs, func) -> tuple[str, datetime, contextvars.Token]:
         start_time = timezone_aware_now()
@@ -173,7 +175,7 @@ def trace(
                 metadata=metadata,
                 target=_parea_target_field,
                 tags=tags,
-                inputs=inputs,
+                inputs={} if log_omit_inputs else inputs,
                 experiment_uuid=os.environ.get(PAREA_OS_ENV_EXPERIMENT_UUID, None),
                 apply_eval_frac=apply_eval_frac,
                 deployment_id=deployment_id,
@@ -214,7 +216,8 @@ def trace(
             output_as_list = check_multiple_return_values(func)
             try:
                 result = await func(*args, **kwargs)
-                fill_trace_data(trace_id, {"result": result, "output_as_list": output_as_list, "eval_funcs_names": eval_funcs_names}, UpdateTraceScenario.RESULT)
+                if not TURN_OFF_PAREA_LOGGING and not log_omit_outputs:
+                    fill_trace_data(trace_id, {"result": result, "output_as_list": output_as_list, "eval_funcs_names": eval_funcs_names}, UpdateTraceScenario.RESULT)
                 return result
             except Exception as e:
                 logger.exception(f"Error occurred in function {func.__name__}, {e}")
@@ -233,7 +236,8 @@ def trace(
             output_as_list = check_multiple_return_values(func)
             try:
                 result = func(*args, **kwargs)
-                fill_trace_data(trace_id, {"result": result, "output_as_list": output_as_list, "eval_funcs_names": eval_funcs_names}, UpdateTraceScenario.RESULT)
+                if not TURN_OFF_PAREA_LOGGING and not log_omit_outputs:
+                    fill_trace_data(trace_id, {"result": result, "output_as_list": output_as_list, "eval_funcs_names": eval_funcs_names}, UpdateTraceScenario.RESULT)
                 return result
             except Exception as e:
                 logger.exception(f"Error occurred in function {func.__name__}, {e}")

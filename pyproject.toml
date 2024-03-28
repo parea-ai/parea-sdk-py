@@ -6,7 +6,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry]
 name = "parea-ai"
 packages = [{ include = "parea" }]
-version = "0.2.113"
+version = "0.2.114"
 description = "Parea python sdk"
 readme = "README.md"
 authors = ["joel-parea-ai <joel@parea.ai>"]
@@ -80,6 +80,7 @@ html2text = "^2020.1.16"
 boto3 = "^1.34.6"
 langchain-openai = "^0.0.5"
 pinecone-client = "^3.1.0"
+guidance = "^0.1.13"
 
 [tool.black]
 # https://github.com/psf/black
