@@ -278,7 +278,7 @@ def _compute_cost(prompt_tokens: int, completion_tokens: int, model: str) -> flo
 def _process_response(response, model_inputs, trace_id):
     response_message = response.choices[0].message
     if response_message.content:
-        completion = response_message.content.strip()
+        completion = response_message.content
     else:
         completion = _format_function_call(response_message)
 

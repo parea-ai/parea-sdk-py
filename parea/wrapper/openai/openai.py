@@ -285,7 +285,7 @@ class OpenAIWrapper:
         if not response_message.get("content", None) if is_old_openai else not response_message.content:
             completion = OpenAIWrapper._format_function_call(response_message)
         else:
-            completion = response_message.content.strip()
+            completion = response_message.content
         return completion
 
     @staticmethod
