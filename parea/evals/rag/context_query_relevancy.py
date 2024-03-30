@@ -46,7 +46,7 @@ candidate sentences:\n""",
             ],
             temperature=0.0,
         ).strip()
-        if extracted_sentences.lower() == "insufficient information":
+        if "insufficient information" in extracted_sentences.lower() and abs(len(extracted_sentences) - len("insufficient information")) < 10:
             return 0.0
         else:
             n_extracted_sentences = len(sent_tokenize(extracted_sentences))
