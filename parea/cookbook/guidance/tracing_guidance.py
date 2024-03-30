@@ -8,7 +8,7 @@ from parea import Parea, trace
 load_dotenv()
 
 p = Parea(api_key=os.getenv("PAREA_API_KEY"), project_name="testing")
-p.auto_trace_guidance()
+p.auto_trace_openai_clients()
 
 
 gpt = models.OpenAI("gpt-3.5-turbo")
