@@ -1,12 +1,16 @@
+from typing import Union
+
 from collections import Counter
 
 from parea.evals.utils import get_tokens
 from parea.schemas.log import Log
 
 
-def answer_matches_target_recall(log: Log) -> float:
+def answer_matches_target_recall(log: Log) -> Union[float, None]:
     """Prop. of tokens in target/reference answer which are also in model generation."""
     target = log.target
+    if target is None:
+        return None
     output = log.output
     model = log.configuration.model
 

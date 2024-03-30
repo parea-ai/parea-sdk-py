@@ -86,7 +86,7 @@ class Parea:
 
         AnthropicWrapper().init(log=logger_all_possible, cache=self.cache, client=client)
 
-    def auto_trace_guidance(self) -> None:
+    def auto_trace_openai_clients(self) -> None:
         import openai
 
         openai.OpenAI = patch_openai_client_classes(openai.OpenAI, self)

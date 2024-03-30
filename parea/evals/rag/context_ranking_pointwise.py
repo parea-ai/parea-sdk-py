@@ -14,7 +14,7 @@ def context_ranking_pointwise_factory(question_field: str = "question", context_
 
     Args:
         question_field: The key name/field used for the question/query of the user. Defaults to "question".
-        context_fields: A list of key names/fields used for the retrieved contexts. Defaults to ["context"].
+        context_fields: A list of key names/fields used for the retrieved contexts in the input to function. If empty list or None, it will use the output field of the log as context. Defaults to ["context"].
         ranking_measurement: Method to calculate ranking. Currently, only supports "average_precision".
 
     Returns:
@@ -32,7 +32,13 @@ def context_ranking_pointwise_factory(question_field: str = "question", context_
     def context_ranking_pointwise(log: Log) -> float:
         """Quantifies if the retrieved context is ranked by their relevancy"""
         question = log.inputs[question_field]
-        contexts = [log.inputs[context_field] for context_field in context_fields]
+        if context_fields:
+            contexts = [log.inputs[context_field] for context_field in context_fields]
+        else:
+            if isinstance(log.output, list):
+                contexts = log.output
+            else:
+                contexts = [str(log.output)]
 
         verifications = []
         for context in contexts:

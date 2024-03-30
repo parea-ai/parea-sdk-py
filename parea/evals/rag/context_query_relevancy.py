@@ -1,4 +1,4 @@
-from typing import Callable, List
+from typing import Callable
 
 from parea.evals.utils import call_openai, sent_tokenize
 from parea.schemas.log import Log
@@ -13,7 +13,7 @@ def context_query_relevancy_factory(question_field: str = "question", context_fi
 
     Args:
         question_field: The key name/field used for the question/query of the user. Defaults to "question".
-        context_fields: A list of key names/fields used for the retrieved contexts. Defaults to ["context"].
+        context_fields: A list of key names/fields used for the retrieved contexts in the input to function. If empty list or None, it will use the output field of the log as context. Defaults to ["context"].
 
     Returns:
         Callable[[Log], float]: A function that takes a log as input and returns a score between 0 and 1 indicating
@@ -23,7 +23,13 @@ def context_query_relevancy_factory(question_field: str = "question", context_fi
     def context_query_relevancy(log: Log) -> float:
         """Quantifies how much the retrieved context relates to the query."""
         question = log.inputs[question_field]
-        context = "\n".join(log.inputs[context_field] for context_field in context_fields)
+        if context_fields:
+            context = "\n".join(log.inputs[context_field] for context_field in context_fields)
+        else:
+            if isinstance(log.output, list):
+                context = "\n".join(log.output)
+            else:
+                context = str(log.output)
 
         extracted_sentences = call_openai(
             model="gpt-3.5-turbo-16k",

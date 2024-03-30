@@ -19,7 +19,7 @@ def context_ranking_listwise_factory(
 
     Args:
         question_field (str): The name of the field in the log that contains the question. Defaults to "question".
-        context_fields (List[str]): The name of the fields in the log that contain the contexts. Defaults to ["context"].
+        context_fields: A list of key names/fields used for the retrieved contexts in the input to function. If empty list or None, it will use the output field of the log as context. Defaults to ["context"].
         ranking_measurement (str): The measurement to use for ranking. Defaults to "ndcg".
         n_contexts_to_rank (int): The number of contexts to rank listwise. Defaults to 10.
 
@@ -94,7 +94,13 @@ def context_ranking_listwise_factory(
     def context_ranking(log: Log) -> float:
         """Quantifies if the retrieved context is ranked by their relevancy by re-ranking the contexts."""
         question = log.inputs[question_field]
-        contexts = [log.inputs[context_field] for context_field in context_fields]
+        if context_fields:
+            contexts = [log.inputs[context_field] for context_field in context_fields]
+        else:
+            if isinstance(log.output, list):
+                contexts = log.output
+            else:
+                contexts = [str(log.output)]
 
         reranked_indices = progressive_reranking(question, contexts)
 

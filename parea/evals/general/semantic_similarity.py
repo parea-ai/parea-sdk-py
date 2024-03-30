@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Union
 
 import numpy as np
 
@@ -6,11 +6,13 @@ from parea.evals.utils import embed
 from parea.schemas import Log
 
 
-def semantic_similarity_factory(embd_model: str = "text-embedding-3-small") -> Callable[[Log], float]:
-    def semantic_similarity(log: Log) -> float:
+def semantic_similarity_factory(embd_model: str = "text-embedding-3-small") -> Callable[[Log], Union[float, None]]:
+    def semantic_similarity(log: Log) -> Union[float, None]:
         """Calculates semantic similarity between output and target"""
         output = log.output
         target = log.target
+        if target is None:
+            return None
 
         output_vector = embed(model=embd_model, input=output)
         target_vector = embed(model=embd_model, input=target)
