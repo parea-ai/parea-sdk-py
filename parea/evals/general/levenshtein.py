@@ -7,8 +7,7 @@ from parea.schemas import Log
 
 def levenshtein(log: Log) -> Union[float, None]:
     output = log.output
-    target = log.target
-    if target is None:
+    if (target := log.target) is None:
         return None
 
     output, target = str(output), str(target)

@@ -1,4 +1,4 @@
-from typing import Callable, List
+from typing import Callable, Optional
 
 from parea.evals.utils import call_openai, ndcg
 from parea.schemas.log import Log
@@ -6,7 +6,7 @@ from parea.schemas.log import Log
 
 def context_ranking_listwise_factory(
     question_field: str = "question",
-    context_fields: list[str] = ["context"],
+    context_fields: Optional[list[str]] = None,
     ranking_measurement="ndcg",
     n_contexts_to_rank=10,
 ) -> Callable[[Log], float]:
@@ -19,7 +19,7 @@ def context_ranking_listwise_factory(
 
     Args:
         question_field (str): The name of the field in the log that contains the question. Defaults to "question".
-        context_fields: A list of key names/fields used for the retrieved contexts in the input to function. If empty list or None, it will use the output field of the log as context. Defaults to ["context"].
+        context_fields: An optional list of key names/fields used for the retrieved contexts in the input to function. If empty list or None, it will use the output field of the log as context. Defaults to None.
         ranking_measurement (str): The measurement to use for ranking. Defaults to "ndcg".
         n_contexts_to_rank (int): The number of contexts to rank listwise. Defaults to 10.
 

@@ -1,4 +1,4 @@
-from typing import Callable, List
+from typing import Callable, Optional, Union
 
 import re
 
@@ -6,14 +6,21 @@ from parea.evals.utils import call_openai
 from parea.schemas.log import Log
 
 
-def percent_target_supported_by_context_factory(question_field: str = "question", context_fields: list[str] = ["context"]) -> Callable[[Log], float]:
+def percent_target_supported_by_context_factory(question_field: str = "question", context_fields: Optional[list[str]] = None) -> Callable[[Log], Union[float, None]]:
     """Quantifies how many sentences in the target/ground truth are supported by the retrieved context."""
 
-    def percent_target_supported_by_context(log: Log) -> float:
+    def percent_target_supported_by_context(log: Log) -> Union[float, None]:
         """Quantifies how many sentences in the target/ground truth are supported by the retrieved context."""
         question = log.inputs[question_field]
-        context = "\n".join(log.inputs[context_field] for context_field in context_fields)
-        target = log.target
+        if context_fields:
+            context = "\n".join(log.inputs[context_field] for context_field in context_fields)
+        else:
+            if isinstance(log.output, list):
+                context = "\n".join(log.output)
+            else:
+                context = str(log.output)
+        if (target := log.target) is None:
+            return None
 
         classification = call_openai(
             model="gpt-3.5-turbo-16k",
