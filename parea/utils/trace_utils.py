@@ -268,6 +268,8 @@ def call_eval_funcs_then_log(trace_id: str, eval_funcs: list[Callable] = None):
 
     if eval_funcs and data.status == "success" and random() <= data.apply_eval_frac:
         thread_ids_running_evals.get().append(trace_id)
+        if data.target is None and (root_target := trace_data.get()[data.root_trace_id].target) is not None:
+            data.target = root_target
         scores = []
         for func in eval_funcs:
             try:
