@@ -15,6 +15,7 @@ from langchain.schema.output_parser import StrOutputParser
 from langchain.text_splitter import TokenTextSplitter
 from langchain.vectorstores import Chroma
 from langchain_community.llms.bedrock import Bedrock
+from langchain_community.vectorstores.faiss import FAISS
 
 # Parea libs
 from parea import Parea
@@ -61,7 +62,7 @@ class DocumentRetriever:
 
         # Define vector store based
         embeddings = OpenAIEmbeddings()
-        vectorstore = Chroma.from_documents(documents, embeddings)
+        vectorstore = FAISS.from_documents(documents, embeddings)
         self.retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
 
     def get_retriever(self):

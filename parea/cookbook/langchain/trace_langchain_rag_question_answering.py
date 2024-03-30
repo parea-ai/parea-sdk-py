@@ -6,7 +6,7 @@ from langchain import hub
 from langchain.document_loaders import WebBaseLoader
 from langchain.schema import StrOutputParser
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import Chroma
+from langchain_community.vectorstores.faiss import FAISS
 from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
@@ -26,7 +26,7 @@ docs = loader.load()
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
 splits = text_splitter.split_documents(docs)
 
-vectorstore = Chroma.from_documents(documents=splits, embedding=OpenAIEmbeddings())
+vectorstore = FAISS.from_documents(documents=splits, embedding=OpenAIEmbeddings())
 retriever = vectorstore.as_retriever()
 
 prompt = hub.pull("rlm/rag-prompt")
