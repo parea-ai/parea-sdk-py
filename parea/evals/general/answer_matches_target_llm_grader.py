@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Callable, Optional, Union
 
 from parea.evals.utils import call_openai
 from parea.schemas.log import Log
@@ -7,13 +7,15 @@ from parea.schemas.log import Log
 def answer_matches_target_llm_grader_factory(
     question_field: Optional[str] = "question",
     model: Optional[str] = "gpt-4",
-) -> Callable[[Log], float]:
+) -> Callable[[Log], Union[float, None]]:
     """Quantifies how much the generated answer matches the ground truth / target."""
 
-    def answer_matches_target_llm_grader(log: Log) -> float:
+    def answer_matches_target_llm_grader(log: Log) -> Union[float, None]:
         question = log.inputs[question_field]
         output = log.output
         target = log.target
+        if target is None:
+            return None
         response = call_openai(
             model=model,
             messages=[

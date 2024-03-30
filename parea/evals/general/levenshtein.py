@@ -1,13 +1,15 @@
+from typing import Union
+
 from Levenshtein import distance
 
 from parea.schemas import Log
 
 
-def levenshtein(log: Log) -> float:
+def levenshtein(log: Log) -> Union[float, None]:
     output = log.output
     target = log.target
     if target is None:
-        raise ValueError("LevenshteinScorer requires an target value")
+        return None
 
     output, target = str(output), str(target)
     max_len = max(len(x) for x in [output, target])

@@ -1,8 +1,10 @@
+from typing import Union
+
 from parea.evals.utils import call_openai, sent_tokenize
 from parea.schemas.log import Log
 
 
-def self_check(log: Log) -> float:
+def self_check(log: Log) -> Union[float, None]:
     """
     Given that many API-based LLMs don't reliably give access to the log probabilities of the generated tokens, assessing
     the certainty of LLM predictions via perplexity isn't possible.
@@ -21,7 +23,7 @@ def self_check(log: Log) -> float:
         float: A score between 0 and 1 indicating the factuality of the response.
     """
     if log.configuration is None or log.configuration.messages is None:
-        return 0.0
+        return None
 
     messages = [m.to_dict() for m in log.configuration.messages]
 
