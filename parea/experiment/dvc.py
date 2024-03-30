@@ -5,6 +5,14 @@ from parea.constants import PAREA_DVC_DIR, PAREA_DVC_METRICS_FILE, PAREA_DVC_YAM
 from parea.utils.universal_encoder import json_dumps
 
 
+def is_git_repo():
+    try:
+        subprocess.check_output(["git", "branch"], stderr=subprocess.STDOUT)
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+
 def save_results_to_dvc_if_init(experiment_name: str, metrics: dict):
     if not parea_dvc_initialized(only_check=True):
         return
@@ -28,6 +36,11 @@ def _check_has_been_committed(git_root: str, file: str) -> bool:
 
 def parea_dvc_initialized(only_check: bool) -> bool:
     print_fn = print if not only_check else lambda *args, **kwargs: None
+
+    if not is_git_repo():
+        print_fn("Git repository is not found. Please run `git init` to initialize a git repository.")
+        return False
+
     git_root = subprocess.check_output(["git", "rev-parse", "--show-toplevel"], text=True, stderr=subprocess.STDOUT).strip()
 
     # make sure DVC is initialized
