@@ -67,7 +67,7 @@ def make_output(result, islist) -> Optional[str]:
         else:
             return json_dumps(result)
     except Exception as e:
-        logger.exception(f"Error occurred making output with result: {result}. Error: {e}", exc_info=e)
+        logger.debug(f"Error occurred making output with result: {result}. Error: {e}", exc_info=e)
         return str(result)
 
 
@@ -161,7 +161,7 @@ def trace(
                 except TypeError:
                     try:
                         inputs[k] = json_dumps(v)
-                    except TypeError:
+                    except (TypeError, AttributeError):
                         # if we can't serialize the value, just convert it to a string
                         inputs[k] = str(v)
 
