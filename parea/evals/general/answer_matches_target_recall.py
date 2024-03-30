@@ -8,8 +8,7 @@ from parea.schemas.log import Log
 
 def answer_matches_target_recall(log: Log) -> Union[float, None]:
     """Prop. of tokens in target/reference answer which are also in model generation."""
-    target = log.target
-    if target is None:
+    if (target := log.target) is None:
         return None
     output = log.output
     model = log.configuration.model

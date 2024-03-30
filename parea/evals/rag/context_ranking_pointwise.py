@@ -1,10 +1,12 @@
-from typing import Callable, List
+from typing import Callable, Optional
 
 from parea.evals.utils import call_openai, safe_json_loads
 from parea.schemas.log import Log
 
 
-def context_ranking_pointwise_factory(question_field: str = "question", context_fields: list[str] = ["context"], ranking_measurement="average_precision") -> Callable[[Log], float]:
+def context_ranking_pointwise_factory(
+    question_field: str = "question", context_fields: Optional[list[str]] = None, ranking_measurement="average_precision"
+) -> Callable[[Log], float]:
     """
     This factory creates an evaluation function that measures how well the retrieved contexts are ranked by relevancy to the given query
     by pointwise estimation of the relevancy of every context to the query. It is based on the paper
@@ -14,7 +16,7 @@ def context_ranking_pointwise_factory(question_field: str = "question", context_
 
     Args:
         question_field: The key name/field used for the question/query of the user. Defaults to "question".
-        context_fields: A list of key names/fields used for the retrieved contexts in the input to function. If empty list or None, it will use the output field of the log as context. Defaults to ["context"].
+        context_fields: An optional list of key names/fields used for the retrieved contexts in the input to function. If empty list or None, it will use the output field of the log as context. Defaults to None.
         ranking_measurement: Method to calculate ranking. Currently, only supports "average_precision".
 
     Returns:

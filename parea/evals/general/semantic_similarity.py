@@ -10,8 +10,7 @@ def semantic_similarity_factory(embd_model: str = "text-embedding-3-small") -> C
     def semantic_similarity(log: Log) -> Union[float, None]:
         """Calculates semantic similarity between output and target"""
         output = log.output
-        target = log.target
-        if target is None:
+        if (target := log.target) is None:
             return None
 
         output_vector = embed(model=embd_model, input=output)

@@ -13,8 +13,7 @@ def answer_matches_target_llm_grader_factory(
     def answer_matches_target_llm_grader(log: Log) -> Union[float, None]:
         question = log.inputs[question_field]
         output = log.output
-        target = log.target
-        if target is None:
+        if (target := log.target) is None:
             return None
         response = call_openai(
             model=model,

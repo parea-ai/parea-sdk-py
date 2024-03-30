@@ -129,8 +129,8 @@ dataset = [{"question": q, "target": t} for q, t in zip(eval_questions, eval_ans
         answer_matches_target_llm_grader_factory(),
         answer_context_faithfulness_binary_factory(),
         answer_context_faithfulness_statement_level_factory(),
-        context_query_relevancy_factory(),
-        percent_target_supported_by_context_factory(),
+        context_query_relevancy_factory(context_fields=["context"]),
+        percent_target_supported_by_context_factory(context_fields=["context"]),
     ]
 )
 def main(question: str) -> str:
