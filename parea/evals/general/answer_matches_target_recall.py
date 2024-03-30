@@ -1,5 +1,6 @@
-from collections import Counter
 from typing import Union
+
+from collections import Counter
 
 from parea.evals.utils import get_tokens
 from parea.schemas.log import Log
