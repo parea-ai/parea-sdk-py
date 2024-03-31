@@ -212,6 +212,9 @@ class Experiment:
             self._gen_name_if_none(name)
             self.experiment_stats = asyncio.run(experiment(self.name, self.data, self.func, self.p, self.n_trials, self.metadata, self.dataset_level_evals, self.n_workers))
         except Exception as e:
+            import traceback
+
+            traceback.print_exc()
             print(f"Error running experiment: {e}")
 
     @property
