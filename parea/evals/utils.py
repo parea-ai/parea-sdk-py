@@ -105,7 +105,20 @@ def ndcg(y_true, ranking):
 
 # note name is extra odd to make sure that skip_decorator_if_func_in_stack works in 99.9% of cases
 def _make_evaluations(trace_id: str, log: Log, eval_funcs: list[EvalFuncTuple], verbose: bool = False, sync: bool = False):
-    scores = [EvaluationResult(name=eval.name, score=eval.func(log)) for eval in eval_funcs]
+    scores = []
+    for eval in eval_funcs:
+        try:
+            result = eval.func(log)
+        except Exception as e:
+            print(f"Error occurred calling evaluation function '{eval.func.__name__}', {e}")
+            continue
+        if isinstance(result, EvaluationResult):
+            scores.append(result)
+        elif isinstance(result, list):
+            scores.extend(result)
+        elif result is not None:
+            scores.append(EvaluationResult(name=eval.name, score=result))
+
     parea_logger.update_log(data=UpdateLog(trace_id=trace_id, field_name_to_value_map={"scores": scores, "target": log.target}))
     if verbose:
         print(f"###Eval Results###")
