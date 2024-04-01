@@ -274,7 +274,11 @@ def call_eval_funcs_then_log(trace_id: str, eval_funcs: list[Callable] = None):
         for func in eval_funcs:
             try:
                 score = func(data)
-                if score is not None:
+                if isinstance(score, EvaluationResult):
+                    scores.append(score)
+                elif isinstance(score, list):
+                    scores.extend(score)
+                elif score is not None:
                     scores.append(EvaluationResult(name=func.__name__, score=score))
             except Exception as e:
                 logger.exception(f"Error occurred calling evaluation function '{func.__name__}', {e}", exc_info=e)

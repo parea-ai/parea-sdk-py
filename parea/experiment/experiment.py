@@ -66,6 +66,8 @@ def apply_dataset_eval(dataset_level_evals: list[Callable]) -> list[EvaluationRe
         result = dataset_level_eval(root_traces)
         if isinstance(result, EvaluationResult):
             results.append(result)
+        elif isinstance(result, list):
+            results.extend(result)
         else:
             results.append(EvaluationResult(name=dataset_level_eval.__name__, score=result))
 

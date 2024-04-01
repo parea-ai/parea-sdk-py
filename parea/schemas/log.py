@@ -131,6 +131,7 @@ class Log:
 class EvaluationResult:
     name: str
     score: float
+    reason: Optional[str] = None
 
 
 @define
