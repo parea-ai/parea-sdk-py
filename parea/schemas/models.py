@@ -140,6 +140,7 @@ class UpdateLog:
 @define
 class CreateExperimentRequest:
     name: str
+    run_name: str
     metadata: Optional[dict[str, str]] = None
 
 
