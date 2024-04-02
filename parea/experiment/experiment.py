@@ -159,7 +159,7 @@ async def experiment(
     stat_name_to_avg_std = calculate_avg_std_for_experiment(experiment_stats)
     if dataset_level_eval_results:
         stat_name_to_avg_std.update({eval_result.name: eval_result.score for eval_result in dataset_level_eval_results})
-    print(f"Experiment {experiment_name} run {run_name} stats:\n{json_dumps(stat_name_to_avg_std, indent=2)}\n\n")
+    print(f"Experiment {experiment_name} Run {run_name} stats:\n{json_dumps(stat_name_to_avg_std, indent=2)}\n\n")
     print(f"View experiment & traces at: https://app.parea.ai/experiments/{experiment_uuid}\n")
     save_results_to_dvc_if_init(run_name, stat_name_to_avg_std)
     return experiment_stats
@@ -200,7 +200,7 @@ class Experiment:
     def _gen_run_name_if_none(self, name: Optional[str]):
         if not name:
             self.run_name = gen_random_name()
-            print(f"Experiment name set to: {self.run_name}, since a name was not provided.")
+            print(f"Run name set to: {self.run_name}, since a name was not provided.")
         else:
             self.run_name = name
 
@@ -215,7 +215,7 @@ class Experiment:
 
         try:
             self._gen_run_name_if_none(run_name)
-            self.experiment_stats = asyncio.run(experiment(self.experiment_name, self.self.run_name, self.data, self.func, self.p, self.n_trials, self.metadata, self.dataset_level_evals, self.n_workers))
+            self.experiment_stats = asyncio.run(experiment(self.experiment_name, self.run_name, self.data, self.func, self.p, self.n_trials, self.metadata, self.dataset_level_evals, self.n_workers))
         except Exception as e:
             import traceback
 

@@ -244,7 +244,7 @@ class Parea:
         r = self._client.request(
             "POST",
             PROJECT_ENDPOINT,
-            data=asdict(CreateExperimentRequest(name=name)),
+            data={"name": name},
         )
         return structure(r.json(), CreateGetProjectResponseSchema)
 

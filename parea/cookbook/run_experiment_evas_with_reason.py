@@ -42,6 +42,7 @@ data = [
 # You can optionally run the experiment manually by calling `.run()`
 if __name__ == "__main__":
     p.experiment(
+        experiment_name="greeting",
         data=data,
         func=greeting,
         n_trials=1,
