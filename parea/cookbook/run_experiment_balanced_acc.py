@@ -63,4 +63,4 @@ data = [
 
 # You can optionally run the experiment manually by calling `.run()`
 if __name__ == "__main__":
-    p.experiment(data=data, func=starts_with_f, dataset_level_evals=[balanced_acc_is_correct], n_workers=2).run()
+    p.experiment(name="Greeting", data=data, func=starts_with_f, dataset_level_evals=[balanced_acc_is_correct], n_workers=2).run()

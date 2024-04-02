@@ -244,7 +244,7 @@ class Parea:
         r = self._client.request(
             "POST",
             PROJECT_ENDPOINT,
-            data=asdict(CreateExperimentRequest(name=name)),
+            data={"name": name},
         )
         return structure(r.json(), CreateGetProjectResponseSchema)
 
@@ -285,6 +285,7 @@ class Parea:
 
     def experiment(
         self,
+        name: str,
         data: Union[str, int, Iterable[dict]],
         func: Callable,
         n_trials: int = 1,
@@ -296,6 +297,7 @@ class Parea:
         :param data: If your dataset is defined locally it should be an iterable of k/v
         pairs matching the expected inputs of your function. To reference a dataset you
         have saved on Parea, use the dataset name as a string or the dataset id as an int.
+        :param name: The name of the experiment.
         :param func: The function to run. This function should accept inputs that match the keys of the data field.
         :param n_trials: The number of times to run the experiment on the same data.
         :param metadata: Optional metadata to attach to the experiment.
@@ -305,6 +307,7 @@ class Parea:
         from parea import Experiment
 
         return Experiment(
+            experiment_name=name,
             data=data,
             func=func,
             p=self,

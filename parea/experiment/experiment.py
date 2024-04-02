@@ -75,7 +75,8 @@ def apply_dataset_eval(dataset_level_evals: list[Callable]) -> list[EvaluationRe
 
 
 async def experiment(
-    name: str,
+    experiment_name: str,
+    run_name: str,
     data: Union[str, int, Iterable[dict]],
     func: Callable,
     p: Parea,
@@ -85,7 +86,8 @@ async def experiment(
     n_workers: int = 10,
 ) -> ExperimentStatsSchema:
     """Creates an experiment and runs the function on the data iterator.
-    param name: The name of the experiment. This name must be unique across experiment runs.
+    param experiment_name: The name of the experiment. Used to organize experiments within a project.
+    param run_name: The run name of the experiment. This name must be unique across experiment runs.
     param data: The data to run the experiment on. This can be a list of dictionaries,
         a string representing the name of a dataset on Parea or an int representing the id of a dataset on Parea.
         If it is a list of dictionaries, the key "target" is reserved for the target/expected output of that sample.
@@ -111,7 +113,7 @@ async def experiment(
         len_test_cases = len(data) if isinstance(data, list) else 0
         print(f"Running {n_trials} trials of the experiment \n")
 
-    experiment_schema: ExperimentSchema = p.create_experiment(CreateExperimentRequest(name=name, metadata=metadata))
+    experiment_schema: ExperimentSchema = p.create_experiment(CreateExperimentRequest(name=experiment_name, run_name=run_name, metadata=metadata))
     experiment_uuid = experiment_schema.uuid
     os.environ[PAREA_OS_ENV_EXPERIMENT_UUID] = experiment_uuid
 
@@ -157,9 +159,9 @@ async def experiment(
     stat_name_to_avg_std = calculate_avg_std_for_experiment(experiment_stats)
     if dataset_level_eval_results:
         stat_name_to_avg_std.update({eval_result.name: eval_result.score for eval_result in dataset_level_eval_results})
-    print(f"Experiment {name} stats:\n{json_dumps(stat_name_to_avg_std, indent=2)}\n\n")
+    print(f"Experiment {experiment_name} Run {run_name} stats:\n{json_dumps(stat_name_to_avg_std, indent=2)}\n\n")
     print(f"View experiment & traces at: https://app.parea.ai/experiments/{experiment_uuid}\n")
-    save_results_to_dvc_if_init(name, stat_name_to_avg_std)
+    save_results_to_dvc_if_init(run_name, stat_name_to_avg_std)
     return experiment_stats
 
 
@@ -178,7 +180,8 @@ class Experiment:
     metadata: Optional[dict[str, str]] = field(default=None)
     dataset_level_evals: Optional[list[Callable]] = field(default=None)
     p: Parea = field(default=None)
-    name: str = field(init=False)
+    experiment_name: str = field
+    run_name: str = field(init=False)
     n_workers: int = field(default=10)
     # The number of times to run the experiment on the same data.
     n_trials: int = field(default=1)
@@ -194,25 +197,27 @@ class Experiment:
                     raise ValueError("Metadata should not contain a key 'Dataset' when using uploaded dataset (data is a string).")
                 self.metadata["Dataset"] = self.data
 
-    def _gen_name_if_none(self, name: Optional[str]):
+    def _gen_run_name_if_none(self, name: Optional[str]):
         if not name:
-            self.name = gen_random_name()
-            print(f"Experiment name set to: {self.name}, since a name was not provided.")
+            self.run_name = gen_random_name()
+            print(f"Run name set to: {self.run_name}, since a name was not provided.")
         else:
-            self.name = name
+            self.run_name = name
 
-    def run(self, name: Optional[str] = None) -> None:
+    def run(self, run_name: Optional[str] = None) -> None:
         """Run the experiment and save the results to DVC.
-        param name: The name of the experiment. This name must be unique across experiment runs.
-        If no name is provided a memorable name will be generated automatically.
+        param run_name: The run name of the experiment. This name must be unique across experiment runs.
+        If no run name is provided a memorable name will be generated automatically.
         """
         if TURN_OFF_PAREA_LOGGING:
             print("Parea logging is turned off. Experiment can't be run without logging. Set env var TURN_OFF_PAREA_LOGGING to False to enable.")
             return
 
         try:
-            self._gen_name_if_none(name)
-            self.experiment_stats = asyncio.run(experiment(self.name, self.data, self.func, self.p, self.n_trials, self.metadata, self.dataset_level_evals, self.n_workers))
+            self._gen_run_name_if_none(run_name)
+            self.experiment_stats = asyncio.run(
+                experiment(self.experiment_name, self.run_name, self.data, self.func, self.p, self.n_trials, self.metadata, self.dataset_level_evals, self.n_workers)
+            )
         except Exception as e:
             import traceback
 
