@@ -215,7 +215,9 @@ class Experiment:
 
         try:
             self._gen_run_name_if_none(run_name)
-            self.experiment_stats = asyncio.run(experiment(self.experiment_name, self.run_name, self.data, self.func, self.p, self.n_trials, self.metadata, self.dataset_level_evals, self.n_workers))
+            self.experiment_stats = asyncio.run(
+                experiment(self.experiment_name, self.run_name, self.data, self.func, self.p, self.n_trials, self.metadata, self.dataset_level_evals, self.n_workers)
+            )
         except Exception as e:
             import traceback
 
