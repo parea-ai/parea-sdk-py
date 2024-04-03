@@ -148,6 +148,7 @@ def main(question: str) -> str:
 
 if __name__ == "__main__":
     p.experiment(
+        name="NYC_Wiki_RAG",
         data=dataset,
         func=main,
     ).run()
