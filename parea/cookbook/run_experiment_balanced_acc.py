@@ -1,7 +1,8 @@
+from typing import List
+
 import asyncio
 import os
 from collections import defaultdict
-from typing import List
 
 from dotenv import load_dotenv
 

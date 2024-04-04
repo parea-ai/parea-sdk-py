@@ -1,6 +1,7 @@
+from typing import List
+
 import os
 from datetime import datetime
-from typing import List
 
 from dotenv import load_dotenv
 

@@ -1,4 +1,4 @@
-from typing import Callable, Optional, List
+from typing import Callable, List, Optional
 
 from parea.evals.utils import call_openai, safe_json_loads
 from parea.schemas.log import Log

@@ -1,4 +1,4 @@
-from typing import Callable, Union, List
+from typing import Callable, List, Union
 
 import json
 import warnings

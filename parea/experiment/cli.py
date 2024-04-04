@@ -1,3 +1,5 @@
+from typing import List
+
 import argparse
 import csv
 import importlib
@@ -5,7 +7,6 @@ import os
 import sys
 import traceback
 from importlib import util
-from typing import List
 
 from .experiment import _experiments
 
