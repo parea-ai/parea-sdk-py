@@ -1,11 +1,11 @@
-from typing import Callable, Optional
+from typing import Callable, Optional, List
 
 from parea.evals.utils import call_openai, safe_json_loads
 from parea.schemas.log import Log
 
 
 def context_ranking_pointwise_factory(
-    question_field: str = "question", context_fields: Optional[list[str]] = None, ranking_measurement="average_precision"
+    question_field: str = "question", context_fields: Optional[List[str]] = None, ranking_measurement="average_precision"
 ) -> Callable[[Log], float]:
     """
     This factory creates an evaluation function that measures how well the retrieved contexts are ranked by relevancy to the given query

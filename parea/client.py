@@ -1,4 +1,4 @@
-from typing import Any, AsyncIterable, Iterable, Callable, Optional, Union, Dict
+from typing import Any, AsyncIterable, Callable, Dict, Iterable, Optional, Union, List
 
 import asyncio
 import logging
@@ -258,7 +258,7 @@ class Parea:
         )
         return structure(r.json(), TestCaseCollection)
 
-    def create_test_collection(self, data: list[Dict[str, Any]], name: Optional[str] = None) -> None:
+    def create_test_collection(self, data: List[Dict[str, Any]], name: Optional[str] = None) -> None:
         request: CreateTestCaseCollection = create_test_collection(data, name)
         self._client.request(
             "POST",
@@ -268,7 +268,7 @@ class Parea:
 
     def add_test_cases(
         self,
-        data: list[Dict[str, Any]],
+        data: List[Dict[str, Any]],
         name: Optional[str] = None,
         dataset_id: Optional[int] = None,
     ) -> None:
@@ -286,7 +286,7 @@ class Parea:
         func: Callable,
         n_trials: int = 1,
         metadata: Optional[Dict[str, str]] = None,
-        dataset_level_evals: Optional[list[Callable]] = None,
+        dataset_level_evals: Optional[List[Callable]] = None,
         n_workers: int = 10,
     ):
         """

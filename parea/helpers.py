@@ -1,4 +1,4 @@
-from typing import Any, Optional, Union, Dict
+from typing import Any, Dict, Optional, Union, List
 
 import csv
 import random
@@ -20,7 +20,7 @@ def gen_trace_id() -> str:
     return str(uuid.uuid4())
 
 
-def write_trace_logs_to_csv(path_csv: str, trace_logs: list[TraceLog]):
+def write_trace_logs_to_csv(path_csv: str, trace_logs: List[TraceLog]):
     with open(path_csv, "w", newline="") as file:
         # write header
         columns = fields_dict(TraceLog).keys()
@@ -38,7 +38,7 @@ def gen_random_name():
     return f"{adjective}-{noun}"
 
 
-def calculate_avg_as_string(values: list[Optional[float]]) -> str:
+def calculate_avg_as_string(values: List[Optional[float]]) -> str:
     if not values:
         return "N/A"
     values = [x for x in values if x is not None]

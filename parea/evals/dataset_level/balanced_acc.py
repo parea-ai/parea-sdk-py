@@ -1,10 +1,11 @@
 from collections import defaultdict
+from typing import List
 
 from parea.schemas import EvaluatedLog, EvaluationResult
 
 
 def balanced_acc_factory(score_name: str):
-    def balanced_acc(logs: list[EvaluatedLog]) -> EvaluationResult:
+    def balanced_acc(logs: List[EvaluatedLog]) -> EvaluationResult:
         correct = defaultdict(int)
         total = defaultdict(int)
         for log in logs:

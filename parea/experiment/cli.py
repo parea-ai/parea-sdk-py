@@ -5,6 +5,7 @@ import os
 import sys
 import traceback
 from importlib import util
+from typing import List
 
 from .experiment import _experiments
 
@@ -24,7 +25,7 @@ def load_from_path(module_path):
         sys.modules[spec.name] = module
 
 
-def read_input_file(file_path) -> list[dict]:
+def read_input_file(file_path) -> List[dict]:
     with open(file_path) as file:
         reader = csv.DictReader(file)
         inputs = list(reader)

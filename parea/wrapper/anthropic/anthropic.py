@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional, Sequence, Dict
+from typing import Any, Callable, Dict, Optional, Sequence
 
 from collections import defaultdict
 from datetime import datetime

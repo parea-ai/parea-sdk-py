@@ -1,4 +1,4 @@
-from typing import Any, Optional, Dict
+from typing import Any, Dict, Optional, List
 
 from collections.abc import Iterable
 from enum import Enum
@@ -21,7 +21,7 @@ class Completion:
     deployment_id: Optional[str] = None
     name: Optional[str] = None
     metadata: Optional[dict] = None
-    tags: Optional[list[str]] = field(factory=list)
+    tags: Optional[List[str]] = field(factory=list)
     target: Optional[str] = None
     cache: bool = True
     log_omit_inputs: bool = False
@@ -57,8 +57,8 @@ class UseDeployedPrompt:
 
 @define
 class Prompt:
-    raw_messages: list[Dict[str, Any]]
-    messages: list[Dict[str, Any]]
+    raw_messages: List[Dict[str, Any]]
+    messages: List[Dict[str, Any]]
     inputs: Optional[Dict[str, Any]] = None
 
 
@@ -66,7 +66,7 @@ class Prompt:
 class UseDeployedPromptResponse:
     deployment_id: str
     name: Optional[str] = None
-    functions: Optional[list[str]] = None
+    functions: Optional[List[str]] = None
     function_call: Optional[str] = None
     prompt: Optional[Prompt] = None
     model: Optional[str] = None
@@ -104,26 +104,26 @@ class TraceLog(EvaluatedLog):
     deployment_id: Optional[str] = None
     cache_hit: bool = False
     output_for_eval_metrics: Optional[str] = None
-    evaluation_metric_names: Optional[list[str]] = field(factory=list)
+    evaluation_metric_names: Optional[List[str]] = field(factory=list)
     apply_eval_frac: float = 1.0
     feedback_score: Optional[float] = None
 
     # info filled from decorator
     trace_name: Optional[str] = None
-    children: list[str] = field(factory=list)
+    children: List[str] = field(factory=list)
 
     # metrics filled from either decorator or completion
     end_timestamp: Optional[str] = None
     end_user_identifier: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
-    tags: Optional[list[str]] = field(factory=list)
+    tags: Optional[List[str]] = field(factory=list)
     experiment_uuid: Optional[str] = None
-    images: Optional[list[TraceLogImage]] = field(factory=list)
+    images: Optional[List[TraceLogImage]] = field(factory=list)
 
 
 @define
 class TraceLogTree(TraceLog):
-    children: Optional[list[TraceLog]] = field(factory=list)
+    children: Optional[List[TraceLog]] = field(factory=list)
 
 
 @define
@@ -165,12 +165,12 @@ class TraceStatsSchema:
     output_tokens: Optional[int] = 0
     total_tokens: Optional[int] = 0
     cost: Optional[float] = None
-    scores: Optional[list[EvaluationResultSchema]] = field(factory=list)
+    scores: Optional[List[EvaluationResultSchema]] = field(factory=list)
 
 
 @define
 class ExperimentStatsSchema:
-    parent_trace_stats: list[TraceStatsSchema] = field(factory=list)
+    parent_trace_stats: List[TraceStatsSchema] = field(factory=list)
 
     @property
     def avg_scores(self) -> Dict[str, float]:
@@ -222,7 +222,7 @@ class TestCase:
     test_case_collection_id: int
     inputs: Dict[str, str] = field(factory=dict)
     target: Optional[str] = None
-    tags: list[str] = field(factory=list)
+    tags: List[str] = field(factory=list)
 
 
 @define
@@ -231,7 +231,7 @@ class TestCaseCollection:
     name: str
     created_at: str
     last_updated_at: str
-    column_names: list[str] = field(factory=list)
+    column_names: List[str] = field(factory=list)
     test_cases: Dict[int, TestCase] = field(factory=dict)
 
     def get_all_test_case_inputs(self) -> Iterable[Dict[str, str]]:
@@ -254,14 +254,14 @@ class TestCaseCollection:
 class CreateTestCase:
     inputs: Dict[str, str]
     target: Optional[str] = None
-    tags: list[str] = field(factory=list)
+    tags: List[str] = field(factory=list)
 
 
 @define
 class CreateTestCases:
     id: Optional[int] = None
     name: Optional[str] = None
-    test_cases: list[CreateTestCase] = field(factory=list)
+    test_cases: List[CreateTestCase] = field(factory=list)
 
     @validators.optional
     def id_or_name_is_set(self, attribute, value):
@@ -272,9 +272,9 @@ class CreateTestCases:
 @define
 class CreateTestCaseCollection(CreateTestCases):
     # column names excluding reserved names, target and tags
-    column_names: list[str] = field(factory=list)
+    column_names: List[str] = field(factory=list)
 
 
 @define
 class FinishExperimentRequestSchema:
-    dataset_level_stats: Optional[list[EvaluationResult]] = field(factory=list)
+    dataset_level_stats: Optional[List[EvaluationResult]] = field(factory=list)

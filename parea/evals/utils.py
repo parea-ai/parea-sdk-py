@@ -1,4 +1,4 @@
-from typing import Callable, Union
+from typing import Callable, Union, List
 
 import json
 import warnings
@@ -24,7 +24,7 @@ class EvalFuncTuple:
     func: Callable
 
 
-def sent_tokenize(text: str) -> list[str]:
+def sent_tokenize(text: str) -> List[str]:
     """Split into sentences"""
     sentences = seg.segment(text)
     assert isinstance(sentences, list)
@@ -40,7 +40,7 @@ def safe_json_loads(s) -> dict:
     return {}
 
 
-def call_openai(messages, model, temperature=1.0, max_tokens=None, top_p=1.0, frequency_penalty=0.0, presence_penalty=0.0, response_format=None, n=1) -> Union[str, list[str]]:
+def call_openai(messages, model, temperature=1.0, max_tokens=None, top_p=1.0, frequency_penalty=0.0, presence_penalty=0.0, response_format=None, n=1) -> Union[str, List[str]]:
     if openai_version.startswith("0."):
         completion = openai.ChatCompletion.create(
             model=model,
@@ -74,7 +74,7 @@ def call_openai(messages, model, temperature=1.0, max_tokens=None, top_p=1.0, fr
             return [c.message.content for c in completion.choices]
 
 
-def embed(model, input) -> list[float]:
+def embed(model, input) -> List[float]:
     if openai_version.startswith("0."):
         return openai.Embedding.create(model=model, input=input, encoding_format="float").data[0]["embedding"]
     else:
@@ -104,7 +104,7 @@ def ndcg(y_true, ranking):
 
 
 # note name is extra odd to make sure that skip_decorator_if_func_in_stack works in 99.9% of cases
-def _make_evaluations(trace_id: str, log: Log, eval_funcs: list[EvalFuncTuple], verbose: bool = False, sync: bool = False):
+def _make_evaluations(trace_id: str, log: Log, eval_funcs: List[EvalFuncTuple], verbose: bool = False, sync: bool = False):
     scores = []
     for eval in eval_funcs:
         try:
@@ -129,7 +129,7 @@ def _make_evaluations(trace_id: str, log: Log, eval_funcs: list[EvalFuncTuple], 
         return scores
 
 
-def run_evals_in_thread_and_log(trace_id: str, log: Log, eval_funcs: list[EvalFuncTuple], verbose: bool = False):
+def run_evals_in_thread_and_log(trace_id: str, log: Log, eval_funcs: List[EvalFuncTuple], verbose: bool = False):
     import threading
 
     logging_thread = threading.Thread(
@@ -139,11 +139,11 @@ def run_evals_in_thread_and_log(trace_id: str, log: Log, eval_funcs: list[EvalFu
     logging_thread.start()
 
 
-def run_evals_synchronous(trace_id: str, log: Log, eval_funcs: list[EvalFuncTuple], verbose: bool = False) -> list[EvaluationResult]:
+def run_evals_synchronous(trace_id: str, log: Log, eval_funcs: List[EvalFuncTuple], verbose: bool = False) -> List[EvaluationResult]:
     return _make_evaluations(trace_id, log, eval_funcs, verbose, True)
 
 
-def get_tokens(model: str, text: str) -> list[int]:
+def get_tokens(model: str, text: str) -> List[int]:
     if not text:
         return []
     try:

@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Union, Dict
+from typing import Callable, Dict, Optional, Union, List
 
 import json
 import sys
@@ -165,8 +165,8 @@ def _num_tokens_from_string(string: str, model_name: str = "gpt-3.5-turbo") -> i
 
 
 def _calculate_input_tokens(
-    messages: Optional[list[Dict[str, str]]],
-    functions: list[Dict[str, str]],
+    messages: Optional[List[Dict[str, str]]],
+    functions: List[Dict[str, str]],
     function_call: Union[str, Dict[str, str]],
     model: str,
 ) -> int:
@@ -231,7 +231,7 @@ def _kwargs_to_llm_configuration(kwargs, model=None) -> LLMInputs:
     )
 
 
-def _convert_oai_messages(messages: list) -> Union[list[Union[dict, Message]], None]:
+def _convert_oai_messages(messages: list) -> Union[List[Union[dict, Message]], None]:
     if not messages:
         return messages
     if is_openai_1:

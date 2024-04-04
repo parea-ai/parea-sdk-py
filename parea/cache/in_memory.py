@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 from attr import asdict
 
@@ -35,5 +35,5 @@ class InMemoryCache(Cache):
     def log(self, value: TraceLog):
         self.logs.append(value)
 
-    def read_logs(self) -> list[TraceLog]:
+    def read_logs(self) -> List[TraceLog]:
         return self.logs.copy()

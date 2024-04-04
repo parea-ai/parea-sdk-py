@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from typing import List
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -15,7 +16,7 @@ p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 p.wrap_openai_client(client)
 
 
-def call_llm(data: list[dict], model: str = "gpt-3.5-turbo", temperature: float = 0.0) -> str:
+def call_llm(data: List[dict], model: str = "gpt-3.5-turbo", temperature: float = 0.0) -> str:
     return client.chat.completions.create(model=model, temperature=temperature, messages=data).choices[0].message.content
 
 

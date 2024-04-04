@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Union, Dict
+from typing import Callable, Dict, Optional, Union, List
 
 import asyncio
 import inspect
@@ -55,7 +55,7 @@ def async_wrapper(fn, **kwargs):
     return asyncio.run(fn(**kwargs))
 
 
-def apply_dataset_eval(dataset_level_evals: list[Callable]) -> list[EvaluationResult]:
+def apply_dataset_eval(dataset_level_evals: List[Callable]) -> List[EvaluationResult]:
     root_traces = []
     for trace in trace_data.get().values():
         if trace.root_trace_id == trace.trace_id:
@@ -82,7 +82,7 @@ async def experiment(
     p: Parea,
     n_trials: int = 1,
     metadata: Optional[Dict[str, str]] = None,
-    dataset_level_evals: Optional[list[Callable]] = None,
+    dataset_level_evals: Optional[List[Callable]] = None,
     n_workers: int = 10,
 ) -> ExperimentStatsSchema:
     """Creates an experiment and runs the function on the data iterator.
@@ -178,7 +178,7 @@ class Experiment:
     func: Callable = field()
     experiment_stats: ExperimentStatsSchema = field(init=False, default=None)
     metadata: Optional[Dict[str, str]] = field(default=None)
-    dataset_level_evals: Optional[list[Callable]] = field(default=None)
+    dataset_level_evals: Optional[List[Callable]] = field(default=None)
     p: Parea = field(default=None)
     experiment_name: str = field
     run_name: str = field(init=False)

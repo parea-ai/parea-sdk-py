@@ -1,4 +1,4 @@
-from typing import Any, Optional, Union, Dict
+from typing import Any, Dict, Optional, Union, List
 
 from enum import Enum
 
@@ -108,8 +108,8 @@ class LLMInputs:
     model: Optional[str] = None
     provider: Optional[str] = None
     model_params: Optional[ModelParams] = None
-    messages: Optional[list[Message]] = None
-    functions: Optional[list[Any]] = None
+    messages: Optional[List[Message]] = None
+    functions: Optional[List[Any]] = None
     function_call: Optional[Union[str, Dict[str, str]]] = None
 
 
@@ -136,7 +136,7 @@ class EvaluationResult:
 
 @define
 class EvaluatedLog(Log):
-    scores: Optional[list[EvaluationResult]] = field(factory=list)
+    scores: Optional[List[EvaluationResult]] = field(factory=list)
 
     def get_score(self, name: str) -> Optional[EvaluationResult]:
         for score in self.scores:

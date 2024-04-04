@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional, Dict
+from typing import Any, Callable, Dict, Optional, List
 
 import contextvars
 import inspect
@@ -126,11 +126,11 @@ def fill_trace_data(trace_id: str, data: Dict[str, Any], scenario: UpdateTraceSc
 
 def trace(
     name: Optional[str] = None,
-    tags: Optional[list[str]] = None,
+    tags: Optional[List[str]] = None,
     metadata: Optional[Dict[str, Any]] = None,
     end_user_identifier: Optional[str] = None,
-    eval_funcs_names: Optional[list[str]] = None,
-    eval_funcs: Optional[list[Callable]] = None,
+    eval_funcs_names: Optional[List[str]] = None,
+    eval_funcs: Optional[List[Callable]] = None,
     access_output_of_func: Optional[Callable] = None,
     apply_eval_frac: float = 1.0,
     deployment_id: Optional[str] = None,
@@ -262,7 +262,7 @@ def trace(
     return decorator
 
 
-def call_eval_funcs_then_log(trace_id: str, eval_funcs: list[Callable] = None):
+def call_eval_funcs_then_log(trace_id: str, eval_funcs: List[Callable] = None):
     data = trace_data.get()[trace_id]
     parea_logger.default_log(data=data)
 
@@ -295,5 +295,5 @@ def logger_all_possible(trace_id: str):
     log_in_thread(parea_logger.default_log, {"data": trace_data.get()[trace_id]})
 
 
-def thread_eval_funcs_then_log(trace_id: str, eval_funcs: list[Callable] = None):
+def thread_eval_funcs_then_log(trace_id: str, eval_funcs: List[Callable] = None):
     log_in_thread(call_eval_funcs_then_log, {"trace_id": trace_id, "eval_funcs": eval_funcs})

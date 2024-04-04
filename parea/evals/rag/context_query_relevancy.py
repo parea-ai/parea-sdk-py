@@ -1,10 +1,10 @@
-from typing import Callable, Optional
+from typing import Callable, Optional, List
 
 from parea.evals.utils import call_openai, sent_tokenize
 from parea.schemas.log import Log
 
 
-def context_query_relevancy_factory(question_field: str = "question", context_fields: Optional[list[str]] = None) -> Callable[[Log], float]:
+def context_query_relevancy_factory(question_field: str = "question", context_fields: Optional[List[str]] = None) -> Callable[[Log], float]:
     """
     This factory creates an evaluation function that measures how relevant the retrieved context is to the given question.
     It is based on the paper [RAGAS: Automated Evaluation of Retrieval Augmented Generation](https://arxiv.org/abs/2309.15217)
