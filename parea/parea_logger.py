@@ -6,7 +6,6 @@ import os
 from attrs import asdict, define, field
 
 from parea.api_client import HTTPClient
-from parea.cache.redis import RedisCache
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.helpers import serialize_metadata_values
 from parea.schemas.log import TraceIntegrations
@@ -20,14 +19,10 @@ VENDOR_LOG_ENDPOINT = "/trace_log/{vendor}"
 @define
 class PareaLogger:
     _client: HTTPClient = field(init=False, default=None)
-    _redis_cache: RedisCache = field(init=False, default=None)
     _project_uuid: str = field(init=False, default=None)
 
     def set_client(self, client: HTTPClient) -> None:
         self._client = client
-
-    def set_redis_cache(self, cache: RedisCache) -> None:
-        self._redis_cache = cache
 
     def set_project_uuid(self, project_uuid: str) -> None:
         self._project_uuid = project_uuid
@@ -60,11 +55,8 @@ class PareaLogger:
 
     def write_log(self, data: TraceLog) -> None:
         data = serialize_metadata_values(data)
-        self._redis_cache.log(data)
 
     def default_log(self, data: TraceLog) -> None:
-        if self._redis_cache:
-            self.write_log(data)
         if self._client:
             if data.target:
                 data.target = json_dumps(data.target)
