@@ -11,7 +11,7 @@
 import sys
 from importlib import metadata as importlib_metadata
 
-from parea.cache import InMemoryCache, RedisCache
+from parea.cache import InMemoryCache
 from parea.client import Parea
 from parea.experiment.cli import experiment as _experiment_cli
 from parea.experiment.dvc import parea_dvc_initialized

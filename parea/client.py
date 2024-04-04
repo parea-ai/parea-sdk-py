@@ -12,7 +12,6 @@ from cattrs import structure
 from dotenv import load_dotenv
 
 from parea.api_client import HTTPClient
-from parea.cache import InMemoryCache, RedisCache
 from parea.cache.cache import Cache
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.experiment.datasets import create_test_cases, create_test_collection
@@ -70,8 +69,6 @@ class Parea:
         if self.api_key:
             parea_logger.set_client(self._client)
             parea_logger.set_project_uuid(self.project_uuid)
-        if isinstance(self.cache, (RedisCache, InMemoryCache)):
-            parea_logger.set_redis_cache(self.cache)
 
     def wrap_openai_client(self, client: "OpenAI") -> None:
         """Only necessary for instance client with OpenAI version >= 1.0.0"""

@@ -98,23 +98,9 @@ code and start
 [a local redis cache](https://redis.io/docs/getting-started/install-stack/):
 
 ```python
-from parea import Parea, RedisCache
+from parea import Parea, InMemoryCache
 
-Parea(cache=RedisCache())
-```
-
-Above will use the default redis cache at `localhost:6379` with no password. You can also specify your redis database
-by:
-
-```python
-from parea import Parea, RedisCache
-
-cache = RedisCache(
-  host=os.getenv("REDIS_HOST", "localhost"),  # default value
-  port=int(os.getenv("REDIS_PORT", 6379)),  # default value
-  password=os.getenv("REDIS_PASSWORT", None)  # default value
-)
-Parea(cache=cache)
+Parea(cache=InMemoryCache())
 ```
 
 If you set `cache = None` for `Parea`, no cache will be used.
