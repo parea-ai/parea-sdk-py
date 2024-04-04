@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import os
 import random
@@ -88,7 +88,7 @@ def generate_tasks(main_objective: str, expounded_initial_task: List[Dict[str, s
 
 
 @trace(name=f"run_agent-{datetime.now(pytz.utc)}")  # You can provide a custom name other than the function name
-def run_agent(main_objective: str, initial_task: str = "") -> tuple[List[Dict[str, str]], str]:
+def run_agent(main_objective: str, initial_task: str = "") -> Tuple[List[Dict[str, str]], str]:
     trace_id = get_current_trace_id()
     generated_tasks = []
     expounded_initial_task = expound_task(main_objective, initial_task)

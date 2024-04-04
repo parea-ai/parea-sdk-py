@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 import os
 from datetime import datetime
@@ -84,7 +84,7 @@ def argument_chain(query: str, additional_description: str = "") -> str:
 
 
 @trace
-def argument_chain2(query: str, additional_description: str = "") -> tuple[str, str]:
+def argument_chain2(query: str, additional_description: str = "") -> Tuple[str, str]:
     trace_id = get_current_trace_id()
     argument = argument_generator(query, additional_description)
     criticism = critic(argument)

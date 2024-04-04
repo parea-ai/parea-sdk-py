@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import contextvars
 import inspect
@@ -137,7 +137,7 @@ def trace(
     log_omit_inputs: Optional[bool] = False,
     log_omit_outputs: Optional[bool] = False,
 ):
-    def init_trace(func_name, _parea_target_field, args, kwargs, func) -> tuple[str, datetime, contextvars.Token]:
+    def init_trace(func_name, _parea_target_field, args, kwargs, func) -> Tuple[str, datetime, contextvars.Token]:
         start_time = timezone_aware_now()
         trace_id = gen_trace_id()
 

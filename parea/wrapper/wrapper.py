@@ -1,4 +1,4 @@
-from typing import Any, Callable, List
+from typing import Any, Callable, List, Tuple
 
 import contextvars
 import functools
@@ -72,7 +72,7 @@ class Wrapper:
         else:
             return self.sync_decorator(original_func)
 
-    def _init_trace(self) -> tuple[str, datetime, contextvars.Token]:
+    def _init_trace(self) -> Tuple[str, datetime, contextvars.Token]:
         start_time = timezone_aware_now()
         trace_id = str(uuid4())
 

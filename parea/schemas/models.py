@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from collections.abc import Iterable
 from enum import Enum
@@ -243,7 +243,7 @@ class TestCaseCollection:
     def get_all_test_case_targets(self) -> Iterable[str]:
         return (test_case.target for test_case in self.test_cases.values())
 
-    def get_all_test_inputs_and_targets_tuple(self) -> Iterable[tuple[Dict[str, str], Optional[str]]]:
+    def get_all_test_inputs_and_targets_tuple(self) -> Iterable[Tuple[Dict[str, str], Optional[str]]]:
         return ((test_case.inputs, test_case.target) for test_case in self.test_cases.values())
 
     def get_all_test_inputs_and_targets_dict(self) -> Iterable[Dict[str, str]]:

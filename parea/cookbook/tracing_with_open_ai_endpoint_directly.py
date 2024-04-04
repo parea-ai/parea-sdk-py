@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 import os
 from datetime import datetime
@@ -71,7 +71,7 @@ def refiner(query: str, additional_description: str, argument: str, criticism: s
 
 
 @trace
-def argument_chain(query: str, additional_description: str = "") -> tuple[str, str]:
+def argument_chain(query: str, additional_description: str = "") -> Tuple[str, str]:
     trace_id = get_current_trace_id()
     argument = argumentor(query, additional_description)
     criticism = critic(argument)
