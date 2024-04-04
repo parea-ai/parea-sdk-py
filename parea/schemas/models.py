@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Iterable, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from enum import Enum
 

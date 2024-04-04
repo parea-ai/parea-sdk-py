@@ -1,7 +1,8 @@
+from typing import Tuple
+
 import json
 import os
 from datetime import datetime
-from typing import Tuple
 
 from attrs import asdict
 from dotenv import load_dotenv

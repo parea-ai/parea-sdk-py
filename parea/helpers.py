@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Iterable, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Union
 
 import csv
 import random

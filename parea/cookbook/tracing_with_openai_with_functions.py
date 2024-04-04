@@ -1,6 +1,7 @@
+from typing import Tuple
+
 import json
 import os
-from typing import Tuple
 
 import openai
 import requests
