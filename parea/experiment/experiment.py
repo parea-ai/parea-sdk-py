@@ -1,10 +1,9 @@
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Dict, List, Iterable, Optional, Union
 
 import asyncio
 import inspect
 import os
 from collections import defaultdict
-from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from functools import partial

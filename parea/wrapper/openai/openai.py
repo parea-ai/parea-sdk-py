@@ -1,9 +1,8 @@
-from typing import Any, Callable, Dict, Optional, TypeVar, Union
+from typing import Any, Callable, Dict, AsyncGenerator, AsyncIterator, Generator, Iterator, Sequence, Optional, TypeVar, Union
 
 import json
 import os
 from collections import defaultdict
-from collections.abc import AsyncGenerator, AsyncIterator, Generator, Iterator, Sequence
 from datetime import datetime
 
 import openai

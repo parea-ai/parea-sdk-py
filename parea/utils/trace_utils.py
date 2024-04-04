@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, AsyncGenerator, AsyncIterator, Generator, Iterator, Optional, Tuple
 
 import contextvars
 import inspect
@@ -7,7 +7,6 @@ import logging
 import os
 import threading
 from collections import ChainMap
-from collections.abc import AsyncGenerator, AsyncIterator, Generator, Iterator
 from datetime import datetime
 from functools import wraps
 from random import random

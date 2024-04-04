@@ -1,9 +1,8 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Iterable, Optional, Union
 
 import csv
 import random
 import uuid
-from collections.abc import Iterable
 from copy import deepcopy
 from datetime import datetime
 
