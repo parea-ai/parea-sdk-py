@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict
 
 import json
 import os
@@ -62,7 +62,7 @@ class PareaLogger:
                 data.target = json_dumps(data.target)
             self.record_log(data)
 
-    def record_vendor_log(self, data: dict[str, Any], vendor: TraceIntegrations) -> None:
+    def record_vendor_log(self, data: Dict[str, Any], vendor: TraceIntegrations) -> None:
         data["project_uuid"] = self._project_uuid
         if experiment_uuid := os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None):
             data["experiment_uuid"] = experiment_uuid
@@ -72,7 +72,7 @@ class PareaLogger:
             data=json.loads(json_dumps(data)),  # uuid is not serializable
         )
 
-    async def arecord_vendor_log(self, data: dict[str, Any], vendor: TraceIntegrations) -> None:
+    async def arecord_vendor_log(self, data: Dict[str, Any], vendor: TraceIntegrations) -> None:
         data["project_uuid"] = self._project_uuid
         if experiment_uuid := os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None):
             data["experiment_uuid"] = experiment_uuid

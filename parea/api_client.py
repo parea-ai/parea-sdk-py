@@ -1,10 +1,9 @@
-from typing import Any, Callable, Optional, Dict
+from typing import Any, AsyncIterable, Callable, Dict, Optional
 
 import asyncio
 import json
 import os
 import time
-from collections.abc import AsyncIterable
 from functools import wraps
 
 import httpx

@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Dict
 
 import os
 
@@ -24,7 +24,7 @@ PAREA_DVC_YAML_FILE = str(os.path.join(PAREA_DVC_DIR, "dvc.yaml"))
 
 CHUNK_DONE_SENTINEL = "data: [DONE]"
 
-OPENAI_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, int]]]] = {
+OPENAI_MODEL_INFO: Dict[str, Dict[str, Union[float, int, Dict[str, int]]]] = {
     "gpt-3.5-turbo-0301": {
         "prompt": 1.5,
         "completion": 4.0,
@@ -121,7 +121,7 @@ OPENAI_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, int]]]] = {
         "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
     },
 }
-AZURE_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, int]]]] = {
+AZURE_MODEL_INFO: Dict[str, Dict[str, Union[float, int, Dict[str, int]]]] = {
     "gpt-35-turbo": {
         "prompt": 1.5,
         "completion": 2.0,
@@ -201,7 +201,7 @@ AZURE_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, int]]]] = {
 
 instant_pricing = {"prompt": 1.63, "completion": 5.51}
 claude_pricing = {"prompt": 8.00, "completion": 24.00}
-ANTHROPIC_MODEL_INFO: dict[str, dict[str, Union[float, int, dict[str, float]]]] = {
+ANTHROPIC_MODEL_INFO: Dict[str, Dict[str, Union[float, int, Dict[str, float]]]] = {
     "claude-instant-1.1": {
         "token_limit": {
             "max_prompt_tokens": 9000,

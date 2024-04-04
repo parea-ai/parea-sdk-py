@@ -1,6 +1,7 @@
 import os
 import random
 from datetime import datetime
+from typing import Dict
 
 import pytz
 from dotenv import load_dotenv
@@ -44,7 +45,7 @@ def call_llm(
 
 
 @trace
-def expound_task(main_objective: str, current_task: str) -> list[dict[str, str]]:
+def expound_task(main_objective: str, current_task: str) -> list[Dict[str, str]]:
     prompt = [
         Message(
             role=Role.system,
@@ -57,7 +58,7 @@ def expound_task(main_objective: str, current_task: str) -> list[dict[str, str]]
 
 
 @trace
-def generate_tasks(main_objective: str, expounded_initial_task: list[dict[str, str]]) -> list[str]:
+def generate_tasks(main_objective: str, expounded_initial_task: list[Dict[str, str]]) -> list[str]:
     select_llm_option = random.choice(LLM_OPTIONS)
     task_expansion = dump_task(expounded_initial_task)
     prompt = [
@@ -86,7 +87,7 @@ def generate_tasks(main_objective: str, expounded_initial_task: list[dict[str, s
 
 
 @trace(name=f"run_agent-{datetime.now(pytz.utc)}")  # You can provide a custom name other than the function name
-def run_agent(main_objective: str, initial_task: str = "") -> tuple[list[dict[str, str]], str]:
+def run_agent(main_objective: str, initial_task: str = "") -> tuple[list[Dict[str, str]], str]:
     trace_id = get_current_trace_id()
     generated_tasks = []
     expounded_initial_task = expound_task(main_objective, initial_task)

@@ -1,4 +1,4 @@
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, Dict
 
 from enum import Enum
 
@@ -23,7 +23,7 @@ class Message:
     content: str
     role: Role = Role.user
 
-    def to_dict(self) -> dict[str, str]:
+    def to_dict(self) -> Dict[str, str]:
         return {
             "content": self.content,
             "role": str(self.role),
@@ -110,13 +110,13 @@ class LLMInputs:
     model_params: Optional[ModelParams] = None
     messages: Optional[list[Message]] = None
     functions: Optional[list[Any]] = None
-    function_call: Optional[Union[str, dict[str, str]]] = None
+    function_call: Optional[Union[str, Dict[str, str]]] = None
 
 
 @define
 class Log:
     configuration: LLMInputs = LLMInputs()
-    inputs: Optional[dict[str, str]] = None
+    inputs: Optional[Dict[str, str]] = None
     output: Optional[str] = None
     target: Optional[str] = None
     latency: Optional[float] = 0.0

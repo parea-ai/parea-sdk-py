@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Dict
 
 import contextvars
 import inspect
@@ -32,7 +32,7 @@ trace_data = contextvars.ContextVar("trace_data", default={})
 thread_ids_running_evals = contextvars.ContextVar("thread_ids_running_evals", default=[])
 
 
-def log_in_thread(target_func: Callable, data: dict[str, Any]):
+def log_in_thread(target_func: Callable, data: Dict[str, Any]):
     logging_thread = threading.Thread(target=target_func, kwargs=data)
     logging_thread.start()
 
@@ -85,7 +85,7 @@ def get_root_trace_id() -> str:
     return ""
 
 
-def trace_insert(data: dict[str, Any], trace_id: Optional[str] = None):
+def trace_insert(data: Dict[str, Any], trace_id: Optional[str] = None):
     """
     Insert data into the trace log for the current or specified trace id. Data should be a dictionary with keys that correspond to the fields of the TraceLog model.
     If the field already has an existing value that is extensible (dict, set, list, etc.), the new value will be merged with the existing value.
@@ -105,7 +105,7 @@ def trace_insert(data: dict[str, Any], trace_id: Optional[str] = None):
         logger.debug(f"Error occurred inserting data into trace log, {e}", exc_info=e)
 
 
-def fill_trace_data(trace_id: str, data: dict[str, Any], scenario: UpdateTraceScenario):
+def fill_trace_data(trace_id: str, data: Dict[str, Any], scenario: UpdateTraceScenario):
     try:
         if scenario == UpdateTraceScenario.RESULT:
             if not isinstance(data["result"], (Generator, AsyncGenerator, AsyncIterator, Iterator)):
@@ -127,7 +127,7 @@ def fill_trace_data(trace_id: str, data: dict[str, Any], scenario: UpdateTraceSc
 def trace(
     name: Optional[str] = None,
     tags: Optional[list[str]] = None,
-    metadata: Optional[dict[str, Any]] = None,
+    metadata: Optional[Dict[str, Any]] = None,
     end_user_identifier: Optional[str] = None,
     eval_funcs_names: Optional[list[str]] = None,
     eval_funcs: Optional[list[Callable]] = None,

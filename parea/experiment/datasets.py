@@ -1,11 +1,11 @@
-from typing import Any, Optional
+from typing import Any, Optional, Dict
 
 from parea.helpers import gen_random_name
 from parea.schemas.models import CreateTestCase, CreateTestCaseCollection
 from parea.utils.universal_encoder import json_dumps
 
 
-def create_test_collection(data: list[dict[str, Any]], name: Optional[str] = None) -> CreateTestCaseCollection:
+def create_test_collection(data: list[Dict[str, Any]], name: Optional[str] = None) -> CreateTestCaseCollection:
     """Create a test case collection from a dictionary of test cases.
     Args:
         data: list of key-value pairs where keys represent input names.
@@ -26,7 +26,7 @@ def create_test_collection(data: list[dict[str, Any]], name: Optional[str] = Non
     return CreateTestCaseCollection(name=name, column_names=column_names, test_cases=test_cases)
 
 
-def create_test_cases(data: list[dict[str, Any]]) -> list[CreateTestCase]:
+def create_test_cases(data: list[Dict[str, Any]]) -> list[CreateTestCase]:
     """Create a list of test cases from a dictionary.
     Args:
         data: list of key-value pairs where keys represent input names.
@@ -39,7 +39,7 @@ def create_test_cases(data: list[dict[str, Any]]) -> list[CreateTestCase]:
     """
     test_cases: list[CreateTestCase] = []
     for row in data:
-        inputs: dict[str, str] = {}
+        inputs: Dict[str, str] = {}
         target: Optional[str] = None
         tags: list = []
         for k, v in row.items():

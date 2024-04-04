@@ -1,4 +1,4 @@
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, Dict
 
 import csv
 import random
@@ -51,7 +51,7 @@ def duplicate_dicts(data: Iterable[dict], n: int) -> Iterable[dict]:
 
 
 def serialize_metadata_values(log_data: Union[TraceLog, UpdateLog, Completion]) -> Union[TraceLog, UpdateLog, Completion]:
-    def serialize_values(metadata: dict[str, Any]) -> dict[str, str]:
+    def serialize_values(metadata: Dict[str, Any]) -> Dict[str, str]:
         return {k: json_dumps(v) for k, v in metadata.items()}
 
     if isinstance(log_data, UpdateLog) and log_data.field_name_to_value_map:

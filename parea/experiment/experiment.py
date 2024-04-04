@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Union
+from typing import Callable, Optional, Union, Dict
 
 import asyncio
 import inspect
@@ -25,7 +25,7 @@ from parea.utils.universal_encoder import json_dumps
 STAT_ATTRS = ["latency", "input_tokens", "output_tokens", "total_tokens", "cost"]
 
 
-def calculate_avg_std_for_experiment(experiment_stats: ExperimentStatsSchema) -> dict[str, str]:
+def calculate_avg_std_for_experiment(experiment_stats: ExperimentStatsSchema) -> Dict[str, str]:
     accumulators = defaultdict(float)
     counts = defaultdict(int)
     score_accumulators = defaultdict(float)
@@ -81,7 +81,7 @@ async def experiment(
     func: Callable,
     p: Parea,
     n_trials: int = 1,
-    metadata: Optional[dict[str, str]] = None,
+    metadata: Optional[Dict[str, str]] = None,
     dataset_level_evals: Optional[list[Callable]] = None,
     n_workers: int = 10,
 ) -> ExperimentStatsSchema:
@@ -177,7 +177,7 @@ class Experiment:
     # The function to run. This function should accept inputs that match the keys of the data field.
     func: Callable = field()
     experiment_stats: ExperimentStatsSchema = field(init=False, default=None)
-    metadata: Optional[dict[str, str]] = field(default=None)
+    metadata: Optional[Dict[str, str]] = field(default=None)
     dataset_level_evals: Optional[list[Callable]] = field(default=None)
     p: Parea = field(default=None)
     experiment_name: str = field
@@ -225,6 +225,6 @@ class Experiment:
             print(f"Error running experiment: {e}")
 
     @property
-    def avg_scores(self) -> dict[str, float]:
+    def avg_scores(self) -> Dict[str, float]:
         """Returns the average score across all evals."""
         return self.experiment_stats.avg_scores if self.experiment_stats else {}

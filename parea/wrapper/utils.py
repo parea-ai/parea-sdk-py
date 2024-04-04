@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Union
+from typing import Callable, Optional, Union, Dict
 
 import json
 import sys
@@ -165,9 +165,9 @@ def _num_tokens_from_string(string: str, model_name: str = "gpt-3.5-turbo") -> i
 
 
 def _calculate_input_tokens(
-    messages: Optional[list[dict[str, str]]],
-    functions: list[dict[str, str]],
-    function_call: Union[str, dict[str, str]],
+    messages: Optional[list[Dict[str, str]]],
+    functions: list[Dict[str, str]],
+    function_call: Union[str, Dict[str, str]],
     model: str,
 ) -> int:
     is_azure = model.startswith("azure_") or model in AZURE_MODEL_INFO
