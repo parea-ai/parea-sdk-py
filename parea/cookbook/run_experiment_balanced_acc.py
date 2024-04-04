@@ -1,3 +1,5 @@
+from typing import List
+
 import asyncio
 import os
 from collections import defaultdict
@@ -16,7 +18,7 @@ def is_correct(log: Log) -> bool:
     return log.target == log.output
 
 
-def balanced_acc_is_correct(logs: list[EvaluatedLog]) -> float:
+def balanced_acc_is_correct(logs: List[EvaluatedLog]) -> float:
     score_name = is_correct.__name__
 
     correct = defaultdict(int)

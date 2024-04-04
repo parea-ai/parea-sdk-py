@@ -1,3 +1,5 @@
+from typing import Dict, List, Tuple
+
 import os
 import random
 from datetime import datetime
@@ -26,7 +28,7 @@ def dump_task(task):
 
 
 def call_llm(
-    data: list[Message],
+    data: List[Message],
     model: str = "gpt-3.5-turbo",
     provider: str = "openai",
     temperature: float = 0.0,
@@ -44,7 +46,7 @@ def call_llm(
 
 
 @trace
-def expound_task(main_objective: str, current_task: str) -> list[dict[str, str]]:
+def expound_task(main_objective: str, current_task: str) -> List[Dict[str, str]]:
     prompt = [
         Message(
             role=Role.system,
@@ -57,7 +59,7 @@ def expound_task(main_objective: str, current_task: str) -> list[dict[str, str]]
 
 
 @trace
-def generate_tasks(main_objective: str, expounded_initial_task: list[dict[str, str]]) -> list[str]:
+def generate_tasks(main_objective: str, expounded_initial_task: List[Dict[str, str]]) -> List[str]:
     select_llm_option = random.choice(LLM_OPTIONS)
     task_expansion = dump_task(expounded_initial_task)
     prompt = [
@@ -73,7 +75,7 @@ def generate_tasks(main_objective: str, expounded_initial_task: list[dict[str, s
     response = call_llm(data=prompt, model=select_llm_option[0], provider=select_llm_option[1]).content
     new_tasks = response.split("\n") if "\n" in response else [response]
     task_list = [{"task_name": task_name} for task_name in new_tasks]
-    new_tasks_list: list[str] = []
+    new_tasks_list: List[str] = []
     for task_item in task_list:
         task_description = task_item.get("task_name")
         if task_description:
@@ -86,7 +88,7 @@ def generate_tasks(main_objective: str, expounded_initial_task: list[dict[str, s
 
 
 @trace(name=f"run_agent-{datetime.now(pytz.utc)}")  # You can provide a custom name other than the function name
-def run_agent(main_objective: str, initial_task: str = "") -> tuple[list[dict[str, str]], str]:
+def run_agent(main_objective: str, initial_task: str = "") -> Tuple[List[Dict[str, str]], str]:
     trace_id = get_current_trace_id()
     generated_tasks = []
     expounded_initial_task = expound_task(main_objective, initial_task)

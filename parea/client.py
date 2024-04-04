@@ -1,10 +1,9 @@
-from typing import Any, Callable, Optional, Union
+from typing import Any, AsyncIterable, Callable, Dict, Iterable, List, Optional, Union
 
 import asyncio
 import logging
 import os
 import time
-from collections.abc import AsyncIterable, Iterable
 
 import httpx
 from attrs import asdict, define, field
@@ -259,7 +258,7 @@ class Parea:
         )
         return structure(r.json(), TestCaseCollection)
 
-    def create_test_collection(self, data: list[dict[str, Any]], name: Optional[str] = None) -> None:
+    def create_test_collection(self, data: List[Dict[str, Any]], name: Optional[str] = None) -> None:
         request: CreateTestCaseCollection = create_test_collection(data, name)
         self._client.request(
             "POST",
@@ -269,7 +268,7 @@ class Parea:
 
     def add_test_cases(
         self,
-        data: list[dict[str, Any]],
+        data: List[Dict[str, Any]],
         name: Optional[str] = None,
         dataset_id: Optional[int] = None,
     ) -> None:
@@ -286,8 +285,8 @@ class Parea:
         data: Union[str, int, Iterable[dict]],
         func: Callable,
         n_trials: int = 1,
-        metadata: Optional[dict[str, str]] = None,
-        dataset_level_evals: Optional[list[Callable]] = None,
+        metadata: Optional[Dict[str, str]] = None,
+        dataset_level_evals: Optional[List[Callable]] = None,
         n_workers: int = 10,
     ):
         """

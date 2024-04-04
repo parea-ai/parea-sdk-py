@@ -4,7 +4,7 @@ from parea.evals.utils import call_openai
 from parea.schemas.log import Log
 
 
-def answer_context_faithfulness_statement_level_factory(question_field: str = "question", context_fields: list[str] = ["context"]) -> Callable[[Log], float]:
+def answer_context_faithfulness_statement_level_factory(question_field: str = "question", context_fields: List[str] = ["context"]) -> Callable[[Log], float]:
     """
     This factory creates an evaluation function that measures the faithfulness of the generated answer to the given context
     by measuring how many statements from the generated answer can be inferred from the given context. It is based on the paper

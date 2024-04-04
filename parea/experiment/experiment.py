@@ -1,10 +1,9 @@
-from typing import Callable, Optional, Union
+from typing import Callable, Dict, Iterable, List, Optional, Union
 
 import asyncio
 import inspect
 import os
 from collections import defaultdict
-from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from functools import partial
@@ -25,7 +24,7 @@ from parea.utils.universal_encoder import json_dumps
 STAT_ATTRS = ["latency", "input_tokens", "output_tokens", "total_tokens", "cost"]
 
 
-def calculate_avg_std_for_experiment(experiment_stats: ExperimentStatsSchema) -> dict[str, str]:
+def calculate_avg_std_for_experiment(experiment_stats: ExperimentStatsSchema) -> Dict[str, str]:
     accumulators = defaultdict(float)
     counts = defaultdict(int)
     score_accumulators = defaultdict(float)
@@ -55,7 +54,7 @@ def async_wrapper(fn, **kwargs):
     return asyncio.run(fn(**kwargs))
 
 
-def apply_dataset_eval(dataset_level_evals: list[Callable]) -> list[EvaluationResult]:
+def apply_dataset_eval(dataset_level_evals: List[Callable]) -> List[EvaluationResult]:
     root_traces = []
     for trace in trace_data.get().values():
         if trace.root_trace_id == trace.trace_id:
@@ -81,8 +80,8 @@ async def experiment(
     func: Callable,
     p: Parea,
     n_trials: int = 1,
-    metadata: Optional[dict[str, str]] = None,
-    dataset_level_evals: Optional[list[Callable]] = None,
+    metadata: Optional[Dict[str, str]] = None,
+    dataset_level_evals: Optional[List[Callable]] = None,
     n_workers: int = 10,
 ) -> ExperimentStatsSchema:
     """Creates an experiment and runs the function on the data iterator.
@@ -177,8 +176,8 @@ class Experiment:
     # The function to run. This function should accept inputs that match the keys of the data field.
     func: Callable = field()
     experiment_stats: ExperimentStatsSchema = field(init=False, default=None)
-    metadata: Optional[dict[str, str]] = field(default=None)
-    dataset_level_evals: Optional[list[Callable]] = field(default=None)
+    metadata: Optional[Dict[str, str]] = field(default=None)
+    dataset_level_evals: Optional[List[Callable]] = field(default=None)
     p: Parea = field(default=None)
     experiment_name: str = field
     run_name: str = field(init=False)
@@ -225,6 +224,6 @@ class Experiment:
             print(f"Error running experiment: {e}")
 
     @property
-    def avg_scores(self) -> dict[str, float]:
+    def avg_scores(self) -> Dict[str, float]:
         """Returns the average score across all evals."""
         return self.experiment_stats.avg_scores if self.experiment_stats else {}

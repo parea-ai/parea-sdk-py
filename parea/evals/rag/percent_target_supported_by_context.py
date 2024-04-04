@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Union
+from typing import Callable, List, Optional, Union
 
 import re
 
@@ -6,7 +6,7 @@ from parea.evals.utils import call_openai
 from parea.schemas.log import Log
 
 
-def percent_target_supported_by_context_factory(question_field: str = "question", context_fields: Optional[list[str]] = None) -> Callable[[Log], Union[float, None]]:
+def percent_target_supported_by_context_factory(question_field: str = "question", context_fields: Optional[List[str]] = None) -> Callable[[Log], Union[float, None]]:
     """Quantifies how many sentences in the target/ground truth are supported by the retrieved context."""
 
     def percent_target_supported_by_context(log: Log) -> Union[float, None]:

@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Callable, List, Optional
 
 from parea.evals.utils import call_openai, ndcg
 from parea.schemas.log import Log
@@ -6,7 +6,7 @@ from parea.schemas.log import Log
 
 def context_ranking_listwise_factory(
     question_field: str = "question",
-    context_fields: Optional[list[str]] = None,
+    context_fields: Optional[List[str]] = None,
     ranking_measurement="ndcg",
     n_contexts_to_rank=10,
 ) -> Callable[[Log], float]:
@@ -33,7 +33,7 @@ def context_ranking_listwise_factory(
     if n_contexts_to_rank < 1:
         raise ValueError("n_contexts_to_rank must be at least 1.")
 
-    def listwise_reranking(query: str, contexts: list[str]) -> list[int]:
+    def listwise_reranking(query: str, contexts: List[str]) -> List[int]:
         """Uses a LLM to listwise rerank the contexts. Returns the indices of the contexts in the order of their
         relevance (most relevant to least relevant)."""
         if len(contexts) == 0 or len(contexts) == 1:
@@ -63,7 +63,7 @@ def context_ranking_listwise_factory(
         number_strings = s.split(",")
         return [int(num) for num in number_strings if num.isdigit()]
 
-    def progressive_reranking(query: str, contexts: list[str]) -> list[int]:
+    def progressive_reranking(query: str, contexts: List[str]) -> List[int]:
         """Returns the indices of the contexts in the order of their relevance (most relevant to least relevant)."""
         if len(contexts) <= n_contexts_to_rank:
             return listwise_reranking(query, contexts)

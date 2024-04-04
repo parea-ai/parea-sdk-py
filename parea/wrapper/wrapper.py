@@ -1,4 +1,4 @@
-from typing import Any, Callable
+from typing import Any, Callable, List, Tuple
 
 import contextvars
 import functools
@@ -23,7 +23,7 @@ class Wrapper:
     def __init__(
         self,
         module: Any,
-        func_names: list[str],
+        func_names: List[str],
         resolver: Callable,
         gen_resolver: Callable,
         agen_resolver: Callable,
@@ -45,7 +45,7 @@ class Wrapper:
         self.convert_cache_to_response = convert_cache_to_response
         self.aconvert_cache_to_response = aconvert_cache_to_response
 
-    def wrap_functions(self, module: Any, func_names: list[str]):
+    def wrap_functions(self, module: Any, func_names: List[str]):
         for func_name in func_names:
             func_name_parts = func_name.split(".")
             original = functools.reduce(getattr, func_name_parts, module)
@@ -72,7 +72,7 @@ class Wrapper:
         else:
             return self.sync_decorator(original_func)
 
-    def _init_trace(self) -> tuple[str, datetime, contextvars.Token]:
+    def _init_trace(self) -> Tuple[str, datetime, contextvars.Token]:
         start_time = timezone_aware_now()
         trace_id = str(uuid4())
 

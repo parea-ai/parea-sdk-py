@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional, Sequence
+from typing import Any, Callable, Dict, Optional, Sequence
 
 from collections import defaultdict
 from datetime import datetime
@@ -33,7 +33,7 @@ class AnthropicWrapper:
         )
 
     @staticmethod
-    def resolver(trace_id: str, _args: Sequence[Any], kwargs: dict[str, Any], response: Optional[Message]) -> Optional[Any]:
+    def resolver(trace_id: str, _args: Sequence[Any], kwargs: Dict[str, Any], response: Optional[Message]) -> Optional[Any]:
         if response:
             output = response.content[0].text
             input_tokens = response.usage.input_tokens
@@ -54,7 +54,7 @@ class AnthropicWrapper:
         trace_data.get()[trace_id].output = output
         return response
 
-    def gen_resolver(self, trace_id: str, _args: Sequence[Any], kwargs: dict[str, Any], response, final_log):
+    def gen_resolver(self, trace_id: str, _args: Sequence[Any], kwargs: Dict[str, Any], response, final_log):
         if isinstance(response, Stream):
             llm_configuration = self._kwargs_to_llm_configuration(kwargs)
             trace_data.get()[trace_id].configuration = llm_configuration
@@ -83,7 +83,7 @@ class AnthropicWrapper:
             else:
                 return MessageAsyncStreamManagerWrapper(response, resolve_and_log)
 
-    def agen_resolver(self, trace_id: str, _args: Sequence[Any], kwargs: dict[str, Any], response, final_log):
+    def agen_resolver(self, trace_id: str, _args: Sequence[Any], kwargs: Dict[str, Any], response, final_log):
         llm_configuration = self._kwargs_to_llm_configuration(kwargs)
         trace_data.get()[trace_id].configuration = llm_configuration
         accumulator, info_from_response = self._get_default_dict_streaming()
@@ -120,7 +120,7 @@ class AnthropicWrapper:
             ),
         )
 
-    def convert_kwargs_to_cache_request(self, _args: Sequence[Any], kwargs: dict[str, Any]) -> CacheRequest:
+    def convert_kwargs_to_cache_request(self, _args: Sequence[Any], kwargs: Dict[str, Any]) -> CacheRequest:
         pass
 
     @staticmethod
@@ -138,17 +138,17 @@ class AnthropicWrapper:
         trace_data.get()[trace_id].time_to_first_token = (model_info["first_token_timestamp"] - datetime.fromisoformat(trace_data.get()[trace_id].start_timestamp)).total_seconds()
 
     @staticmethod
-    def _convert_cache_to_response(_args: Sequence[Any], kwargs: dict[str, Any], cache_response: TraceLog):
+    def _convert_cache_to_response(_args: Sequence[Any], kwargs: Dict[str, Any], cache_response: TraceLog):
         pass
 
     @staticmethod
     def should_use_gen_resolver(response: Any) -> bool:
         return isinstance(response, (Stream, MessageStreamManager, AsyncStream, AsyncMessageStreamManager))
 
-    def convert_cache_to_response(self, _args: Sequence[Any], kwargs: dict[str, Any], cache_response: TraceLog):
+    def convert_cache_to_response(self, _args: Sequence[Any], kwargs: Dict[str, Any], cache_response: TraceLog):
         pass
 
-    def aconvert_cache_to_response(self, _args: Sequence[Any], kwargs: dict[str, Any], cache_response: TraceLog):
+    def aconvert_cache_to_response(self, _args: Sequence[Any], kwargs: Dict[str, Any], cache_response: TraceLog):
         pass
 
     @staticmethod

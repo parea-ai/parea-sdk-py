@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional
+from typing import Any, AsyncGenerator, AsyncIterator, Callable, Dict, Generator, Iterator, List, Optional, Tuple
 
 import contextvars
 import inspect
@@ -7,7 +7,6 @@ import logging
 import os
 import threading
 from collections import ChainMap
-from collections.abc import AsyncGenerator, AsyncIterator, Generator, Iterator
 from datetime import datetime
 from functools import wraps
 from random import random
@@ -32,7 +31,7 @@ trace_data = contextvars.ContextVar("trace_data", default={})
 thread_ids_running_evals = contextvars.ContextVar("thread_ids_running_evals", default=[])
 
 
-def log_in_thread(target_func: Callable, data: dict[str, Any]):
+def log_in_thread(target_func: Callable, data: Dict[str, Any]):
     logging_thread = threading.Thread(target=target_func, kwargs=data)
     logging_thread.start()
 
@@ -85,7 +84,7 @@ def get_root_trace_id() -> str:
     return ""
 
 
-def trace_insert(data: dict[str, Any], trace_id: Optional[str] = None):
+def trace_insert(data: Dict[str, Any], trace_id: Optional[str] = None):
     """
     Insert data into the trace log for the current or specified trace id. Data should be a dictionary with keys that correspond to the fields of the TraceLog model.
     If the field already has an existing value that is extensible (dict, set, list, etc.), the new value will be merged with the existing value.
@@ -105,7 +104,7 @@ def trace_insert(data: dict[str, Any], trace_id: Optional[str] = None):
         logger.debug(f"Error occurred inserting data into trace log, {e}", exc_info=e)
 
 
-def fill_trace_data(trace_id: str, data: dict[str, Any], scenario: UpdateTraceScenario):
+def fill_trace_data(trace_id: str, data: Dict[str, Any], scenario: UpdateTraceScenario):
     try:
         if scenario == UpdateTraceScenario.RESULT:
             if not isinstance(data["result"], (Generator, AsyncGenerator, AsyncIterator, Iterator)):
@@ -126,18 +125,18 @@ def fill_trace_data(trace_id: str, data: dict[str, Any], scenario: UpdateTraceSc
 
 def trace(
     name: Optional[str] = None,
-    tags: Optional[list[str]] = None,
-    metadata: Optional[dict[str, Any]] = None,
+    tags: Optional[List[str]] = None,
+    metadata: Optional[Dict[str, Any]] = None,
     end_user_identifier: Optional[str] = None,
-    eval_funcs_names: Optional[list[str]] = None,
-    eval_funcs: Optional[list[Callable]] = None,
+    eval_funcs_names: Optional[List[str]] = None,
+    eval_funcs: Optional[List[Callable]] = None,
     access_output_of_func: Optional[Callable] = None,
     apply_eval_frac: float = 1.0,
     deployment_id: Optional[str] = None,
     log_omit_inputs: Optional[bool] = False,
     log_omit_outputs: Optional[bool] = False,
 ):
-    def init_trace(func_name, _parea_target_field, args, kwargs, func) -> tuple[str, datetime, contextvars.Token]:
+    def init_trace(func_name, _parea_target_field, args, kwargs, func) -> Tuple[str, datetime, contextvars.Token]:
         start_time = timezone_aware_now()
         trace_id = gen_trace_id()
 
@@ -262,7 +261,7 @@ def trace(
     return decorator
 
 
-def call_eval_funcs_then_log(trace_id: str, eval_funcs: list[Callable] = None):
+def call_eval_funcs_then_log(trace_id: str, eval_funcs: List[Callable] = None):
     data = trace_data.get()[trace_id]
     parea_logger.default_log(data=data)
 
@@ -295,5 +294,5 @@ def logger_all_possible(trace_id: str):
     log_in_thread(parea_logger.default_log, {"data": trace_data.get()[trace_id]})
 
 
-def thread_eval_funcs_then_log(trace_id: str, eval_funcs: list[Callable] = None):
+def thread_eval_funcs_then_log(trace_id: str, eval_funcs: List[Callable] = None):
     log_in_thread(call_eval_funcs_then_log, {"trace_id": trace_id, "eval_funcs": eval_funcs})

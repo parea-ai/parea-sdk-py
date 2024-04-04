@@ -1,10 +1,9 @@
-from typing import Any, Callable, Optional
+from typing import Any, AsyncIterable, Callable, Dict, Optional
 
 import asyncio
 import json
 import os
 import time
-from collections.abc import AsyncIterable
 from functools import wraps
 
 import httpx
@@ -77,8 +76,8 @@ class HTTPClient:
         self,
         method: str,
         endpoint: str,
-        data: Optional[dict[str, Any]] = None,
-        params: Optional[dict[str, Any]] = None,
+        data: Optional[Dict[str, Any]] = None,
+        params: Optional[Dict[str, Any]] = None,
         api_key: Optional[str] = None,
     ) -> httpx.Response:
         """
@@ -100,8 +99,8 @@ class HTTPClient:
         self,
         method: str,
         endpoint: str,
-        data: Optional[dict[str, Any]] = None,
-        params: Optional[dict[str, Any]] = None,
+        data: Optional[Dict[str, Any]] = None,
+        params: Optional[Dict[str, Any]] = None,
         api_key: Optional[str] = None,
     ) -> httpx.Response:
         """
@@ -121,8 +120,8 @@ class HTTPClient:
         self,
         method: str,
         endpoint: str,
-        data: Optional[dict[str, Any]] = None,
-        params: Optional[dict[str, Any]] = None,
+        data: Optional[Dict[str, Any]] = None,
+        params: Optional[Dict[str, Any]] = None,
         api_key: Optional[str] = None,
         chunk_size: Optional[int] = None,
     ):
@@ -144,8 +143,8 @@ class HTTPClient:
         self,
         method: str,
         endpoint: str,
-        data: Optional[dict[str, Any]] = None,
-        params: Optional[dict[str, Any]] = None,
+        data: Optional[Dict[str, Any]] = None,
+        params: Optional[Dict[str, Any]] = None,
         api_key: Optional[str] = None,
         chunk_size: Optional[int] = None,
     ) -> AsyncIterable[bytes]:

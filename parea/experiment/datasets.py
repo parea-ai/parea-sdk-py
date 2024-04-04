@@ -1,11 +1,11 @@
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 
 from parea.helpers import gen_random_name
 from parea.schemas.models import CreateTestCase, CreateTestCaseCollection
 from parea.utils.universal_encoder import json_dumps
 
 
-def create_test_collection(data: list[dict[str, Any]], name: Optional[str] = None) -> CreateTestCaseCollection:
+def create_test_collection(data: List[Dict[str, Any]], name: Optional[str] = None) -> CreateTestCaseCollection:
     """Create a test case collection from a dictionary of test cases.
     Args:
         data: list of key-value pairs where keys represent input names.
@@ -26,7 +26,7 @@ def create_test_collection(data: list[dict[str, Any]], name: Optional[str] = Non
     return CreateTestCaseCollection(name=name, column_names=column_names, test_cases=test_cases)
 
 
-def create_test_cases(data: list[dict[str, Any]]) -> list[CreateTestCase]:
+def create_test_cases(data: List[Dict[str, Any]]) -> List[CreateTestCase]:
     """Create a list of test cases from a dictionary.
     Args:
         data: list of key-value pairs where keys represent input names.
@@ -35,11 +35,11 @@ def create_test_cases(data: list[dict[str, Any]]) -> list[CreateTestCase]:
             If target is present it will represent the target/expected response for the inputs.
             If tags are present they must be a list of json_serializable values.
 
-    Returns: list[CreateTestCase]
+    Returns: List[CreateTestCase]
     """
-    test_cases: list[CreateTestCase] = []
+    test_cases: List[CreateTestCase] = []
     for row in data:
-        inputs: dict[str, str] = {}
+        inputs: Dict[str, str] = {}
         target: Optional[str] = None
         tags: list = []
         for k, v in row.items():

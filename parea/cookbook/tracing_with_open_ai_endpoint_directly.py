@@ -1,3 +1,5 @@
+from typing import List, Tuple
+
 import os
 from datetime import datetime
 
@@ -15,7 +17,7 @@ p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 p.wrap_openai_client(client)
 
 
-def call_llm(data: list[dict], model: str = "gpt-3.5-turbo", temperature: float = 0.0) -> str:
+def call_llm(data: List[dict], model: str = "gpt-3.5-turbo", temperature: float = 0.0) -> str:
     return client.chat.completions.create(model=model, temperature=temperature, messages=data).choices[0].message.content
 
 
@@ -69,7 +71,7 @@ def refiner(query: str, additional_description: str, argument: str, criticism: s
 
 
 @trace
-def argument_chain(query: str, additional_description: str = "") -> tuple[str, str]:
+def argument_chain(query: str, additional_description: str = "") -> Tuple[str, str]:
     trace_id = get_current_trace_id()
     argument = argumentor(query, additional_description)
     criticism = critic(argument)

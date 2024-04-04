@@ -1,4 +1,4 @@
-from typing import Any, AsyncGenerator, AsyncIterator, Generator, Iterator
+from typing import Any, AsyncGenerator, AsyncIterator, Dict, Generator, Iterator
 
 import contextvars
 import inspect
@@ -22,7 +22,7 @@ logger = logging.getLogger()
 
 class BaseWrapper:
     @staticmethod
-    def fill_trace_data(trace_id: str, data: dict[str, Any], scenario: UpdateTraceScenario):
+    def fill_trace_data(trace_id: str, data: Dict[str, Any], scenario: UpdateTraceScenario):
         try:
             if scenario == UpdateTraceScenario.RESULT:
                 if not isinstance(data["result"], (Generator, AsyncGenerator, AsyncIterator, Iterator)):

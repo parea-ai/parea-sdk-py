@@ -1,9 +1,8 @@
-from typing import Any, Callable, Optional, TypeVar, Union
+from typing import Any, AsyncGenerator, AsyncIterator, Callable, Dict, Generator, Iterator, Optional, Sequence, TypeVar, Union
 
 import json
 import os
 from collections import defaultdict
-from collections.abc import AsyncGenerator, AsyncIterator, Generator, Iterator, Sequence
 from datetime import datetime
 
 import openai
@@ -76,7 +75,7 @@ class OpenAIWrapper:
             aconvert_cache_to_response=self.aconvert_cache_to_response,
         )
 
-    def resolver(self, trace_id: str, _args: Sequence[Any], kwargs: dict[str, Any], response: Optional[Any]) -> Optional[Any]:
+    def resolver(self, trace_id: str, _args: Sequence[Any], kwargs: Dict[str, Any], response: Optional[Any]) -> Optional[Any]:
         if response:
             output = self._get_output(response)
             if openai_version.startswith("0."):
@@ -106,7 +105,7 @@ class OpenAIWrapper:
         trace_data.get()[trace_id].output = output
         return response
 
-    def gen_resolver(self, trace_id: str, _args: Sequence[Any], kwargs: dict[str, Any], response, final_log):
+    def gen_resolver(self, trace_id: str, _args: Sequence[Any], kwargs: Dict[str, Any], response, final_log):
         llm_configuration = self._kwargs_to_llm_configuration(kwargs)
         trace_data.get()[trace_id].configuration = llm_configuration
 
@@ -213,7 +212,7 @@ class OpenAIWrapper:
                 if tool_call.get("function", {}).get("arguments"):
                     accumulator["tool_calls"][tool_id]["function"]["arguments"].append(tool_call["function"]["arguments"])
 
-    def agen_resolver(self, trace_id: str, _args: Sequence[Any], kwargs: dict[str, Any], response, final_log):
+    def agen_resolver(self, trace_id: str, _args: Sequence[Any], kwargs: Dict[str, Any], response, final_log):
         llm_configuration = self._kwargs_to_llm_configuration(kwargs)
         trace_data.get()[trace_id].configuration = llm_configuration
 
@@ -292,13 +291,13 @@ class OpenAIWrapper:
     def _format_function_call(response_message) -> str:
         return _format_function_call(response_message)
 
-    def convert_kwargs_to_cache_request(self, _args: Sequence[Any], kwargs: dict[str, Any]) -> CacheRequest:
+    def convert_kwargs_to_cache_request(self, _args: Sequence[Any], kwargs: Dict[str, Any]) -> CacheRequest:
         return CacheRequest(
             configuration=self._kwargs_to_llm_configuration(kwargs),
         )
 
     @staticmethod
-    def _convert_cache_to_response(_args: Sequence[Any], kwargs: dict[str, Any], cache_response: TraceLog) -> OpenAIObject:
+    def _convert_cache_to_response(_args: Sequence[Any], kwargs: Dict[str, Any], cache_response: TraceLog) -> OpenAIObject:
         content = cache_response.output
         message = {"role": "assistant", "content": None}
         try:
@@ -337,14 +336,14 @@ class OpenAIWrapper:
             }
         )
 
-    def convert_cache_to_response(self, _args: Sequence[Any], kwargs: dict[str, Any], cache_response: TraceLog) -> Union[OpenAIObject, Iterator[OpenAIObject]]:
+    def convert_cache_to_response(self, _args: Sequence[Any], kwargs: Dict[str, Any], cache_response: TraceLog) -> Union[OpenAIObject, Iterator[OpenAIObject]]:
         response = self._convert_cache_to_response(_args, kwargs, cache_response)
         if kwargs.get("stream", False):
             return iter([response])
         else:
             return response
 
-    def aconvert_cache_to_response(self, _args: Sequence[Any], kwargs: dict[str, Any], cache_response: TraceLog) -> Union[OpenAIObject, AsyncIterator[OpenAIObject]]:
+    def aconvert_cache_to_response(self, _args: Sequence[Any], kwargs: Dict[str, Any], cache_response: TraceLog) -> Union[OpenAIObject, AsyncIterator[OpenAIObject]]:
         response = self._convert_cache_to_response(_args, kwargs, cache_response)
         if kwargs.get("stream", False):
 

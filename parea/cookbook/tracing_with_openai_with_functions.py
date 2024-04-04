@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import json
 import os
 
@@ -129,7 +131,7 @@ def call_google_places_api(user_id, place_type, food_preference=None):
 
 
 @trace
-def provide_user_specific_recommendations(user_input, user_id, functions) -> tuple[str, str]:
+def provide_user_specific_recommendations(user_input, user_id, functions) -> Tuple[str, str]:
     trace_id = get_current_trace_id()
     customer_profile = fetch_customer_profile(user_id)
     if customer_profile is None:

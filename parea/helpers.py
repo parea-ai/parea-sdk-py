@@ -1,9 +1,8 @@
-from typing import Any, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Union
 
 import csv
 import random
 import uuid
-from collections.abc import Iterable
 from copy import deepcopy
 from datetime import datetime
 
@@ -20,7 +19,7 @@ def gen_trace_id() -> str:
     return str(uuid.uuid4())
 
 
-def write_trace_logs_to_csv(path_csv: str, trace_logs: list[TraceLog]):
+def write_trace_logs_to_csv(path_csv: str, trace_logs: List[TraceLog]):
     with open(path_csv, "w", newline="") as file:
         # write header
         columns = fields_dict(TraceLog).keys()
@@ -38,7 +37,7 @@ def gen_random_name():
     return f"{adjective}-{noun}"
 
 
-def calculate_avg_as_string(values: list[Optional[float]]) -> str:
+def calculate_avg_as_string(values: List[Optional[float]]) -> str:
     if not values:
         return "N/A"
     values = [x for x in values if x is not None]
@@ -51,7 +50,7 @@ def duplicate_dicts(data: Iterable[dict], n: int) -> Iterable[dict]:
 
 
 def serialize_metadata_values(log_data: Union[TraceLog, UpdateLog, Completion]) -> Union[TraceLog, UpdateLog, Completion]:
-    def serialize_values(metadata: dict[str, Any]) -> dict[str, str]:
+    def serialize_values(metadata: Dict[str, Any]) -> Dict[str, str]:
         return {k: json_dumps(v) for k, v in metadata.items()}
 
     if isinstance(log_data, UpdateLog) and log_data.field_name_to_value_map:

@@ -1,3 +1,5 @@
+from typing import Dict, List
+
 import json
 import os
 import time
@@ -16,7 +18,7 @@ load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
-use_cache = True  # by using the in memory cache, you don't need a Parea API key
+use_cache = False  # by using the in memory cache, you don't need a Parea API key
 cache = InMemoryCache() if use_cache else None
 Parea(api_key=os.getenv("PAREA_API_KEY"), cache=cache)
 
@@ -53,7 +55,7 @@ def usefulness(log: Log) -> float:
 
 
 @trace(eval_funcs=[friendliness, usefulness])
-def helpful_the_second_time(messages: list[dict[str, str]]) -> str:
+def helpful_the_second_time(messages: List[Dict[str, str]]) -> str:
     helpful_response = call_openai(
         [
             {"role": "system", "content": "You are a friendly, and helpful assistant that helps people with their homework."},

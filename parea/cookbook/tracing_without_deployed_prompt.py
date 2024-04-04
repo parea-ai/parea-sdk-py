@@ -1,3 +1,5 @@
+from typing import List, Tuple
+
 import os
 from datetime import datetime
 
@@ -13,7 +15,7 @@ p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
 @trace  # <--- If you want to log the inputs to the LLM call you can optionally add a trace decorator here
 def call_llm(
-    data: list[dict],
+    data: List[dict],
     model: str = "gpt-3.5-turbo-1106",
     provider: str = "openai",
     temperature: float = 0.0,
@@ -82,7 +84,7 @@ def argument_chain(query: str, additional_description: str = "") -> str:
 
 
 @trace
-def argument_chain2(query: str, additional_description: str = "") -> tuple[str, str]:
+def argument_chain2(query: str, additional_description: str = "") -> Tuple[str, str]:
     trace_id = get_current_trace_id()
     argument = argument_generator(query, additional_description)
     criticism = critic(argument)

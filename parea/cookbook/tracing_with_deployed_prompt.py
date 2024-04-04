@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import json
 import os
 from datetime import datetime
@@ -76,7 +78,7 @@ def deployed_refiner2(query: str, additional_description: str, current_arg: str,
     tags=["cookbook-example-deployed", "feedback_tracked-deployed"],
     metadata={"source": "python-sdk", "deployed": "True"},
 )
-def deployed_argument_chain_tags_metadata(query: str, additional_description: str = "") -> tuple[CompletionResponse, str]:
+def deployed_argument_chain_tags_metadata(query: str, additional_description: str = "") -> Tuple[CompletionResponse, str]:
     trace_id = get_current_trace_id()  # get parent's trace_id
     argument = deployed_argument_generator(query, additional_description)
     criticism = deployed_critic(argument)
