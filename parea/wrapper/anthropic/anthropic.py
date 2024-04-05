@@ -4,12 +4,12 @@ from collections import defaultdict
 from datetime import datetime
 
 from anthropic import AsyncMessageStreamManager, AsyncStream, Client, MessageStreamManager, Stream
-from anthropic.types import ContentBlockDeltaEvent, Message, MessageDeltaEvent, MessageStartEvent
+from anthropic.types import ContentBlockDeltaEvent, Message, MessageDeltaEvent, MessageStartEvent, TextBlock
 
 from parea.cache.cache import Cache
 from parea.helpers import timezone_aware_now
 from parea.schemas import CacheRequest, LLMInputs, ModelParams, TraceLog
-from parea.utils.trace_utils import trace_data
+from parea.utils.trace_utils import trace_data, make_output
 from parea.wrapper import Wrapper
 from parea.wrapper.anthropic.stream_wrapper import AnthropicAsyncStreamWrapper, AnthropicStreamWrapper, MessageAsyncStreamManagerWrapper, MessageStreamManagerWrapper
 from parea.wrapper.utils import _compute_cost
@@ -18,6 +18,9 @@ from parea.wrapper.utils import _compute_cost
 class AnthropicWrapper:
 
     def init(self, log: Callable, cache: Cache, client: Client):
+        func_names = ["messages.create", "messages.stream"]
+        if hasattr(client, "beta") and hasattr(client.beta, "tools") and hasattr(client.beta.tools, "messages") and hasattr(client.beta.tools.messages, "create"):
+            func_names.append("beta.tools.messages.create")
         Wrapper(
             resolver=self.resolver,
             gen_resolver=self.gen_resolver,
@@ -25,7 +28,7 @@ class AnthropicWrapper:
             should_use_gen_resolver=self.should_use_gen_resolver,
             log=log,
             module=client,
-            func_names=["messages.create", "messages.stream"],
+            func_names=func_names,
             cache=cache,
             convert_kwargs_to_cache_request=self.convert_kwargs_to_cache_request,
             convert_cache_to_response=self.convert_cache_to_response,
@@ -35,7 +38,18 @@ class AnthropicWrapper:
     @staticmethod
     def resolver(trace_id: str, _args: Sequence[Any], kwargs: Dict[str, Any], response: Optional[Message]) -> Optional[Any]:
         if response:
-            output = response.content[0].text
+            if len(response.content) > 1:
+                from anthropic.types.beta.tools import ToolUseBlock
+
+                output_list = []
+                for content in response.content:
+                    if isinstance(content, TextBlock):
+                        output_list.append(content.text)
+                    elif isinstance(content, ToolUseBlock):
+                        output_list.append(content.model_dump())
+                output = make_output(output_list, islist=True)
+            else:
+                output = response.content[0].text
             input_tokens = response.usage.input_tokens
             output_tokens = response.usage.output_tokens
             total_tokens = input_tokens + output_tokens
@@ -109,6 +123,10 @@ class AnthropicWrapper:
 
     @staticmethod
     def _kwargs_to_llm_configuration(kwargs, model=None) -> LLMInputs:
+        functions = [d for d in kwargs.get("tools", [])]
+        for func in functions:
+            if 'input_schema' in func:
+                func["parameters"] = func.pop("input_schema")
         return LLMInputs(
             model=model or kwargs.get("model", None),
             provider="anthropic",
@@ -118,6 +136,7 @@ class AnthropicWrapper:
                 max_length=kwargs.get("max_tokens", None),
                 top_p=kwargs.get("top_p", 1.0),
             ),
+            functions=functions,
         )
 
     def convert_kwargs_to_cache_request(self, _args: Sequence[Any], kwargs: Dict[str, Any]) -> CacheRequest:
