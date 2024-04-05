@@ -125,7 +125,7 @@ class AnthropicWrapper:
     def _kwargs_to_llm_configuration(kwargs, model=None) -> LLMInputs:
         functions = [d for d in kwargs.get("tools", [])]
         for func in functions:
-            if 'input_schema' in func:
+            if "input_schema" in func:
                 func["parameters"] = func.pop("input_schema")
         return LLMInputs(
             model=model or kwargs.get("model", None),
