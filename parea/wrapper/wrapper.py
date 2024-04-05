@@ -171,7 +171,6 @@ class Wrapper:
     def _cleanup_trace_core(self, trace_id: str, start_time: datetime, error: str, cache_hit, args, kwargs, context_token: contextvars.Token):
         trace_data.get()[trace_id].cache_hit = cache_hit
 
-        parent_id = trace_context.get()[-2] if len(trace_context.get()) > 1 else None
         if error:
             trace_data.get()[trace_id].error = error
             trace_data.get()[trace_id].status = "error"
@@ -182,17 +181,11 @@ class Wrapper:
             end_time = timezone_aware_now()
             trace_data.get()[trace_id].end_timestamp = end_time.isoformat()
             trace_data.get()[trace_id].latency = (end_time - start_time).total_seconds()
-            if parent_id:
-                trace_data.get()[parent_id].end_timestamp = end_time.isoformat()
-                start_time_parent = datetime.fromisoformat(trace_data.get()[parent_id].start_timestamp)
-                trace_data.get()[parent_id].latency = (end_time - start_time_parent).total_seconds()
 
             if not error and self.cache:
                 self.cache.set(self.convert_kwargs_to_cache_request(args, kwargs), trace_data.get()[trace_id])
 
             self.log(trace_id)
-            if parent_id:
-                self.log(parent_id)
             try:
                 trace_context.reset(context_token)
             except IndexError:
