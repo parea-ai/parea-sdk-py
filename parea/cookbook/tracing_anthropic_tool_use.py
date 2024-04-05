@@ -5,6 +5,7 @@ import anthropic
 from dotenv import load_dotenv
 
 from parea import Parea
+from parea.cookbook.data.anthropic_tool_use_examples import missing_information, multiple_tool_use, single_tool_use
 
 load_dotenv()
 
@@ -15,41 +16,21 @@ p = Parea(api_key=os.getenv("PAREA_API_KEY"), project_name="testing")
 p.wrap_anthropic_client(client)
 p.wrap_anthropic_client(aclient)
 
-client_kwargs = {
-    "model": "claude-3-opus-20240229",
-    "max_tokens": 1024,
-    "messages": [{"role": "user", "content": "What's the weather like in San Francisco?"}],
-    "tools": [
-        {
-            "name": "get_weather",
-            "description": "Get the current weather in a given location",
-            "input_schema": {
-                "type": "object",
-                "properties": {
-                    "location": {
-                        "type": "string",
-                        "description": "The city and state, e.g. San Francisco, CA",
-                    }
-                },
-                "required": ["location"],
-            },
-        }
-    ]
-}
+
+def anthropic_sync(create_kwargs):
+    message = client.beta.tools.messages.create(**create_kwargs)
+    print(message.content)
 
 
-def anthropic_sync():
-    message = client.beta.tools.messages.create(**client_kwargs)
-
-    print(message.content[0])
-
-
-async def async_anthropic():
-    message = await aclient.beta.tools.messages.create(**client_kwargs)
-    print(message.content[0].text)
-
+async def async_anthropic(create_kwargs):
+    message = await aclient.beta.tools.messages.create(**create_kwargs)
+    print(message.content)
 
 
 if __name__ == "__main__":
-    # anthropic_sync()
-    asyncio.run(async_anthropic())
+    anthropic_sync(single_tool_use)
+    anthropic_sync(multiple_tool_use)
+    anthropic_sync(missing_information)
+    # asyncio.run(async_anthropic(single_tool_use))
+    # asyncio.run(async_anthropic(multiple_tool_use))
+    # asyncio.run(async_anthropic(missing_information))

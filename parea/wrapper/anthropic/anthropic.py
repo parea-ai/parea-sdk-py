@@ -9,7 +9,7 @@ from anthropic.types import ContentBlockDeltaEvent, Message, MessageDeltaEvent, 
 from parea.cache.cache import Cache
 from parea.helpers import timezone_aware_now
 from parea.schemas import CacheRequest, LLMInputs, ModelParams, TraceLog
-from parea.utils.trace_utils import trace_data, make_output
+from parea.utils.trace_utils import make_output, trace_data
 from parea.wrapper import Wrapper
 from parea.wrapper.anthropic.stream_wrapper import AnthropicAsyncStreamWrapper, AnthropicStreamWrapper, MessageAsyncStreamManagerWrapper, MessageStreamManagerWrapper
 from parea.wrapper.utils import _compute_cost
