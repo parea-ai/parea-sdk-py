@@ -1,10 +1,13 @@
-from typing import Callable
+from typing import Callable, Optional
 
 from parea.evals.utils import call_openai
 from parea.schemas.log import Log
 
 
-def lm_vs_lm_factuality_factory(examiner_model: str = "gpt-3.5-turbo") -> Callable[[Log], float]:
+def lm_vs_lm_factuality_factory(
+    examiner_model: str = "gpt-4",
+    is_azure: Optional[bool] = False,
+) -> Callable[[Log], float]:
     """
     This factory creates an evaluation function that measures the factuality of an LLM's response to a given question.
     It is based on the paper [LM vs LM: Detecting Factual Errors via Cross Examination](https://arxiv.org/abs/2305.13281) which proposes using
@@ -14,6 +17,7 @@ def lm_vs_lm_factuality_factory(examiner_model: str = "gpt-3.5-turbo") -> Callab
     model to say, "I don't know," if it is uncertain.
 
     Args:
+        is_azure: Whether to use the Azure API. Defaults to False.
         examiner_model: The model which will examine the original model. Currently, only supports OpenAI chat models.
 
     Returns:
@@ -32,6 +36,7 @@ def lm_vs_lm_factuality_factory(examiner_model: str = "gpt-3.5-turbo") -> Callab
             model=examiner_model,
             messages=messages_examiner,
             temperature=0.0,
+            is_azure=is_azure,
         )
         messages_examiner += [{"role": "assistant", "content": follow_up_questions}]
         n_rounds_follow_up_questions = 1
@@ -42,7 +47,7 @@ def lm_vs_lm_factuality_factory(examiner_model: str = "gpt-3.5-turbo") -> Callab
         while follow_up_questions is not None:
             messages_examinee += [{"role": "user", "content": follow_up_questions}]
             follow_up_answers = call_openai(
-                model=log.configuration.model,
+                model=examiner_model if is_azure else log.configuration.model,
                 messages=messages_examinee,
                 temperature=log.configuration.model_params.temp,
                 top_p=log.configuration.model_params.top_p,
@@ -50,6 +55,7 @@ def lm_vs_lm_factuality_factory(examiner_model: str = "gpt-3.5-turbo") -> Callab
                 presence_penalty=log.configuration.model_params.presence_penalty,
                 max_tokens=log.configuration.model_params.max_length,
                 response_format=log.configuration.model_params.response_format,
+                is_azure=is_azure,
             )
             messages_examiner.append({"role": "assistant", "content": follow_up_answers})
 
@@ -63,6 +69,7 @@ def lm_vs_lm_factuality_factory(examiner_model: str = "gpt-3.5-turbo") -> Callab
                 model=examiner_model,
                 messages=messages_examiner,
                 temperature=0.0,
+                is_azure=is_azure,
             )
             messages_examiner += [{"role": "assistant", "content": examiner_response}]
             if "yes" in examiner_response.lower():
@@ -80,6 +87,7 @@ def lm_vs_lm_factuality_factory(examiner_model: str = "gpt-3.5-turbo") -> Callab
             model=examiner_model,
             messages=messages_examiner,
             temperature=0.0,
+            is_azure=is_azure,
         )
         return float("incorrect" not in examiner_response.lower())
 

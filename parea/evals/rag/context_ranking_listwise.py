@@ -9,6 +9,8 @@ def context_ranking_listwise_factory(
     context_fields: Optional[List[str]] = None,
     ranking_measurement="ndcg",
     n_contexts_to_rank=10,
+    model: Optional[str] = "gpt-3.5-turbo-16k",
+    is_azure: Optional[bool] = False,
 ) -> Callable[[Log], float]:
     """
     This factory creates an evaluation function that measures how well the retrieved contexts are ranked by relevancy to the given query
@@ -18,6 +20,8 @@ def context_ranking_listwise_factory(
     The authors used a progressive listwise reordering if the retrieved contexts don't fit into the context window of the LLM.
 
     Args:
+        is_azure: Whether to use the Azure API. Defaults to False.
+        model: The model which should be used for grading. Defaults to "gpt-3.5-turbo-16k".
         question_field (str): The name of the field in the log that contains the question. Defaults to "question".
         context_fields: An optional list of key names/fields used for the retrieved contexts in the input to function. If empty list or None, it will use the output field of the log as context. Defaults to None.
         ranking_measurement (str): The measurement to use for ranking. Defaults to "ndcg".
@@ -55,8 +59,9 @@ def context_ranking_listwise_factory(
                     "content": prompt,
                 }
             ],
-            model="gpt-3.5-turbo-16k",
+            model=model,
             temperature=0.0,
+            is_azure=is_azure,
         )
 
         s = sorted_list.strip("[] ").replace(" ", "")

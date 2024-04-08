@@ -6,10 +6,7 @@ from parea.evals.utils import call_openai
 from parea.schemas.log import Log
 
 
-def factual_inconsistency_scale_factory(
-    article_field: Optional[str] = "article",
-    model: Optional[str] = "gpt-4",
-) -> Callable[[Log], float]:
+def factual_inconsistency_scale_factory(article_field: Optional[str] = "article", model: Optional[str] = "gpt-4", is_azure: Optional[bool] = False) -> Callable[[Log], float]:
     """
     This factory creates an evaluation function that grades the factual consistency of a summary with the article on a scale from 1 to 10.
     It is based on the paper [ChatGPT as a Factual Inconsistency Evaluator for Text Summarization](https://arxiv.org/abs/2303.15621)
@@ -19,6 +16,7 @@ def factual_inconsistency_scale_factory(
     Args:
         article_field: The key name/field used for the content which should be summarized. Defaults to "article".
         model: The model which should be used for grading. Currently, only supports OpenAI chat models. Defaults to "gpt-4".
+        is_azure: Whether to use the Azure API. Defaults to False.
 
     Returns:
         Callable[[Log], float]: A function that takes a log as input and returns a score between 0 and 1 indicating
@@ -38,6 +36,7 @@ def factual_inconsistency_scale_factory(
                 {"role": "user", "content": prompt},
             ],
             temperature=0.0,
+            is_azure=is_azure,
         )
 
         pattern = re.compile(r"\d+")

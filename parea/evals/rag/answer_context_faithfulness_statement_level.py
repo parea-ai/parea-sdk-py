@@ -1,10 +1,12 @@
-from typing import Callable, List
+from typing import Callable, List, Optional
 
 from parea.evals.utils import call_openai
 from parea.schemas.log import Log
 
 
-def answer_context_faithfulness_statement_level_factory(question_field: str = "question", context_fields: List[str] = ["context"]) -> Callable[[Log], float]:
+def answer_context_faithfulness_statement_level_factory(
+    question_field: str = "question", context_fields: List[str] = ["context"], model: Optional[str] = "gpt-3.5-turbo-16k", is_azure: Optional[bool] = False
+) -> Callable[[Log], float]:
     """
     This factory creates an evaluation function that measures the faithfulness of the generated answer to the given context
     by measuring how many statements from the generated answer can be inferred from the given context. It is based on the paper
@@ -12,6 +14,8 @@ def answer_context_faithfulness_statement_level_factory(question_field: str = "q
     to create a list of all statements in the generated answer and assessing whether the given context supports each statement.
 
     Args:
+        model: The model which should be used for grading. Defaults to "gpt-3.5-turbo-16k".
+        is_azure: Whether to use the Azure API. Defaults to False.
         question_field: The key name/field used for the question/query of the user. Defaults to "question".
         context_fields: A list of key names/fields used for the retrieved contexts. Defaults to ["context"].
 
@@ -27,7 +31,7 @@ def answer_context_faithfulness_statement_level_factory(question_field: str = "q
         output = log.output
 
         completion = call_openai(
-            model="gpt-3.5-turbo-16k",
+            model=model,
             messages=[
                 {
                     "role": "user",
@@ -48,13 +52,14 @@ statements:\n""",
                 }
             ],
             temperature=0.0,
+            is_azure=is_azure,
         )
         statements = completion.strip().split("\n")
         statements_formatted = [f"{i+1}. {s.strip()}" for i, s in enumerate(statements)]
 
         verdicts = (
             call_openai(
-                model="gpt-3.5-turbo-16k",
+                model=model,
                 messages=[
                     {
                         "role": "user",
@@ -83,6 +88,7 @@ Answer:
                     }
                 ],
                 temperature=0.0,
+                is_azure=is_azure,
             )
             .lower()
             .strip()

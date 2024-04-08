@@ -6,7 +6,9 @@ from parea.evals.utils import call_openai
 from parea.schemas.log import Log
 
 
-def goal_success_ratio_factory(use_output: Optional[bool] = False, message_field: Optional[str] = None) -> Callable[[Log], float]:
+def goal_success_ratio_factory(
+    use_output: Optional[bool] = False, message_field: Optional[str] = None, model: Optional[str] = "gpt-4", is_azure: Optional[bool] = False
+) -> Callable[[Log], float]:
     """
     This factory creates an evaluation function that measures the success ratio of a goal-oriented conversation.
     Typically, a user interacts with a chatbot or AI assistant to achieve specific goals.
@@ -19,6 +21,8 @@ def goal_success_ratio_factory(use_output: Optional[bool] = False, message_field
     3. Calculate the average number of messages sent per segment.
 
     Args:
+        is_azure: Whether to use Azure as the model. Defaults to False.
+        model: The model which should be used for grading.
         use_output (Optional[bool], optional): Whether to use the output of the log to access the messages. Defaults to False.
         message_field (Optional[str], optional): The name of the field in the log that contains the messages.
             Defaults to None. If None, the messages are taken from the configuration attribute.
@@ -56,7 +60,8 @@ def goal_success_ratio_factory(use_output: Optional[bool] = False, message_field
                     }
                 ]
                 + messages[start_index:end_index],
-                model="gpt-4",
+                model=model,
+                is_azure=is_azure,
             )
 
             if user_follows_same_goal == "SAME_GOAL":

@@ -4,7 +4,9 @@ from parea.evals.utils import call_openai, sent_tokenize
 from parea.schemas.log import Log
 
 
-def context_query_relevancy_factory(question_field: str = "question", context_fields: Optional[List[str]] = None) -> Callable[[Log], float]:
+def context_query_relevancy_factory(
+    question_field: str = "question", context_fields: Optional[List[str]] = None, model: Optional[str] = "gpt-3.5-turbo-16k", is_azure: Optional[bool] = False
+) -> Callable[[Log], float]:
     """
     This factory creates an evaluation function that measures how relevant the retrieved context is to the given question.
     It is based on the paper [RAGAS: Automated Evaluation of Retrieval Augmented Generation](https://arxiv.org/abs/2309.15217)
@@ -12,6 +14,8 @@ def context_query_relevancy_factory(question_field: str = "question", context_fi
     the ratio of relevant sentences to the total number of sentences in the retrieved context.
 
     Args:
+        is_azure: Whether to use the Azure API. Defaults to False.
+        model: The model which should be used for grading. Defaults to "gpt-3.5-turbo-16k".
         question_field: The key name/field used for the question/query of the user. Defaults to "question".
         context_fields: An optional list of key names/fields used for the retrieved contexts in the input to function. If empty list or None, it will use the output field of the log as context. Defaults to None.
 
@@ -32,7 +36,7 @@ def context_query_relevancy_factory(question_field: str = "question", context_fi
                 context = str(log.output)
 
         extracted_sentences = call_openai(
-            model="gpt-3.5-turbo-16k",
+            model=model,
             messages=[
                 {
                     "role": "user",
@@ -45,6 +49,7 @@ candidate sentences:\n""",
                 }
             ],
             temperature=0.0,
+            is_azure=is_azure,
         ).strip()
         if "insufficient information" in extracted_sentences.lower() and abs(len(extracted_sentences) - len("insufficient information")) < 10:
             return 0.0

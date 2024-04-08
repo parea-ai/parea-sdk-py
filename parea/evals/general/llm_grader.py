@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Optional
 
 import ast
 import re
@@ -10,17 +10,18 @@ one_score_pattern = re.compile(r"\[\[(\d+\.?\d*)\]\]")
 one_score_pattern_backup = re.compile(r"\[(\d+\.?\d*)\]")
 
 
-def llm_grader_factory(model: str, question_field: str = "question") -> Callable[[Log], float]:
+def llm_grader_factory(model: str = "gpt-4", question_field: str = "question", is_azure: Optional[bool] = False) -> Callable[[Log], float]:
     """
     This factory creates an evaluation function that uses an LLM to grade the response of an LLM to a given question.
     It is based on the paper [Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena](https://arxiv.org/abs/2306.05685)
-    which intorduces general-purpose zero-shot prompt to rate responses from an LLM to a given question on a scale from 1-10.
+    which introduces general-purpose zero-shot prompt to rate responses from an LLM to a given question on a scale from 1-10.
     They find that GPT-4's ratings agree as much with a human rater as a human annotator agrees with another one (>80%).
     Further, they observe that the agreement with a human annotator increases as the response rating gets clearer.
     Additionally, they investigated how much the evaluating LLM overestimated its responses and found that GPT-4 and
     Claude-1 were the only models that didn't overestimate themselves.
 
     Args:
+        is_azure: Whether to use the Azure API. Defaults to False.
         model: The model which should be used for grading. Currently, only supports OpenAI chat models.
         question_field: The key name/field used for the question/query of the user. Defaults to "question".
 
@@ -49,6 +50,7 @@ def llm_grader_factory(model: str, question_field: str = "question") -> Callable
                 },
             ],
             temperature=0.0,
+            is_azure=is_azure,
         )
         match = re.search(one_score_pattern, rating_response)
         if not match:

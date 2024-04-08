@@ -6,7 +6,9 @@ from parea.evals.utils import call_openai
 from parea.schemas.log import Log
 
 
-def percent_target_supported_by_context_factory(question_field: str = "question", context_fields: Optional[List[str]] = None) -> Callable[[Log], Union[float, None]]:
+def percent_target_supported_by_context_factory(
+    question_field: str = "question", context_fields: Optional[List[str]] = None, model: Optional[str] = "gpt-3.5-turbo-16k", is_azure: Optional[bool] = False
+) -> Callable[[Log], Union[float, None]]:
     """Quantifies how many sentences in the target/ground truth are supported by the retrieved context."""
 
     def percent_target_supported_by_context(log: Log) -> Union[float, None]:
@@ -23,7 +25,7 @@ def percent_target_supported_by_context_factory(question_field: str = "question"
             return None
 
         classification = call_openai(
-            model="gpt-3.5-turbo-16k",
+            model=model,
             messages=[
                 {
                     "role": "user",
@@ -79,6 +81,7 @@ classification:
                 }
             ],
             temperature=0.0,
+            is_azure=is_azure,
         )
         pattern = r"\[\s*\{.*?\}(\s*,\s*\{.*?\})*\s*\]"
         match = re.search(pattern, classification.replace("\n", ""))
