@@ -9,9 +9,8 @@ from enum import Enum
 from uuid import UUID
 
 import attrs
+import openai
 from pydantic import BaseModel
-
-from parea.types import OpenAIAsyncStreamWrapper, OpenAIStreamWrapper
 
 logger = logging.getLogger()
 
@@ -42,6 +41,15 @@ def is_pandas_instance(obj):
     return pd and isinstance(obj, pd.DataFrame)
 
 
+def is_openai_stream_wrapper(obj):
+    if openai.__version__.startswith("0."):
+        return False
+    else:
+        from parea.types import OpenAIAsyncStreamWrapper, OpenAIStreamWrapper
+
+        return isinstance(obj, (OpenAIStreamWrapper, OpenAIAsyncStreamWrapper))
+
+
 class UniversalEncoder(json.JSONEncoder):
     """
     A JSON encoder that can handle additional types such as dataclasses, attrs, and more.
@@ -57,7 +65,7 @@ class UniversalEncoder(json.JSONEncoder):
                 return str(obj.value)
             except Exception:
                 return str(obj)
-        elif isinstance(obj, (OpenAIStreamWrapper, OpenAIAsyncStreamWrapper)):
+        elif is_openai_stream_wrapper(obj):
             return str(obj)
         elif is_dataclass_instance(obj):
             return dataclasses.asdict(obj)
