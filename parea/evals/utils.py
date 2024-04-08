@@ -13,7 +13,6 @@ from parea.parea_logger import parea_logger
 from parea.schemas import EvaluationResult
 from parea.schemas.log import Log
 from parea.schemas.models import UpdateLog
-from parea.wrapper.utils import _safe_encode
 
 seg = pysbd.Segmenter(language="en", clean=False)
 
@@ -40,7 +39,27 @@ def safe_json_loads(s) -> dict:
     return {}
 
 
-def call_openai(messages, model, temperature=1.0, max_tokens=None, top_p=1.0, frequency_penalty=0.0, presence_penalty=0.0, response_format=None, n=1) -> Union[str, List[str]]:
+def call_openai(
+    messages, model, temperature=1.0, max_tokens=None, top_p=1.0, frequency_penalty=0.0, presence_penalty=0.0, response_format=None, n=1, is_azure=False
+) -> Union[str, List[str]]:
+    if is_azure:
+        from openai.lib.azure import AzureOpenAI
+
+        completion = AzureOpenAI().chat.completions.create(
+            model=model,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            top_p=top_p,
+            frequency_penalty=frequency_penalty,
+            presence_penalty=presence_penalty,
+            response_format=response_format,
+            n=n,
+        )
+        if n == 1:
+            return completion.choices[0].message.content
+        else:
+            return [c.message.content for c in completion.choices]
     if openai_version.startswith("0."):
         completion = openai.ChatCompletion.create(
             model=model,
@@ -74,7 +93,11 @@ def call_openai(messages, model, temperature=1.0, max_tokens=None, top_p=1.0, fr
             return [c.message.content for c in completion.choices]
 
 
-def embed(model, input) -> List[float]:
+def embed(model, input, is_azure=False) -> List[float]:
+    if is_azure:
+        from openai.lib.azure import AzureOpenAI
+
+        return AzureOpenAI().embeddings.create(model=model, input=input, encoding_format="float").data[0].embedding
     if openai_version.startswith("0."):
         return openai.Embedding.create(model=model, input=input, encoding_format="float").data[0]["embedding"]
     else:
@@ -121,7 +144,7 @@ def _make_evaluations(trace_id: str, log: Log, eval_funcs: List[EvalFuncTuple], 
 
     parea_logger.update_log(data=UpdateLog(trace_id=trace_id, field_name_to_value_map={"scores": scores, "target": log.target}))
     if verbose:
-        print(f"###Eval Results###")
+        print("###Eval Results###")
         for score in scores:
             print(score)
         print(f"View trace at: https://app.parea.ai/logs/detailed/{trace_id} \n")

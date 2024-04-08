@@ -5,7 +5,11 @@ from parea.schemas.log import Log
 
 
 def context_ranking_pointwise_factory(
-    question_field: str = "question", context_fields: Optional[List[str]] = None, ranking_measurement="average_precision"
+    question_field: str = "question",
+    context_fields: Optional[List[str]] = None,
+    ranking_measurement="average_precision",
+    model: Optional[str] = "gpt-3.5-turbo-16k",
+    is_azure: Optional[bool] = False,
 ) -> Callable[[Log], float]:
     """
     This factory creates an evaluation function that measures how well the retrieved contexts are ranked by relevancy to the given query
@@ -15,6 +19,8 @@ def context_ranking_pointwise_factory(
     mean average precision. Note that this approach considers any two relevant contexts equally important/relevant to the query.
 
     Args:
+        is_azure: Whether to use the Azure API. Defaults to False.
+        model: The model which should be used for grading. Defaults to "gpt-3.5-turbo-16k".
         question_field: The key name/field used for the question/query of the user. Defaults to "question".
         context_fields: An optional list of key names/fields used for the retrieved contexts in the input to function. If empty list or None, it will use the output field of the log as context. Defaults to None.
         ranking_measurement: Method to calculate ranking. Currently, only supports "average_precision".
@@ -45,7 +51,7 @@ def context_ranking_pointwise_factory(
         verifications = []
         for context in contexts:
             response = call_openai(
-                model="gpt-3.5-turbo-16k",
+                model=model,
                 messages=[
                     {
                         "role": "user",
@@ -71,6 +77,7 @@ verification:""",
                     }
                 ],
                 temperature=0.0,
+                is_azure=is_azure,
             )
             verifications.append(response)
 

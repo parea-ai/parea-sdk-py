@@ -5,9 +5,7 @@ from parea.schemas.log import Log
 
 
 def answer_context_faithfulness_binary_factory(
-    question_field: Optional[str] = "question",
-    context_field: Optional[str] = "context",
-    model: Optional[str] = "gpt-3.5-turbo-16k",
+    question_field: Optional[str] = "question", context_field: Optional[str] = "context", model: Optional[str] = "gpt-3.5-turbo-16k", is_azure: Optional[bool] = False
 ) -> Callable[[Log], float]:
     """
     This factory creates an evaluation function that classifies if the generated answer was faithful to the given context.
@@ -16,6 +14,7 @@ def answer_context_faithfulness_binary_factory(
     They find that GPT-4 is the best model for this analysis as measured by correlation with human judgment.
 
     Args:
+        is_azure: Whether to use the Azure API. Defaults to False.
         question_field: The key name/field used for the question/query of the user. Defaults to "question".
         context_field: The key name/field used for the retrieved context. Defaults to "context".
         model: The model which should be used for grading. Currently, only supports OpenAI chat models. Defaults to "gpt-4".
@@ -44,6 +43,7 @@ def answer_context_faithfulness_binary_factory(
                 },
             ],
             temperature=0.0,
+            is_azure=is_azure,
         )
         return float("yes" in response.lower())
 

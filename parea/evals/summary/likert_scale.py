@@ -6,10 +6,7 @@ from parea.evals.utils import call_openai
 from parea.schemas.log import Log
 
 
-def likert_scale_factory(
-    article_field: Optional[str] = "article",
-    model: Optional[str] = "gpt-4",
-) -> Callable[[Log], float]:
+def likert_scale_factory(article_field: Optional[str] = "article", model: Optional[str] = "gpt-4", is_azure: Optional[bool] = False) -> Callable[[Log], float]:
     """
     This factory creates an evaluation function that grades the quality of a summary on a Likert scale from 1-5 along
     the dimensions of relevance, consistency, fluency, and coherence. It is based on the paper
@@ -18,6 +15,7 @@ def likert_scale_factory(
     methods. Noteworthy is that [BARTScore](https://arxiv.org/abs/2106.11520) was very competitive to `gpt-3.5-0301`.
 
     Args:
+        is_azure: Whether to use the Azure API. Defaults to False.
         article_field: The key name/field used for the content which should be summarized. Defaults to "article".
         model: The model which should be used for grading. Currently, only supports OpenAI chat models. Defaults to "gpt-4".
 
@@ -46,6 +44,7 @@ Summary: {output}"""
                 {"role": "user", "content": prompt},
             ],
             temperature=0.0,
+            is_azure=is_azure,
         )
 
         # extract the scores

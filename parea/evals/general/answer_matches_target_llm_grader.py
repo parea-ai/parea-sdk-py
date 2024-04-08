@@ -7,6 +7,7 @@ from parea.schemas.log import Log
 def answer_matches_target_llm_grader_factory(
     question_field: Optional[str] = "question",
     model: Optional[str] = "gpt-4",
+    is_azure: Optional[bool] = False,
 ) -> Callable[[Log], Union[float, None]]:
     """Quantifies how much the generated answer matches the ground truth / target."""
 
@@ -31,6 +32,7 @@ CompareGPT response:""",
                 },
             ],
             temperature=0.0,
+            is_azure=is_azure,
         )
         return float("yes" in response.lower())
 
