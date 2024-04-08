@@ -142,7 +142,7 @@ async def experiment(
     total_evals = len(thread_ids_running_evals.get())
     with tqdm(total=total_evals, dynamic_ncols=True) as pbar:
         while thread_ids_running_evals.get():
-            pbar.set_description(f"Waiting for evaluations to finish")
+            pbar.set_description("Waiting for evaluations to finish")
             pbar.update(total_evals - len(thread_ids_running_evals.get()))
             total_evals = len(thread_ids_running_evals.get())
             await asyncio.sleep(0.5)
@@ -159,7 +159,7 @@ async def experiment(
     if dataset_level_eval_results:
         stat_name_to_avg_std.update({eval_result.name: eval_result.score for eval_result in dataset_level_eval_results})
     print(f"Experiment {experiment_name} Run {run_name} stats:\n{json_dumps(stat_name_to_avg_std, indent=2)}\n\n")
-    print(f"View experiment & traces at: https://app.parea.ai/experiments/{experiment_uuid}\n")
+    print(f"View experiment & traces at: https://app.parea.ai/experiments/{experiment_name}/{experiment_uuid}\n")
     save_results_to_dvc_if_init(run_name, stat_name_to_avg_std)
     return experiment_stats
 
