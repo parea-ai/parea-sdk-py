@@ -17,7 +17,7 @@ p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 p.wrap_openai_client(client)
 
 
-def call_llm(data: List[dict], model: str = "gpt-3.5-turbo", temperature: float = 0.0) -> str:
+def call_llm(data: List[dict], model: str = "gpt-4-turbo", temperature: float = 0.0) -> str:
     return client.chat.completions.create(model=model, temperature=temperature, messages=data).choices[0].message.content
 
 
@@ -82,7 +82,7 @@ def argument_chain(query: str, additional_description: str = "") -> Tuple[str, s
 @trace
 def json_call() -> str:
     completion = client.chat.completions.create(
-        model="gpt-3.5-turbo-0125",
+        model="gpt-4-turbo-2024-04-09",
         messages=[{"role": "system", "content": "You are a helpful assistant talking in JSON."}, {"role": "user", "content": "What are you?"}],
         response_format={"type": "json_object"},
     )
@@ -95,11 +95,11 @@ if __name__ == "__main__":
         additional_description="Provide a concise, few sentence argument on why sparkling wine is good for you.",
     )
     print(result)
-    p.record_feedback(
-        FeedbackRequest(
-            trace_id=trace_id,
-            score=0.7,  # 0.0 (bad) to 1.0 (good)
-        )
-    )
+    # p.record_feedback(
+    #     FeedbackRequest(
+    #         trace_id=trace_id,
+    #         score=0.7,  # 0.0 (bad) to 1.0 (good)
+    #     )
+    # )
 
     print(json_call())
