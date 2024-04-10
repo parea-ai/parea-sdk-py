@@ -105,6 +105,11 @@ OPENAI_MODEL_INFO: Dict[str, Dict[str, Union[float, int, Dict[str, int]]]] = {
         "completion": 60.0,
         "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
     },
+    "gpt-4-1106-vision-preview": {
+        "prompt": 30.0,
+        "completion": 60.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
     "gpt-4-turbo-preview": {
         "prompt": 10.0,
         "completion": 30.0,
@@ -116,6 +121,16 @@ OPENAI_MODEL_INFO: Dict[str, Dict[str, Union[float, int, Dict[str, int]]]] = {
         "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
     },
     "gpt-4-0125-preview": {
+        "prompt": 10.0,
+        "completion": 30.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
+    "gpt-4-turbo": {
+        "prompt": 10.0,
+        "completion": 30.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
+    "gpt-4-turbo-2024-04-09": {
         "prompt": 10.0,
         "completion": 30.0,
         "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
@@ -192,7 +207,22 @@ AZURE_MODEL_INFO: Dict[str, Dict[str, Union[float, int, Dict[str, int]]]] = {
         "completion": 30.0,
         "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
     },
+    "gpt-4-1106-vision-preview": {
+        "prompt": 30.0,
+        "completion": 60.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
     "gpt-35-turbo-instruct": {
+        "prompt": 10.0,
+        "completion": 30.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
+    "gpt-4-turbo": {
+        "prompt": 10.0,
+        "completion": 30.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
+    "gpt-4-turbo-2024-04-09": {
         "prompt": 10.0,
         "completion": 30.0,
         "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
