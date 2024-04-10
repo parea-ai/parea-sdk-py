@@ -14,7 +14,7 @@ from parea.api_client import HTTPClient
 from parea.cache.cache import Cache
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.experiment.datasets import create_test_cases, create_test_collection
-from parea.helpers import gen_trace_id, serialize_metadata_values
+from parea.helpers import gen_trace_id, serialize_metadata_values, structure_trace_log_from_api
 from parea.parea_logger import parea_logger
 from parea.schemas.models import (
     Completion,
@@ -29,6 +29,7 @@ from parea.schemas.models import (
     FinishExperimentRequestSchema,
     ProjectSchema,
     TestCaseCollection,
+    TraceLog,
     UseDeployedPrompt,
     UseDeployedPromptResponse,
 )
@@ -48,6 +49,7 @@ PROJECT_ENDPOINT = "/project"
 GET_COLLECTION_ENDPOINT = "/collection/{test_collection_identifier}"
 CREATE_COLLECTION_ENDPOINT = "/collection"
 ADD_TEST_CASES_ENDPOINT = "/testcases"
+GET_TRACE_LOG_ENDPOINT = "/trace_log/{trace_id}"
 
 
 @define
@@ -335,6 +337,14 @@ class Parea:
             logger.debug(f"Error updating trace ids for completion. Trace log will be absent: {e}")
 
         return data
+
+    def get_trace_log(self, trace_id: str) -> TraceLog:
+        response = self._client.request("GET", GET_TRACE_LOG_ENDPOINT.format(trace_id=trace_id))
+        return structure_trace_log_from_api(response.json())
+
+    async def aget_trace_log(self, trace_id: str) -> TraceLog:
+        response = await self._client.request_async("GET", GET_TRACE_LOG_ENDPOINT.format(trace_id=trace_id))
+        return structure_trace_log_from_api(response.json())
 
 
 _initialized_parea_wrapper = False

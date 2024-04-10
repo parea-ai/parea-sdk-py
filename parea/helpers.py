@@ -8,6 +8,7 @@ from datetime import datetime
 
 import pytz
 from attr import asdict, fields_dict
+from cattrs import GenConverter
 
 from parea.constants import ADJECTIVES, NOUNS
 from parea.schemas.models import Completion, TraceLog, UpdateLog
@@ -78,3 +79,17 @@ def serialize_metadata_values(log_data: Union[TraceLog, UpdateLog, Completion]) 
 
 def timezone_aware_now() -> datetime:
     return datetime.now(pytz.utc)
+
+
+def structure_trace_log_from_api(d: dict) -> TraceLog:
+    def structure_union_type(obj: Any, cl: type) -> Any:
+        if isinstance(obj, str):
+            return obj
+        elif isinstance(obj, dict):
+            return obj
+        else:
+            return None
+
+    converter = GenConverter()
+    converter.register_structure_hook(Union[str, Dict[str, str], None], structure_union_type)
+    return converter.structure(d, TraceLog)
