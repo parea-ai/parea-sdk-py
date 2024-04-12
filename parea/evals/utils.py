@@ -169,10 +169,11 @@ def run_evals_synchronous(trace_id: str, log: Log, eval_funcs: List[EvalFuncTupl
 def get_tokens(model: str, text: str) -> List[int]:
     if not text:
         return []
+    fallback_model = "cl100k_base"
     try:
-        encoding = tiktoken.encoding_for_model(model)
+        encoding = tiktoken.encoding_for_model(model or fallback_model)
     except KeyError:
-        encoding = tiktoken.get_encoding("cl100k_base")
+        encoding = tiktoken.get_encoding(fallback_model)
     try:
         return encoding.encode(text)
     except Exception as e:
