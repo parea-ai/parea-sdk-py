@@ -89,7 +89,7 @@ def trace_insert(data: Dict[str, Any], trace_id: Optional[str] = None):
     Insert data into the trace log for the current or specified trace id. Data should be a dictionary with keys that correspond to the fields of the TraceLog model.
     If the field already has an existing value that is extensible (dict, set, list, etc.), the new value will be merged with the existing value.
     Args:
-        data: Keys can be one of: trace_name, end_user_identifier, metadata, tags, deployment_id, images
+        data: Keys can be one of: trace_name, end_user_identifier, metadata, tags, deployment_id, images, session_id
         trace_id: The trace id to insert the data into. If not provided, the current trace id will be used.
     """
     try:
@@ -128,6 +128,7 @@ def trace(
     tags: Optional[List[str]] = None,
     metadata: Optional[Dict[str, Any]] = None,
     end_user_identifier: Optional[str] = None,
+    session_id: Optional[str] = None,
     eval_funcs_names: Optional[List[str]] = None,
     eval_funcs: Optional[List[Callable]] = None,
     access_output_of_func: Optional[Callable] = None,
@@ -171,6 +172,7 @@ def trace(
                 start_timestamp=start_time.isoformat(),
                 trace_name=name or func_name,
                 end_user_identifier=end_user_identifier,
+                session_id=session_id,
                 metadata=metadata,
                 target=_parea_target_field,
                 tags=tags,

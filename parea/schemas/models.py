@@ -114,6 +114,7 @@ class TraceLog(EvaluatedLog):
     # metrics filled from either decorator or completion
     end_timestamp: Optional[str] = None
     end_user_identifier: Optional[str] = None
+    session_id: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
     tags: Optional[List[str]] = field(factory=list)
     experiment_uuid: Optional[str] = None
