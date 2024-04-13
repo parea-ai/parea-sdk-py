@@ -13,7 +13,7 @@ load_dotenv()
 client = anthropic.Anthropic()
 aclient = anthropic.AsyncAnthropic()
 
-p = Parea(api_key=os.getenv("PAREA_API_KEY"), project_name="testing")
+p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 p.wrap_anthropic_client(client)
 p.wrap_anthropic_client(aclient)
 

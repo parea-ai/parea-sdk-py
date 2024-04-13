@@ -6,7 +6,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from openai import OpenAI
 
-from parea import Parea, get_current_trace_id, trace
+from parea import Parea, get_current_trace_id, trace, trace_insert
 from parea.schemas import FeedbackRequest
 
 load_dotenv()
@@ -73,13 +73,14 @@ def refiner(query: str, additional_description: str, argument: str, criticism: s
 @trace
 def argument_chain(query: str, additional_description: str = "") -> Tuple[str, str]:
     trace_id = get_current_trace_id()
+    trace_insert({"session_id": "cus_1234", "end_user_identifier": "user_1234"}, trace_id)
     argument = argumentor(query, additional_description)
     criticism = critic(argument)
     refined_argument = refiner(query, additional_description, argument, criticism)
     return refined_argument, trace_id
 
 
-@trace
+@trace(session_id="cus_1234", end_user_identifier="user_1234")
 def json_call() -> str:
     completion = client.chat.completions.create(
         model="gpt-4-turbo-2024-04-09",
@@ -95,11 +96,11 @@ if __name__ == "__main__":
         additional_description="Provide a concise, few sentence argument on why sparkling wine is good for you.",
     )
     print(result)
-    # p.record_feedback(
-    #     FeedbackRequest(
-    #         trace_id=trace_id,
-    #         score=0.7,  # 0.0 (bad) to 1.0 (good)
-    #     )
-    # )
+    p.record_feedback(
+        FeedbackRequest(
+            trace_id=trace_id,
+            score=0.7,  # 0.0 (bad) to 1.0 (good)
+        )
+    )
 
     print(json_call())

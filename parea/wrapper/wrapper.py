@@ -89,6 +89,7 @@ class Wrapper:
                 start_timestamp=start_time.isoformat(),
                 trace_name="LLM",
                 end_user_identifier=None,
+                session_id=None,
                 metadata=None,
                 target=None,
                 tags=None,
