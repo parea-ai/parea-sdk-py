@@ -14,7 +14,7 @@ from parea.evals.utils import _make_evaluations
 from parea.helpers import timezone_aware_now
 from parea.schemas.models import TraceLog, UpdateTraceScenario
 from parea.utils.trace_utils import call_eval_funcs_then_log, fill_trace_data, trace_context, trace_data
-from parea.wrapper.utils import skip_decorator_if_func_in_stack
+from parea.wrapper.utils import safe_format_template_to_prompt, skip_decorator_if_func_in_stack
 
 logger = logging.getLogger()
 
@@ -72,12 +72,17 @@ class Wrapper:
         else:
             return self.sync_decorator(original_func)
 
-    def _init_trace(self) -> Tuple[str, datetime, contextvars.Token]:
+    def _init_trace(self, kwargs) -> Tuple[str, datetime, contextvars.Token]:
         start_time = timezone_aware_now()
         trace_id = str(uuid4())
 
         new_trace_context = trace_context.get() + [trace_id]
         token = trace_context.set(new_trace_context)
+
+        if template_inputs := kwargs.pop("template_inputs", None):
+            for m in kwargs["messages"] or []:
+                if isinstance(m, dict) and "content" in m:
+                    m["content"] = safe_format_template_to_prompt(m["content"], **template_inputs)
 
         if TURN_OFF_PAREA_LOGGING:
             return trace_id, start_time, token
@@ -93,7 +98,7 @@ class Wrapper:
                 metadata=None,
                 target=None,
                 tags=None,
-                inputs={},
+                inputs=template_inputs,
                 experiment_uuid=os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None),
             )
 
@@ -109,7 +114,7 @@ class Wrapper:
     def async_decorator(self, orig_func: Callable) -> Callable:
         @functools.wraps(orig_func)
         async def wrapper(*args, **kwargs):
-            trace_id, start_time, context_token = self._init_trace()
+            trace_id, start_time, context_token = self._init_trace(kwargs)
             response = None
             exception = None
             error = None
@@ -141,7 +146,7 @@ class Wrapper:
     def sync_decorator(self, orig_func: Callable) -> Callable:
         @functools.wraps(orig_func)
         def wrapper(*args, **kwargs):
-            trace_id, start_time, context_token = self._init_trace()
+            trace_id, start_time, context_token = self._init_trace(kwargs)
             response = None
             error = None
             cache_hit = False
