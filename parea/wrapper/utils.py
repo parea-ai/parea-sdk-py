@@ -1,6 +1,7 @@
 from typing import Callable, Dict, List, Optional, Union
 
 import json
+import re
 import sys
 from functools import lru_cache, wraps
 
@@ -338,3 +339,16 @@ def convert_openai_raw_stream_to_log(content: list, tools: dict, data: dict, tra
 
 def convert_openai_raw_to_log(r: dict, data: dict):
     log_in_thread(_process_response, {"response": ChatCompletion(**r), "model_inputs": data, "trace_id": get_current_trace_id()})
+
+
+def safe_format_template_to_prompt(_template: str, **kwargs) -> str:
+    """Replaces langchain.prompts.PromptTemplate.format in a safe manner.
+
+    Only variables '{{...}}' will be replaced, not any in '{...}'
+    """
+
+    def replace(match):
+        var_name = match.group(1)
+        return str(kwargs.get(var_name, match.group(0)))
+
+    return re.sub(r"{{(\w+)}}", replace, _template)
