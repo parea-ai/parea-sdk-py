@@ -1,7 +1,6 @@
-from typing import Any, AsyncGenerator, Generator
-
 import json
 from collections import defaultdict
+from typing import Any, AsyncGenerator, Generator
 
 from parea.constants import CHUNK_DONE_SENTINEL
 from parea.utils.trace_utils import get_current_trace_id

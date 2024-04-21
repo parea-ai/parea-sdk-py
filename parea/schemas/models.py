@@ -198,6 +198,7 @@ class UpdateTraceScenario(str, Enum):
     ERROR: str = "error"
     CHAIN: str = "chain"
     USAGE: str = "usage"
+    OPENAICONFIG: str = "openaiconfig"
 
 
 @define
