@@ -14,7 +14,7 @@ from parea.evals.utils import _make_evaluations
 from parea.helpers import timezone_aware_now
 from parea.schemas.models import TraceLog, UpdateTraceScenario
 from parea.utils.trace_utils import call_eval_funcs_then_log, fill_trace_data, trace_context, trace_data
-from parea.wrapper.utils import skip_decorator_if_func_in_stack
+from parea.wrapper.utils import safe_format_template_to_prompt, skip_decorator_if_func_in_stack
 
 logger = logging.getLogger()
 
@@ -82,7 +82,7 @@ class Wrapper:
         if template_inputs := kwargs.pop("template_inputs", None):
             for m in kwargs["messages"] or []:
                 if isinstance(m, dict) and "content" in m:
-                    m["content"] = m["content"].format(**template_inputs)
+                    m["content"] = safe_format_template_to_prompt(m["content"], **template_inputs)
 
         if TURN_OFF_PAREA_LOGGING:
             return trace_id, start_time, token
