@@ -43,9 +43,9 @@ def func(topic: str) -> dict[str, str | None]:
 
 
 if __name__ == "__main__":
-    print(func("Python"))
-    # p.experiment(
-    #     name="hello-world-example-ch",
-    #     data=[{"topic": "Python"}, {"topic": "javascript"}],
-    #     func=func,
-    # ).run()
+    # print(func("Python"))
+    p.experiment(
+        name="hello-world-example-ch",
+        data=[{"topic": "Python"}, {"topic": "javascript"}],
+        func=func,
+    ).run()
