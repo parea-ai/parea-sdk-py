@@ -1,3 +1,5 @@
+from typing import Any, AsyncGenerator, AsyncIterator, Callable, Dict, Generator, Iterator, List, Optional, Tuple
+
 import contextvars
 import inspect
 import json
@@ -8,7 +10,6 @@ from collections import ChainMap
 from datetime import datetime
 from functools import wraps
 from random import random
-from typing import Any, AsyncGenerator, AsyncIterator, Callable, Dict, Generator, Iterator, List, Optional, Tuple
 
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID, TURN_OFF_PAREA_LOGGING
 from parea.helpers import gen_trace_id, timezone_aware_now

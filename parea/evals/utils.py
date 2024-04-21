@@ -13,7 +13,7 @@ from parea.parea_logger import parea_logger
 from parea.schemas import EvaluationResult
 from parea.schemas.log import Log
 from parea.schemas.models import UpdateLog
-from parea.utils.trace_utils import trace_data, thread_ids_running_evals
+from parea.utils.trace_utils import thread_ids_running_evals, trace_data
 
 seg = pysbd.Segmenter(language="en", clean=False)
 
