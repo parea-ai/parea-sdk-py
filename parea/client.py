@@ -31,7 +31,7 @@ from parea.schemas.models import (
     TestCaseCollection,
     TraceLog,
     UseDeployedPrompt,
-    UseDeployedPromptResponse,
+    UseDeployedPromptResponse, ListExperimentUUIDsFilters,
 )
 from parea.utils.trace_utils import get_current_trace_id, get_root_trace_id, logger_all_possible, logger_record_log, trace_data
 
@@ -50,6 +50,7 @@ GET_COLLECTION_ENDPOINT = "/collection/{test_collection_identifier}"
 CREATE_COLLECTION_ENDPOINT = "/collection"
 ADD_TEST_CASES_ENDPOINT = "/testcases"
 GET_TRACE_LOG_ENDPOINT = "/trace_log/{trace_id}"
+LIST_EXPERIMENTS_ENDPOINT = "/experiments"
 
 
 @define
@@ -345,6 +346,14 @@ class Parea:
     async def aget_trace_log(self, trace_id: str) -> TraceLog:
         response = await self._client.request_async("GET", GET_TRACE_LOG_ENDPOINT.format(trace_id=trace_id))
         return structure_trace_log_from_api(response.json())
+
+    def list_experiment_uuids(self, filter_conditions: Optional[ListExperimentUUIDsFilters] = ListExperimentUUIDsFilters()) -> List[str]:
+        response = self._client.request("POST", LIST_EXPERIMENTS_ENDPOINT, data=asdict(filter_conditions))
+        return response.json()
+
+    async def alist_experiment_uuids(self, filter_conditions: Optional[ListExperimentUUIDsFilters] = ListExperimentUUIDsFilters()) -> List[str]:
+        response = await self._client.request_async("POST", LIST_EXPERIMENTS_ENDPOINT, data=asdict(filter_conditions))
+        return response.json()
 
 
 _initialized_parea_wrapper = False
