@@ -27,11 +27,12 @@ from parea.schemas.models import (
     ExperimentStatsSchema,
     FeedbackRequest,
     FinishExperimentRequestSchema,
+    ListExperimentUUIDsFilters,
     ProjectSchema,
     TestCaseCollection,
     TraceLog,
     UseDeployedPrompt,
-    UseDeployedPromptResponse, ListExperimentUUIDsFilters,
+    UseDeployedPromptResponse,
 )
 from parea.utils.trace_utils import get_current_trace_id, get_root_trace_id, logger_all_possible, logger_record_log, trace_data
 
