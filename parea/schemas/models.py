@@ -278,3 +278,11 @@ class CreateTestCaseCollection(CreateTestCases):
 @define
 class FinishExperimentRequestSchema:
     dataset_level_stats: Optional[List[EvaluationResult]] = field(factory=list)
+
+
+@define
+class ListExperimentUUIDsFilters:
+    project_name: Optional[str] = None
+    metadata_filter: Optional[Dict[str, Any]] = None
+    experiment_name_filter: Optional[str] = None
+    run_name_filter: Optional[str] = None
