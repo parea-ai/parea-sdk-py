@@ -309,6 +309,50 @@ class ListExperimentUUIDsFilters:
     run_name_filter: Optional[str] = None
 
 
+class ExperimentStatus(str, Enum):
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class StatisticOperation(str, Enum):
+    MEAN = "mean"
+    MEDIAN = "median"
+    VARIANCE = "variance"
+    STANDARD_DEVIATION = "standard_deviation"
+    MIN = "min"
+    MAX = "max"
+    MSE = "mse"
+    MAE = "mae"
+    CORRELATION = "correlation"
+    SPEARMAN_CORRELATION = "spearman_correlation"
+    ACCURACY = "accuracy"
+    CUSTOM = "custom"
+
+
+@define
+class ExperimentPinnedStatistic:
+    var1: str
+    operation: StatisticOperation
+    value: float
+    var2: Optional[str] = None
+
+
+@define
+class ExperimentWithPinnedStatsSchema:
+    name: str
+    uuid: str
+    created_at: str
+    run_name: str
+    project_uuid: str
+    status: ExperimentStatus
+    is_public: bool = False
+    metadata: Optional[Dict[str, str]] = None
+    pinned_stats: list[ExperimentPinnedStatistic] = []
+    num_samples: Optional[int] = None
+
+
 class FilterOperator(str, Enum):
     EQUALS = "equals"
     NOT_EQUALS = "not_equals"
