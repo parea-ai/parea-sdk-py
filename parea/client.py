@@ -25,6 +25,7 @@ from parea.schemas.models import (
     CreateTestCases,
     ExperimentSchema,
     ExperimentStatsSchema,
+    ExperimentWithPinnedStatsSchema,
     FeedbackRequest,
     FinishExperimentRequestSchema,
     ListExperimentUUIDsFilters,
@@ -350,13 +351,13 @@ class Parea:
         response = await self._client.request_async("GET", GET_TRACE_LOG_ENDPOINT.format(trace_id=trace_id))
         return structure_trace_log_from_api(response.json())
 
-    def list_experiment_uuids(self, filter_conditions: Optional[ListExperimentUUIDsFilters] = ListExperimentUUIDsFilters()) -> List[str]:
+    def list_experiments(self, filter_conditions: Optional[ListExperimentUUIDsFilters] = ListExperimentUUIDsFilters()) -> List[ExperimentWithPinnedStatsSchema]:
         response = self._client.request("POST", LIST_EXPERIMENTS_ENDPOINT, data=asdict(filter_conditions))
-        return response.json()
+        return structure(response.json(), List[ExperimentWithPinnedStatsSchema])
 
-    async def alist_experiment_uuids(self, filter_conditions: Optional[ListExperimentUUIDsFilters] = ListExperimentUUIDsFilters()) -> List[str]:
+    async def alist_experiments(self, filter_conditions: Optional[ListExperimentUUIDsFilters] = ListExperimentUUIDsFilters()) -> List[ExperimentWithPinnedStatsSchema]:
         response = await self._client.request_async("POST", LIST_EXPERIMENTS_ENDPOINT, data=asdict(filter_conditions))
-        return response.json()
+        return structure(response.json(), List[ExperimentWithPinnedStatsSchema])
 
     def get_experiment_trace_logs(self, experiment_uuid: str, filters: TraceLogFilters = TraceLogFilters()) -> List[TraceLog]:
         response = self._client.request("POST", GET_EXPERIMENT_LOGS_ENDPOINT.format(experiment_uuid=experiment_uuid), data=asdict(filters))
