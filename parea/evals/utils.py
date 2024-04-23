@@ -189,7 +189,7 @@ def get_context(log: Log, context_fields: Optional[List[str]] = None, as_list: b
         context = log.output
         try:
             loaded_context = json.loads(log.output)
-            if isinstance(log.output, list):
+            if isinstance(loaded_context, list):
                 return loaded_context if as_list else "\n".join(loaded_context)
         except json.JSONDecodeError:
             pass
