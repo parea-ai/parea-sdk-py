@@ -1,6 +1,6 @@
 from typing import Callable, List, Optional
 
-from parea.evals.utils import call_openai, ndcg
+from parea.evals.utils import call_openai, get_context, ndcg
 from parea.schemas.log import Log
 
 
@@ -99,13 +99,7 @@ def context_ranking_listwise_factory(
     def context_ranking(log: Log) -> float:
         """Quantifies if the retrieved context is ranked by their relevancy by re-ranking the contexts."""
         question = log.inputs[question_field]
-        if context_fields:
-            contexts = [log.inputs[context_field] for context_field in context_fields]
-        else:
-            if isinstance(log.output, list):
-                contexts = log.output
-            else:
-                contexts = [str(log.output)]
+        contexts = get_context(log, context_fields, True)
 
         reranked_indices = progressive_reranking(question, contexts)
 
