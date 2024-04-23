@@ -1,6 +1,6 @@
 from typing import Callable, List, Optional
 
-from parea.evals.utils import call_openai, sent_tokenize
+from parea.evals.utils import call_openai, get_context, sent_tokenize
 from parea.schemas.log import Log
 
 
@@ -27,13 +27,7 @@ def context_query_relevancy_factory(
     def context_query_relevancy(log: Log) -> float:
         """Quantifies how much the retrieved context relates to the query."""
         question = log.inputs[question_field]
-        if context_fields:
-            context = "\n".join(log.inputs[context_field] for context_field in context_fields)
-        else:
-            if isinstance(log.output, list):
-                context = "\n".join(log.output)
-            else:
-                context = str(log.output)
+        context = get_context(log, context_fields)
 
         extracted_sentences = call_openai(
             model=model,
