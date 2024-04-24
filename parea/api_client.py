@@ -74,7 +74,8 @@ class HTTPClient:
         self.api_key = api_key
 
     def add_integration(self, integration: str):
-        self.integrations.append(integration)
+        if integration not in self.integrations:
+            self.integrations.append(integration)
 
     def _get_headers(self, api_key: Optional[str] = None) -> Dict[str, str]:
         headers = {
