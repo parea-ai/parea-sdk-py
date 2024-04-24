@@ -1,10 +1,11 @@
-from typing import Any, AsyncIterable, Callable, Dict, Optional
+from typing import Any, AsyncIterable, Callable, Dict, Optional, List
 
 import asyncio
 import json
 import os
 import time
 from functools import wraps
+from importlib import metadata as importlib_metadata
 
 import httpx
 from dotenv import load_dotenv
@@ -60,6 +61,7 @@ class HTTPClient:
     _instance = None
     base_url = os.getenv("PAREA_BASE_URL", "https://parea-ai-backend-us-9ac16cdbc7a7b006.onporter.run/api/parea/v1")
     api_key = None
+    integrations: List[str] = []
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
@@ -70,6 +72,19 @@ class HTTPClient:
 
     def set_api_key(self, api_key: str):
         self.api_key = api_key
+
+    def add_integration(self, integration: str):
+        self.integrations.append(integration)
+
+    def _get_headers(self, api_key: Optional[str] = None) -> Dict[str, str]:
+        headers = {
+            "x-api-key": self.api_key or api_key,
+            "x-sdk-version": get_version(),
+            "x-sdk-language": "python",
+        }
+        if self.integrations:
+            headers["x-integrations"] = ",".join(self.integrations)
+        return headers
 
     @retry_on_502
     def request(
@@ -83,7 +98,7 @@ class HTTPClient:
         """
         Makes an HTTP request to the specified endpoint.
         """
-        headers = {"x-api-key": self.api_key} if self.api_key else api_key
+        headers = self._get_headers(api_key=api_key)
         try:
             response = self.sync_client.request(method, endpoint, json=data, headers=headers, params=params)
             response.raise_for_status()
@@ -106,7 +121,7 @@ class HTTPClient:
         """
         Makes an asynchronous HTTP request to the specified endpoint.
         """
-        headers = {"x-api-key": self.api_key} if self.api_key else api_key
+        headers = self._get_headers(api_key=api_key)
         try:
             response = await self.async_client.request(method, endpoint, json=data, headers=headers, params=params)
             response.raise_for_status()
@@ -128,7 +143,7 @@ class HTTPClient:
         """
         Makes a streaming HTTP request to the specified endpoint, yielding chunks of data.
         """
-        headers = {"x-api-key": self.api_key} if self.api_key else api_key
+        headers = self._get_headers(api_key=api_key)
         try:
             with self.sync_client.stream(method, endpoint, json=data, headers=headers, params=params, timeout=None) as response:
                 response.raise_for_status()
@@ -151,7 +166,7 @@ class HTTPClient:
         """
         Makes an asynchronous streaming HTTP request to the specified endpoint, yielding chunks of data.
         """
-        headers = {"x-api-key": self.api_key} if self.api_key else api_key
+        headers = self._get_headers(api_key=api_key)
         try:
             async with self.async_client.stream(method, endpoint, json=data, headers=headers, params=params, timeout=None) as response:
                 response.raise_for_status()
@@ -200,3 +215,10 @@ def parse_event_data(byte_data):
     except Exception as e:
         print(f"Error parsing event data: {e}")
         return None
+
+
+def get_version() -> str:
+    try:
+        return importlib_metadata.version("parea-ai")
+    except importlib_metadata.PackageNotFoundError:  # pragma: no cover
+        return "unknown"

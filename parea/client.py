@@ -97,6 +97,10 @@ class Parea:
         openai.AzureOpenAI = patch_openai_client_classes(openai.AzureOpenAI, self)
         openai.AsyncAzureOpenAI = patch_openai_client_classes(openai.AsyncAzureOpenAI, self)
 
+    def integrate_with_sglang(self):
+        self.auto_trace_openai_clients()
+        self._client.add_integration("sglang")
+
     def _add_project_uuid_to_data(self, data) -> dict:
         data_dict = asdict(data)
         data_dict["project_uuid"] = self._project.uuid
