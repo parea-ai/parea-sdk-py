@@ -1,4 +1,4 @@
-from typing import Any, AsyncIterable, Callable, Dict, Optional, List
+from typing import Any, AsyncIterable, Callable, Dict, List, Optional
 
 import asyncio
 import json
@@ -83,7 +83,7 @@ class HTTPClient:
             "x-sdk-language": "python",
         }
         if self.integrations:
-            headers["x-integrations"] = ",".join(self.integrations)
+            headers["x-sdk-integrations"] = ",".join(self.integrations)
         return headers
 
     @retry_on_502
