@@ -139,7 +139,7 @@ class TraceLog(EvaluatedLog):
 
     # from UI
     comments: Optional[List[TraceLogCommentSchema]] = None
-    annotations: Optional[dict[int, dict[str, TraceLogAnnotationSchema]]] = None
+    annotations: Optional[Dict[int, Dict[str, TraceLogAnnotationSchema]]] = None
 
 
 @define
