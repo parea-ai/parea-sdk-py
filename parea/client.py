@@ -76,7 +76,7 @@ class Parea:
             parea_logger.set_client(self._client)
             parea_logger.set_project_uuid(self.project_uuid)
 
-    def wrap_openai_client(self, client: "OpenAI") -> None:
+    def wrap_openai_client(self, client: "OpenAI", integration: Optional[str] = None) -> None:
         """Only necessary for instance client with OpenAI version >= 1.0.0"""
         from parea.wrapper import OpenAIWrapper
         from parea.wrapper.openai_beta_wrapper import BetaWrappers
@@ -84,10 +84,16 @@ class Parea:
         OpenAIWrapper().init(log=logger_all_possible, cache=self.cache, module_client=client)
         BetaWrappers(client).init()
 
-    def wrap_anthropic_client(self, client: "Anthropic") -> None:
+        if integration:
+            self._client.add_integration(integration)
+
+    def wrap_anthropic_client(self, client: "Anthropic", integration: Optional[str] = None) -> None:
         from parea.wrapper.anthropic.anthropic import AnthropicWrapper
 
         AnthropicWrapper().init(log=logger_all_possible, cache=self.cache, client=client)
+
+        if integration:
+            self._client.add_integration(integration)
 
     def auto_trace_openai_clients(self) -> None:
         import openai

@@ -66,7 +66,7 @@ class PareaLogger:
         data["project_uuid"] = self._project_uuid
         if experiment_uuid := os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None):
             data["experiment_uuid"] = experiment_uuid
-        self._client.add_integration('langchain')
+        self._client.add_integration("langchain")
         self._client.request(
             "POST",
             VENDOR_LOG_ENDPOINT.format(vendor=vendor.value),
@@ -77,7 +77,7 @@ class PareaLogger:
         data["project_uuid"] = self._project_uuid
         if experiment_uuid := os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None):
             data["experiment_uuid"] = experiment_uuid
-        self._client.add_integration('langchain')
+        self._client.add_integration("langchain")
         await self._client.request_async(
             "POST",
             VENDOR_LOG_ENDPOINT.format(vendor=vendor.value),
