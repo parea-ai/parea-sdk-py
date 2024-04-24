@@ -19,7 +19,7 @@ class Completion:
     end_user_identifier: Optional[str] = None
     deployment_id: Optional[str] = None
     name: Optional[str] = None
-    metadata: Optional[dict] = None
+    metadata: Optional[Dict] = None
     tags: Optional[List[str]] = field(factory=list)
     target: Optional[str] = None
     cache: bool = True
@@ -349,7 +349,7 @@ class ExperimentWithPinnedStatsSchema:
     status: ExperimentStatus
     is_public: bool = False
     metadata: Optional[Dict[str, str]] = None
-    pinned_stats: list[ExperimentPinnedStatistic] = []
+    pinned_stats: List[ExperimentPinnedStatistic] = []
     num_samples: Optional[int] = None
 
 
