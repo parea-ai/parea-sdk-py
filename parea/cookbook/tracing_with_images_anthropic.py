@@ -28,14 +28,17 @@ def image_maker(query: str) -> str:
     return image_url
 
 
-import requests
-import base64
 from typing import Optional
+
+import base64
+
+import requests
+
 
 @trace
 def ask_vision(image_url: str) -> Optional[str]:
     image_data = requests.get(image_url).content
-    base64_image = base64.b64encode(image_data).decode('utf-8')
+    base64_image = base64.b64encode(image_data).decode("utf-8")
 
     response = a_client.messages.create(
         model="claude-3-haiku-20240307",
