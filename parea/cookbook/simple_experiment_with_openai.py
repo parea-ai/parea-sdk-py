@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 from parea import Parea, trace
-from parea.schemas import Log
+from parea.schemas import Log, EvaluationResult
 
 load_dotenv()
 
@@ -15,12 +15,16 @@ p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 p.wrap_openai_client(client)
 
 
-def eval_func(log: Log) -> float:
+def eval_func(log: Log) -> EvaluationResult:
     from random import random
     from time import sleep
 
     sleep(random() * 10)
-    return random()
+    return EvaluationResult(
+        name="eval_func",
+        score=random(),
+        reason="Random score",
+    )
 
 
 # @trace(eval_funcs=[eval_func])
@@ -43,9 +47,9 @@ def func(topic: str) -> dict[str, str | None]:
 
 
 if __name__ == "__main__":
-    # print(func("Python"))
-    p.experiment(
-        name="hello-world-example-ch",
-        data=[{"topic": "Python"}, {"topic": "javascript"}],
-        func=func,
-    ).run()
+    print(func("Python"))
+    # p.experiment(
+    #     name="hello-world-example-ch",
+    #     data=[{"topic": "Fish"}, {"topic": "Python"}],
+    #     func=func,
+    # ).run()

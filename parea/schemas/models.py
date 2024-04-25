@@ -77,7 +77,6 @@ class UseDeployedPromptResponse:
 class FeedbackRequest:
     score: float = field(validator=[validators.ge(0), validators.le(1)])
     trace_id: Optional[str] = None
-    inference_id: Optional[str] = None
     name: Optional[str] = None
     target: Optional[str] = None
 

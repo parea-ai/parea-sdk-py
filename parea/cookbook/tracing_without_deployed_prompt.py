@@ -13,18 +13,15 @@ load_dotenv()
 p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
 
-@trace  # <--- If you want to log the inputs to the LLM call you can optionally add a trace decorator here
 def call_llm(
     data: List[dict],
     model: str = "gpt-3.5-turbo-1106",
-    provider: str = "openai",
     temperature: float = 0.0,
 ) -> CompletionResponse:
     return p.completion(
         data=Completion(
             llm_configuration=LLMInputs(
                 model=model,
-                provider=provider,
                 model_params=ModelParams(temp=temperature),
                 messages=[Message(**d) for d in data],
             )
@@ -106,8 +103,7 @@ def refiner2(query: str, additional_description: str, current_arg: str, criticis
                 "content": "Please generate a new argument that incorporates the feedback from the user.",
             },
         ],
-        model="claude-2",
-        provider="anthropic",
+        model="claude-3-haiku-20240307",
     )
 
 
@@ -128,7 +124,6 @@ def json_call():
         data=Completion(
             llm_configuration=LLMInputs(
                 model="gpt-3.5-turbo-1106",
-                provider="openai",
                 model_params=ModelParams(temp=0.0, response_format={"type": "json_object"}),
                 messages=[Message(**d) for d in json_messages],
             )
@@ -147,12 +142,12 @@ if __name__ == "__main__":
         "Whether wine is good for you.",
         additional_description="Provide a concise, few sentence argument on why wine is good for you.",
     )
-    print(result2)
+    print(trace_id2, result2)
     p.record_feedback(
         FeedbackRequest(
             trace_id=trace_id2,
-            score=0.0,  # 0.0 (bad) to 1.0 (good)
-            target="Moonshine is wonderful.",
+            score=0.7,  # 0.0 (bad) to 1.0 (good)
+            target="Wine is wonderful.",
         )
     )
 
@@ -164,7 +159,7 @@ if __name__ == "__main__":
     p.record_feedback(
         FeedbackRequest(
             trace_id=result3.inference_id,
-            score=0.7,  # 0.0 (bad) to 1.0 (good)
+            score=0.5,  # 0.0 (bad) to 1.0 (good)
             target="Moonshine is wonderful. End of story.",
         )
     )
