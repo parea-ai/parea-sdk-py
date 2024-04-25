@@ -1,4 +1,4 @@
-from typing import Callable, List, Union
+from typing import Callable, List, Optional, Union
 
 import json
 import warnings
@@ -10,7 +10,7 @@ from attrs import define
 from openai import __version__ as openai_version
 
 from parea.parea_logger import parea_logger
-from parea.schemas import EvaluationResult
+from parea.schemas import EvaluationResult, Log
 from parea.schemas.log import Log
 from parea.schemas.models import UpdateLog
 from parea.utils.trace_utils import thread_ids_running_evals, trace_data
@@ -185,3 +185,18 @@ def get_tokens(model: str, text: str) -> List[int]:
     except Exception as e:
         print(f"Error encoding text: {e}")
         return []
+
+
+def get_context(log: Log, context_fields: Optional[List[str]] = None, as_list: bool = False) -> str:
+    if context_fields:
+        context_list = [log.inputs[context_field] for context_field in context_fields]
+        return context_list if as_list else "\n".join(context_list)
+    else:
+        context = log.output
+        try:
+            loaded_context = json.loads(log.output)
+            if isinstance(loaded_context, list):
+                return loaded_context if as_list else "\n".join(loaded_context)
+        except json.JSONDecodeError:
+            pass
+        return [context] if as_list else context

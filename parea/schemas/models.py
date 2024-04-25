@@ -19,7 +19,7 @@ class Completion:
     end_user_identifier: Optional[str] = None
     deployment_id: Optional[str] = None
     name: Optional[str] = None
-    metadata: Optional[dict] = None
+    metadata: Optional[Dict] = None
     tags: Optional[List[str]] = field(factory=list)
     target: Optional[str] = None
     cache: bool = True
@@ -88,6 +88,23 @@ class TraceLogImage:
 
 
 @define
+class TraceLogCommentSchema:
+    comment: str
+    user_id: str
+    created_at: str
+
+
+@define
+class TraceLogAnnotationSchema:
+    created_at: str
+    user_id: str
+    score: float
+    user_email_address: Optional[str] = None
+    annotation_name: Optional[str] = None
+    value: Optional[str] = None
+
+
+@define
 class TraceLog(EvaluatedLog):
     trace_id: Optional[str] = field(default=None, validator=validators.instance_of(str))
     parent_trace_id: Optional[str] = field(default=None, validator=validators.instance_of(str))
@@ -118,6 +135,10 @@ class TraceLog(EvaluatedLog):
     tags: Optional[List[str]] = field(factory=list)
     experiment_uuid: Optional[str] = None
     images: Optional[List[TraceLogImage]] = field(factory=list)
+
+    # from UI
+    comments: Optional[List[TraceLogCommentSchema]] = None
+    annotations: Optional[Dict[int, Dict[str, TraceLogAnnotationSchema]]] = None
 
 
 @define
@@ -278,3 +299,75 @@ class CreateTestCaseCollection(CreateTestCases):
 @define
 class FinishExperimentRequestSchema:
     dataset_level_stats: Optional[List[EvaluationResult]] = field(factory=list)
+
+
+@define
+class ListExperimentUUIDsFilters:
+    project_name: Optional[str] = None
+    metadata_filter: Optional[Dict[str, Any]] = None
+    experiment_name_filter: Optional[str] = None
+    run_name_filter: Optional[str] = None
+
+
+class ExperimentStatus(str, Enum):
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class StatisticOperation(str, Enum):
+    MEAN = "mean"
+    MEDIAN = "median"
+    VARIANCE = "variance"
+    STANDARD_DEVIATION = "standard_deviation"
+    MIN = "min"
+    MAX = "max"
+    MSE = "mse"
+    MAE = "mae"
+    CORRELATION = "correlation"
+    SPEARMAN_CORRELATION = "spearman_correlation"
+    ACCURACY = "accuracy"
+    CUSTOM = "custom"
+
+
+@define
+class ExperimentPinnedStatistic:
+    var1: str
+    operation: StatisticOperation
+    value: float
+    var2: Optional[str] = None
+
+
+@define
+class ExperimentWithPinnedStatsSchema:
+    name: str
+    uuid: str
+    created_at: str
+    run_name: str
+    project_uuid: str
+    status: ExperimentStatus
+    is_public: bool = False
+    metadata: Optional[Dict[str, str]] = None
+    pinned_stats: List[ExperimentPinnedStatistic] = []
+    num_samples: Optional[int] = None
+
+
+class FilterOperator(str, Enum):
+    EQUALS = "equals"
+    NOT_EQUALS = "not_equals"
+    LIKE = "like"
+    GREATER_THAN_OR_EQUAL = "greater_than_or_equal"
+    LESS_THAN_OR_EQUAL = "less_than_or_equal"
+    GRATER_THAN = "greater_than"
+    LESS_THAN = "less_than"
+    IS_NULL = "is_null"
+    EXISTS = "exists"
+    IN = "in"
+
+
+@define
+class TraceLogFilters:
+    filter_field: Optional[str] = None
+    filter_operator: Optional[FilterOperator] = None
+    filter_value: Optional[str] = None

@@ -14,7 +14,7 @@ from parea.api_client import HTTPClient
 from parea.cache.cache import Cache
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.experiment.datasets import create_test_cases, create_test_collection
-from parea.helpers import gen_trace_id, serialize_metadata_values, structure_trace_log_from_api
+from parea.helpers import gen_trace_id, serialize_metadata_values, structure_trace_log_from_api, structure_trace_logs_from_api
 from parea.parea_logger import parea_logger
 from parea.schemas.models import (
     Completion,
@@ -25,11 +25,14 @@ from parea.schemas.models import (
     CreateTestCases,
     ExperimentSchema,
     ExperimentStatsSchema,
+    ExperimentWithPinnedStatsSchema,
     FeedbackRequest,
     FinishExperimentRequestSchema,
+    ListExperimentUUIDsFilters,
     ProjectSchema,
     TestCaseCollection,
     TraceLog,
+    TraceLogFilters,
     UseDeployedPrompt,
     UseDeployedPromptResponse,
 )
@@ -50,6 +53,8 @@ GET_COLLECTION_ENDPOINT = "/collection/{test_collection_identifier}"
 CREATE_COLLECTION_ENDPOINT = "/collection"
 ADD_TEST_CASES_ENDPOINT = "/testcases"
 GET_TRACE_LOG_ENDPOINT = "/trace_log/{trace_id}"
+LIST_EXPERIMENTS_ENDPOINT = "/experiments"
+GET_EXPERIMENT_LOGS_ENDPOINT = "/experiment/{experiment_uuid}/trace_logs"
 
 
 @define
@@ -71,7 +76,7 @@ class Parea:
             parea_logger.set_client(self._client)
             parea_logger.set_project_uuid(self.project_uuid)
 
-    def wrap_openai_client(self, client: "OpenAI") -> None:
+    def wrap_openai_client(self, client: "OpenAI", integration: Optional[str] = None) -> None:
         """Only necessary for instance client with OpenAI version >= 1.0.0"""
         from parea.wrapper import OpenAIWrapper
         from parea.wrapper.openai_beta_wrapper import BetaWrappers
@@ -79,10 +84,16 @@ class Parea:
         OpenAIWrapper().init(log=logger_all_possible, cache=self.cache, module_client=client)
         BetaWrappers(client).init()
 
-    def wrap_anthropic_client(self, client: "Anthropic") -> None:
+        if integration:
+            self._client.add_integration(integration)
+
+    def wrap_anthropic_client(self, client: "Anthropic", integration: Optional[str] = None) -> None:
         from parea.wrapper.anthropic.anthropic import AnthropicWrapper
 
         AnthropicWrapper().init(log=logger_all_possible, cache=self.cache, client=client)
+
+        if integration:
+            self._client.add_integration(integration)
 
     def auto_trace_openai_clients(self) -> None:
         import openai
@@ -91,6 +102,10 @@ class Parea:
         openai.AsyncOpenAI = patch_openai_client_classes(openai.AsyncOpenAI, self)
         openai.AzureOpenAI = patch_openai_client_classes(openai.AzureOpenAI, self)
         openai.AsyncAzureOpenAI = patch_openai_client_classes(openai.AsyncAzureOpenAI, self)
+
+    def integrate_with_sglang(self):
+        self.auto_trace_openai_clients()
+        self._client.add_integration("sglang")
 
     def _add_project_uuid_to_data(self, data) -> dict:
         data_dict = asdict(data)
@@ -345,6 +360,22 @@ class Parea:
     async def aget_trace_log(self, trace_id: str) -> TraceLog:
         response = await self._client.request_async("GET", GET_TRACE_LOG_ENDPOINT.format(trace_id=trace_id))
         return structure_trace_log_from_api(response.json())
+
+    def list_experiments(self, filter_conditions: Optional[ListExperimentUUIDsFilters] = ListExperimentUUIDsFilters()) -> List[ExperimentWithPinnedStatsSchema]:
+        response = self._client.request("POST", LIST_EXPERIMENTS_ENDPOINT, data=asdict(filter_conditions))
+        return structure(response.json(), List[ExperimentWithPinnedStatsSchema])
+
+    async def alist_experiments(self, filter_conditions: Optional[ListExperimentUUIDsFilters] = ListExperimentUUIDsFilters()) -> List[ExperimentWithPinnedStatsSchema]:
+        response = await self._client.request_async("POST", LIST_EXPERIMENTS_ENDPOINT, data=asdict(filter_conditions))
+        return structure(response.json(), List[ExperimentWithPinnedStatsSchema])
+
+    def get_experiment_trace_logs(self, experiment_uuid: str, filters: TraceLogFilters = TraceLogFilters()) -> List[TraceLog]:
+        response = self._client.request("POST", GET_EXPERIMENT_LOGS_ENDPOINT.format(experiment_uuid=experiment_uuid), data=asdict(filters))
+        return structure_trace_logs_from_api(response.json())
+
+    async def aget_experiment_trace_logs(self, experiment_uuid: str, filters: TraceLogFilters = TraceLogFilters()) -> List[TraceLog]:
+        response = await self._client.request_async("POST", GET_EXPERIMENT_LOGS_ENDPOINT.format(experiment_uuid=experiment_uuid), data=asdict(filters))
+        return structure_trace_logs_from_api(response.json())
 
 
 _initialized_parea_wrapper = False

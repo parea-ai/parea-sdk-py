@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ "3.9" ]
+        python-version: [ "3.8" ]
 
     steps:
       - uses: actions/checkout@v4.1.1
@@ -33,9 +33,9 @@ jobs:
         run: |
           make check-codestyle
 
-#      - name: Run tests
-#        run: |
-#          make test
+      - name: Run tests
+        run: |
+          make test
 
 #    - name: Run safety checks
 #      run: |
