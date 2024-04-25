@@ -1,12 +1,10 @@
-from typing import Dict
-
 import os
 
 from dotenv import load_dotenv
 from openai import OpenAI
 
 from parea import Parea, trace
-from parea.schemas import Log, EvaluationResult
+from parea.schemas import Log
 
 load_dotenv()
 
@@ -15,16 +13,12 @@ p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 p.wrap_openai_client(client)
 
 
-def eval_func(log: Log) -> EvaluationResult:
+def eval_func(log: Log) -> float:
     from random import random
     from time import sleep
 
     sleep(random() * 10)
-    return EvaluationResult(
-        name="eval_func",
-        score=random(),
-        reason="Random score",
-    )
+    return random()
 
 
 @trace(eval_funcs=[eval_func])

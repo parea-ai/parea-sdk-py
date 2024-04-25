@@ -148,7 +148,6 @@ def _make_evaluations(trace_id: str, log: Log, eval_funcs: List[EvalFuncTuple], 
     data_with_scores = trace_data.get()[trace_id]
     thread_ids_running_evals.get().remove(trace_id)
     parea_logger.default_log(data=data_with_scores)
-    # parea_logger.update_log(data=UpdateLog(trace_id=trace_id, field_name_to_value_map={"scores": scores, "target": log.target}))
     if verbose:
         print("###Eval Results###")
         for score in scores:

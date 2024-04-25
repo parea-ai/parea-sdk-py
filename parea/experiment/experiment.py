@@ -34,14 +34,14 @@ def calculate_avg_std_for_experiment(experiment_stats: ExperimentStatsSchema) ->
         for attr in STAT_ATTRS:
             value = getattr(trace_stat, attr, None)
             if value is not None:
-                accumulators[attr] += value
+                accumulators[attr] += value  # f"{value:.5f}" if attr == "cost" else value
                 counts[attr] += 1
 
         for score in trace_stat.scores:
             score_accumulators[score.name] += score.score
             score_counts[score.name] += 1
 
-    averages = {attr: "N/A" if counts[attr] == 0 else f"{accumulators[attr] / counts[attr]:.2f}" for attr in accumulators}
+    averages = {attr: "N/A" if counts[attr] == 0 else f"{accumulators[attr] / counts[attr]:.{5 if attr == 'cost' else 2}f}" for attr in accumulators}
 
     score_averages = {f"{name}": "N/A" if score_counts[name] == 0 else f"{score_accumulators[name] / score_counts[name]:.2f}" for name in score_accumulators}
 
