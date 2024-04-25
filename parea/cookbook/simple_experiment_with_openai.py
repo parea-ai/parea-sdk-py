@@ -22,25 +22,27 @@ def eval_func(log: Log) -> float:
 
 
 @trace(eval_funcs=[eval_func])
-def func(lang: str, framework: str) -> str:
-    return (
-        client.chat.completions.create(
-            model="gpt-4-turbo",
-            messages=[
-                {
-                    "role": "user",
-                    "content": f"Write a hello world program in {lang} using {framework}",
-                }
-            ],
+def func(topic: str) -> dict[str, str | None]:
+    return {
+        "data": (
+            client.chat.completions.create(
+                model="gpt-4-turbo",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": f"Write a short haiku about {topic}",
+                    }
+                ],
+            )
+            .choices[0]
+            .message.content
         )
-        .choices[0]
-        .message.content
-    )
+    }
 
 
 if __name__ == "__main__":
     p.experiment(
-        name="hello-world-example",
-        data=[{"lang": "Python", "framework": "Flask"}],
+        name="hello-world-example-ch",
+        data=[{"topic": "Fish"}, {"topic": "Python"}],
         func=func,
     ).run()

@@ -13,6 +13,7 @@ from parea.parea_logger import parea_logger
 from parea.schemas import EvaluationResult, Log
 from parea.schemas.log import Log
 from parea.schemas.models import UpdateLog
+from parea.utils.trace_utils import thread_ids_running_evals, trace_data
 
 seg = pysbd.Segmenter(language="en", clean=False)
 
@@ -142,7 +143,11 @@ def _make_evaluations(trace_id: str, log: Log, eval_funcs: List[EvalFuncTuple], 
         elif result is not None:
             scores.append(EvaluationResult(name=eval.name, score=result))
 
-    parea_logger.update_log(data=UpdateLog(trace_id=trace_id, field_name_to_value_map={"scores": scores, "target": log.target}))
+    trace_data.get()[trace_id].scores = scores
+    trace_data.get()[trace_id].target = log.target
+    data_with_scores = trace_data.get()[trace_id]
+    thread_ids_running_evals.get().remove(trace_id)
+    parea_logger.default_log(data=data_with_scores)
     if verbose:
         print("###Eval Results###")
         for score in scores:

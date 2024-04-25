@@ -15,7 +15,7 @@ from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID, TURN_OFF_PAREA_LOGGING
 from parea.helpers import gen_trace_id, timezone_aware_now
 from parea.parea_logger import parea_logger
 from parea.schemas import EvaluationResult
-from parea.schemas.models import TraceLog, UpdateLog, UpdateTraceScenario
+from parea.schemas.models import TraceLog, UpdateTraceScenario
 from parea.utils.universal_encoder import json_dumps
 
 logger = logging.getLogger()
@@ -117,6 +117,13 @@ def fill_trace_data(trace_id: str, data: Dict[str, Any], scenario: UpdateTraceSc
         elif scenario == UpdateTraceScenario.CHAIN:
             trace_data.get()[trace_id].parent_trace_id = data["parent_trace_id"]
             trace_data.get()[data["parent_trace_id"]].children.append(trace_id)
+        elif scenario == UpdateTraceScenario.OPENAICONFIG:
+            trace_data.get()[trace_id].configuration = data["configuration"]
+            trace_data.get()[trace_id].output = data["output"]
+            trace_data.get()[trace_id].input_tokens = data["input_tokens"]
+            trace_data.get()[trace_id].output_tokens = data["output_tokens"]
+            trace_data.get()[trace_id].total_tokens = data["total_tokens"]
+            trace_data.get()[trace_id].cost = data["cost"]
         else:
             logger.debug(f"Error occurred filling trace data. Scenario not valid: {scenario}")
     except Exception as e:
@@ -265,7 +272,7 @@ def trace(
 
 def call_eval_funcs_then_log(trace_id: str, eval_funcs: List[Callable] = None):
     data = trace_data.get()[trace_id]
-    parea_logger.default_log(data=data)
+    # parea_logger.default_log(data=data)
 
     if eval_funcs and data.status == "success" and random() <= data.apply_eval_frac:
         thread_ids_running_evals.get().append(trace_id)
@@ -283,9 +290,12 @@ def call_eval_funcs_then_log(trace_id: str, eval_funcs: List[Callable] = None):
                     scores.append(EvaluationResult(name=func.__name__, score=score))
             except Exception as e:
                 logger.exception(f"Error occurred calling evaluation function '{func.__name__}', {e}", exc_info=e)
-        parea_logger.update_log(data=UpdateLog(trace_id=trace_id, field_name_to_value_map={"scores": scores}))
+        # parea_logger.update_log(data=UpdateLog(trace_id=trace_id, field_name_to_value_map={"scores": scores}))
         trace_data.get()[trace_id].scores = scores
         thread_ids_running_evals.get().remove(trace_id)
+
+    data_with_scores = trace_data.get()[trace_id]
+    parea_logger.default_log(data=data_with_scores)
 
 
 def logger_record_log(trace_id: str):

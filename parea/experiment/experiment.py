@@ -41,7 +41,7 @@ def calculate_avg_std_for_experiment(experiment_stats: ExperimentStatsSchema) ->
             score_accumulators[score.name] += score.score
             score_counts[score.name] += 1
 
-    averages = {attr: "N/A" if counts[attr] == 0 else f"{accumulators[attr] / counts[attr]:.2f}" for attr in accumulators}
+    averages = {attr: "N/A" if counts[attr] == 0 else f"{accumulators[attr] / counts[attr]:.{5 if attr == 'cost' else 2}f}" for attr in accumulators}
 
     score_averages = {f"{name}": "N/A" if score_counts[name] == 0 else f"{score_accumulators[name] / score_counts[name]:.2f}" for name in score_accumulators}
 
@@ -157,7 +157,7 @@ async def experiment(
     experiment_stats: ExperimentStatsSchema = p.finish_experiment(experiment_uuid, FinishExperimentRequestSchema(dataset_level_stats=dataset_level_eval_results))
     stat_name_to_avg_std = calculate_avg_std_for_experiment(experiment_stats)
     if dataset_level_eval_results:
-        stat_name_to_avg_std.update({eval_result.name: eval_result.score for eval_result in dataset_level_eval_results})
+        stat_name_to_avg_std.update(**{eval_result.name: eval_result.score for eval_result in dataset_level_eval_results})
     print(f"Experiment {experiment_name} Run {run_name} stats:\n{json_dumps(stat_name_to_avg_std, indent=2)}\n\n")
     print(f"View experiment & traces at: https://app.parea.ai/experiments/{experiment_name}/{experiment_uuid}\n")
     save_results_to_dvc_if_init(run_name, stat_name_to_avg_std)
@@ -216,6 +216,26 @@ class Experiment:
             self._gen_run_name_if_none(run_name)
             self.experiment_stats = asyncio.run(
                 experiment(self.experiment_name, self.run_name, self.data, self.func, self.p, self.n_trials, self.metadata, self.dataset_level_evals, self.n_workers)
+            )
+        except Exception as e:
+            import traceback
+
+            traceback.print_exc()
+            print(f"Error running experiment: {e}")
+
+    async def arun(self, run_name: Optional[str] = None) -> None:
+        """Run the experiment and save the results to DVC.
+        param run_name: The run name of the experiment. This name must be unique across experiment runs.
+        If no run name is provided a memorable name will be generated automatically.
+        """
+        if TURN_OFF_PAREA_LOGGING:
+            print("Parea logging is turned off. Experiment can't be run without logging. Set env var TURN_OFF_PAREA_LOGGING to False to enable.")
+            return
+
+        try:
+            self._gen_run_name_if_none(run_name)
+            self.experiment_stats = await experiment(
+                self.experiment_name, self.run_name, self.data, self.func, self.p, self.n_trials, self.metadata, self.dataset_level_evals, self.n_workers
             )
         except Exception as e:
             import traceback

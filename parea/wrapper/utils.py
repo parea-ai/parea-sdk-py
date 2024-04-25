@@ -11,8 +11,8 @@ from openai import __version__ as openai_version
 from parea.constants import ALL_NON_AZURE_MODELS_INFO, AZURE_MODEL_INFO
 from parea.parea_logger import parea_logger
 from parea.schemas.log import LLMInputs, Message, ModelParams, Role
-from parea.schemas.models import UpdateLog
-from parea.utils.trace_utils import get_current_trace_id, log_in_thread, trace_insert
+from parea.schemas.models import UpdateLog, UpdateTraceScenario
+from parea.utils.trace_utils import fill_trace_data, get_current_trace_id, log_in_thread, trace_data, trace_insert
 from parea.utils.universal_encoder import json_dumps
 
 is_openai_1 = openai_version.startswith("1.")
@@ -318,19 +318,17 @@ def _process_stream_response(content: list, tools: dict, data: dict, trace_id: s
         data.get("model"),
     )
     completion_tokens = _num_tokens_from_string(final_content if final_content else json_dumps(tool_calls), model)
-    parea_logger.update_log(
-        UpdateLog(
-            trace_id=trace_id,
-            field_name_to_value_map={
-                "configuration": _kwargs_to_llm_configuration(data, model),
-                "output": completion,
-                "input_tokens": prompt_tokens,
-                "output_tokens": completion_tokens,
-                "total_tokens": prompt_tokens + completion_tokens,
-                "cost": _compute_cost(prompt_tokens, completion_tokens, model),
-            },
-        )
-    )
+    data = {
+        "configuration": _kwargs_to_llm_configuration(data, model),
+        "output": completion,
+        "input_tokens": prompt_tokens,
+        "output_tokens": completion_tokens,
+        "total_tokens": prompt_tokens + completion_tokens,
+        "cost": _compute_cost(prompt_tokens, completion_tokens, model),
+    }
+    fill_trace_data(trace_id, data, UpdateTraceScenario.OPENAICONFIG)
+    data_with_config = trace_data.get()[trace_id]
+    parea_logger.default_log(data=data_with_config)
 
 
 def convert_openai_raw_stream_to_log(content: list, tools: dict, data: dict, trace_id: str):
