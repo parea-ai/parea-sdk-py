@@ -34,7 +34,7 @@ def calculate_avg_std_for_experiment(experiment_stats: ExperimentStatsSchema) ->
         for attr in STAT_ATTRS:
             value = getattr(trace_stat, attr, None)
             if value is not None:
-                accumulators[attr] += value  # f"{value:.5f}" if attr == "cost" else value
+                accumulators[attr] += value
                 counts[attr] += 1
 
         for score in trace_stat.scores:
