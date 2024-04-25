@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-MAX_RETRIES = 7
+MAX_RETRIES = 8
 BACKOFF_FACTOR = 0.5
 
 
