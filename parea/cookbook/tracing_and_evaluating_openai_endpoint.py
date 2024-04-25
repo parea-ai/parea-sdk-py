@@ -16,7 +16,7 @@ from parea.schemas import Log
 load_dotenv()
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
-
+openai.api_type = "openai"
 
 use_cache = False  # by using the in memory cache, you don't need a Parea API key
 cache = InMemoryCache() if use_cache else None

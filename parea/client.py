@@ -347,7 +347,6 @@ class Parea:
             if parent_trace_id:
                 trace_data.get()[parent_trace_id].children.append(inference_id)
                 trace_data.get()[parent_trace_id].experiment_uuid = experiment_uuid
-                logger_record_log(parent_trace_id)
         except Exception as e:
             logger.debug(f"Error updating trace ids for completion. Trace log will be absent: {e}")
 
