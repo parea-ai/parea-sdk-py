@@ -27,7 +27,7 @@ def eval_func(log: Log) -> EvaluationResult:
     )
 
 
-# @trace(eval_funcs=[eval_func])
+@trace(eval_funcs=[eval_func])
 def func(topic: str) -> dict[str, str | None]:
     return {
         "data": (
@@ -47,9 +47,8 @@ def func(topic: str) -> dict[str, str | None]:
 
 
 if __name__ == "__main__":
-    print(func("Python"))
-    # p.experiment(
-    #     name="hello-world-example-ch",
-    #     data=[{"topic": "Fish"}, {"topic": "Python"}],
-    #     func=func,
-    # ).run()
+    p.experiment(
+        name="hello-world-example-ch",
+        data=[{"topic": "Fish"}, {"topic": "Python"}],
+        func=func,
+    ).run()

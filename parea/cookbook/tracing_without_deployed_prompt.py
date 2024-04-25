@@ -46,7 +46,7 @@ def critic(argument: str) -> str:
         [
             {
                 "role": "system",
-                "content": f"You are a critic."
+                "content": "You are a critic."
                 "\nWhat unresolved questions or criticism do you have after reading the following argument?"
                 "Provide a concise summary of your feedback.",
             },
