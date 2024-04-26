@@ -98,6 +98,7 @@ class Parea:
     def auto_trace_openai_clients(self) -> None:
         import openai
 
+        openai._ModuleClient = patch_openai_client_classes(openai._ModuleClient, self)
         openai.OpenAI = patch_openai_client_classes(openai.OpenAI, self)
         openai.AsyncOpenAI = patch_openai_client_classes(openai.AsyncOpenAI, self)
         openai.AzureOpenAI = patch_openai_client_classes(openai.AzureOpenAI, self)
@@ -375,9 +376,6 @@ class Parea:
     async def aget_experiment_trace_logs(self, experiment_uuid: str, filters: TraceLogFilters = TraceLogFilters()) -> List[TraceLog]:
         response = await self._client.request_async("POST", GET_EXPERIMENT_LOGS_ENDPOINT.format(experiment_uuid=experiment_uuid), data=asdict(filters))
         return structure_trace_logs_from_api(response.json())
-
-
-_initialized_parea_wrapper = False
 
 
 def patch_openai_client_classes(openai_client, parea_client: Parea):

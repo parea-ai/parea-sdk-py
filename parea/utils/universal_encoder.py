@@ -55,6 +55,32 @@ class UniversalEncoder(json.JSONEncoder):
     A JSON encoder that can handle additional types such as dataclasses, attrs, and more.
     """
 
+    def handle_dspy_response(self, obj) -> Any:
+        try:
+            import dspy
+        except ImportError:
+            return None
+
+        from dsp.templates.template_v3 import Template
+        from dspy.primitives.example import Example
+
+        if hasattr(obj, "completions") and hasattr(obj.completions, "_completions"):
+            # multiple completions
+            return obj.completions._completions
+        elif hasattr(obj, "_asdict"):
+            # convert namedtuples to dictionaries
+            return obj._asdict()
+        elif isinstance(obj, Example):
+            # handles Prediction objects and other sub-classes of Example
+            return getattr(obj, "_store", {})
+        elif isinstance(obj, Template):
+            return {
+                "fields": [self.default(field) for field in obj.fields],
+                "instructions": obj.instructions,
+            }
+        else:
+            return None
+
     def default(self, obj: Any):
         if isinstance(obj, str):
             return obj
@@ -92,6 +118,8 @@ class UniversalEncoder(json.JSONEncoder):
             return obj.tolist()
         elif is_pandas_instance(obj):
             return obj.to_dict(orient="records")
+        elif dspy_response := self.handle_dspy_response(obj):
+            return dspy_response
         else:
             return super().default(obj)
 
