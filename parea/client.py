@@ -95,13 +95,32 @@ class Parea:
         if integration:
             self._client.add_integration(integration)
 
-    def auto_trace_openai_clients(self) -> None:
+    def auto_trace_openai_clients(self, integration: Optional[str]) -> None:
         import openai
 
+        openai._ModuleClient = patch_openai_client_classes(openai._ModuleClient, self)
         openai.OpenAI = patch_openai_client_classes(openai.OpenAI, self)
         openai.AsyncOpenAI = patch_openai_client_classes(openai.AsyncOpenAI, self)
         openai.AzureOpenAI = patch_openai_client_classes(openai.AzureOpenAI, self)
         openai.AsyncAzureOpenAI = patch_openai_client_classes(openai.AsyncAzureOpenAI, self)
+
+        if integration:
+            self._client.add_integration(integration)
+
+    def trace_dspy(self):
+        from parea.utils.trace_integrations.dspy import DSPyInstrumentor
+
+        try:
+            import openai
+
+            if openai.version.__version__.startswith("0."):
+                self.wrap_openai_client(openai, "dspy")
+            else:
+                self.auto_trace_openai_clients("dspy")
+        except ImportError:
+            pass
+
+        DSPyInstrumentor().instrument()
 
     def integrate_with_sglang(self):
         self.auto_trace_openai_clients()
@@ -375,9 +394,6 @@ class Parea:
     async def aget_experiment_trace_logs(self, experiment_uuid: str, filters: TraceLogFilters = TraceLogFilters()) -> List[TraceLog]:
         response = await self._client.request_async("POST", GET_EXPERIMENT_LOGS_ENDPOINT.format(experiment_uuid=experiment_uuid), data=asdict(filters))
         return structure_trace_logs_from_api(response.json())
-
-
-_initialized_parea_wrapper = False
 
 
 def patch_openai_client_classes(openai_client, parea_client: Parea):
