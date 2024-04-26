@@ -95,7 +95,7 @@ class Parea:
         if integration:
             self._client.add_integration(integration)
 
-    def auto_trace_openai_clients(self) -> None:
+    def auto_trace_openai_clients(self, integration: Optional[str]) -> None:
         import openai
 
         openai._ModuleClient = patch_openai_client_classes(openai._ModuleClient, self)
@@ -103,6 +103,24 @@ class Parea:
         openai.AsyncOpenAI = patch_openai_client_classes(openai.AsyncOpenAI, self)
         openai.AzureOpenAI = patch_openai_client_classes(openai.AzureOpenAI, self)
         openai.AsyncAzureOpenAI = patch_openai_client_classes(openai.AsyncAzureOpenAI, self)
+
+        if integration:
+            self._client.add_integration(integration)
+
+    def trace_dspy(self):
+        from parea.utils.trace_integrations.dspy import DSPyInstrumentor
+
+        try:
+            import openai
+
+            if openai.version.__version__.startswith('0.'):
+                self.wrap_openai_client(openai, "dspy")
+            else:
+                self.auto_trace_openai_clients("dspy")
+        except ImportError:
+            pass
+
+        DSPyInstrumentor().instrument()
 
     def integrate_with_sglang(self):
         self.auto_trace_openai_clients()
