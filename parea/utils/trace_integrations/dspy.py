@@ -23,7 +23,7 @@ class DSPyInstrumentor:
                 module=_DSP_MODULE_NAME,
                 name=lm.__name__ + ".basic_request",
                 factory=CopyableFunctionWrapper,
-                args=(_LMBasicRequestWrapper(),),
+                args=(_GeneralDSPyWrapper('request'),),
             )
 
         # Predict is a concrete (non-abstract) class that may be invoked
@@ -51,7 +51,7 @@ class DSPyInstrumentor:
             module=_DSPY_MODULE_NAME,
             name="Retrieve.forward",
             factory=CopyableFunctionWrapper,
-            args=(_RetrieverForwardWrapper(),),
+            args=(_GeneralDSPyWrapper('forward'),),
         )
 
         wrap_object(
@@ -61,7 +61,7 @@ class DSPyInstrumentor:
             # forward method and invokes that method using __call__.
             name="Module.__call__",
             factory=CopyableFunctionWrapper,
-            args=(_ModuleForwardWrapper(),),
+            args=(_GeneralDSPyWrapper('forward'),),
         )
 
         # At this time, there is no common parent class for retriever models as
@@ -71,7 +71,7 @@ class DSPyInstrumentor:
             module=_DSP_MODULE_NAME,
             name="ColBERTv2.__call__",
             factory=CopyableFunctionWrapper,
-            args=(_RetrieverModelCallWrapper(),),
+            args=(_GeneralDSPyWrapper('__call__'),),
         )
 
 
@@ -114,11 +114,9 @@ class CopyableFunctionWrapper(FunctionWrapper):  # type: ignore
         return CopyableFunctionWrapper(deepcopy(self.__wrapped__, memo), self._self_wrapper)
 
 
-class _LMBasicRequestWrapper:
-    """
-    Wrapper for DSP LM.basic_request
-    Captures all calls to language models (lm)
-    """
+class _GeneralDSPyWrapper:
+    def __init__(self, method_name: str):
+        self._method_name = method_name
 
     def __call__(
         self,
@@ -127,7 +125,7 @@ class _LMBasicRequestWrapper:
         args: Tuple[type, Any],
         kwargs: Mapping[str, Any],
     ) -> Any:
-        span_name = instance.__class__.__name__ + ".request"
+        span_name = instance.__class__.__name__ + "." + self._method_name
         return trace(name=span_name)(wrapped)(*args, **kwargs)
 
 
@@ -159,62 +157,6 @@ class _PredictForwardWrapper:
             return wrapped(*args, **kwargs)
         else:
             return trace(name=_get_predict_span_name(instance))(wrapped)(*args, **kwargs)
-
-
-class _ModuleForwardWrapper:
-    """
-    Instruments the __call__ method of dspy.Module. DSPy end users define custom
-    subclasses of Module implementing a forward method, loosely resembling the
-    ergonomics of torch.nn.Module. The __call__ method of dspy.Module invokes
-    the forward method of the user-defined subclass.
-    """
-
-    def __call__(
-        self,
-        wrapped: Callable[..., Any],
-        instance: Any,
-        args: Tuple[type, Any],
-        kwargs: Mapping[str, Any],
-    ) -> Any:
-        span_name = instance.__class__.__name__ + ".forward"
-        return trace(name=span_name)(wrapped)(*args, **kwargs)
-
-
-class _RetrieverForwardWrapper:
-    """
-    Instruments the forward method of dspy.Retrieve, which is a wrapper around
-    retriever models such as ColBERTv2. At this time, Retrieve does not contain
-    any additional information that cannot be gleaned from the underlying
-    retriever model sub-span. It is, however, a user-facing concept, so we have
-    decided to instrument it.
-    """
-
-    def __call__(
-        self,
-        wrapped: Callable[..., Any],
-        instance: Any,
-        args: Tuple[type, Any],
-        kwargs: Mapping[str, Any],
-    ) -> Any:
-        span_name = instance.__class__.__name__ + ".forward"
-        return trace(name=span_name)(wrapped)(*args, **kwargs)
-
-
-class _RetrieverModelCallWrapper:
-    """
-    Instruments the __call__ method of retriever models such as ColBERTv2.
-    """
-
-    def __call__(
-        self,
-        wrapped: Callable[..., Any],
-        instance: Any,
-        args: Tuple[type, Any],
-        kwargs: Mapping[str, Any],
-    ) -> Any:
-        class_name = instance.__class__.__name__
-        span_name = class_name + ".__call__"
-        return trace(name=span_name)(wrapped)(*args, **kwargs)
 
 
 def _get_predict_span_name(instance: Any) -> str:
