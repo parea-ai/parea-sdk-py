@@ -113,7 +113,7 @@ class Parea:
         try:
             import openai
 
-            if openai.version.__version__.startswith('0.'):
+            if openai.version.__version__.startswith("0."):
                 self.wrap_openai_client(openai, "dspy")
             else:
                 self.auto_trace_openai_clients("dspy")

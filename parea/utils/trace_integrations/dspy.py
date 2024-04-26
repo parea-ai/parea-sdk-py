@@ -23,7 +23,7 @@ class DSPyInstrumentor:
                 module=_DSP_MODULE_NAME,
                 name=lm.__name__ + ".basic_request",
                 factory=CopyableFunctionWrapper,
-                args=(_GeneralDSPyWrapper('request'),),
+                args=(_GeneralDSPyWrapper("request"),),
             )
 
         # Predict is a concrete (non-abstract) class that may be invoked
@@ -46,12 +46,11 @@ class DSPyInstrumentor:
                 args=(_PredictForwardWrapper(),),
             )
 
-
         wrap_object(
             module=_DSPY_MODULE_NAME,
             name="Retrieve.forward",
             factory=CopyableFunctionWrapper,
-            args=(_GeneralDSPyWrapper('forward'),),
+            args=(_GeneralDSPyWrapper("forward"),),
         )
 
         wrap_object(
@@ -61,7 +60,7 @@ class DSPyInstrumentor:
             # forward method and invokes that method using __call__.
             name="Module.__call__",
             factory=CopyableFunctionWrapper,
-            args=(_GeneralDSPyWrapper('forward'),),
+            args=(_GeneralDSPyWrapper("forward"),),
         )
 
         # At this time, there is no common parent class for retriever models as
@@ -71,7 +70,7 @@ class DSPyInstrumentor:
             module=_DSP_MODULE_NAME,
             name="ColBERTv2.__call__",
             factory=CopyableFunctionWrapper,
-            args=(_GeneralDSPyWrapper('__call__'),),
+            args=(_GeneralDSPyWrapper("__call__"),),
         )
 
 
