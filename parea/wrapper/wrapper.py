@@ -13,7 +13,7 @@ from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID, TURN_OFF_PAREA_LOGGING
 from parea.evals.utils import _make_evaluations
 from parea.helpers import timezone_aware_now
 from parea.schemas.models import TraceLog, UpdateTraceScenario
-from parea.utils.trace_utils import call_eval_funcs_then_log, fill_trace_data, trace_context, trace_data
+from parea.utils.trace_utils import call_eval_funcs_then_log, fill_trace_data, trace_context, trace_data, execution_order_counters
 from parea.wrapper.utils import safe_format_template_to_prompt, skip_decorator_if_func_in_stack
 
 logger = logging.getLogger()
@@ -33,6 +33,7 @@ class Wrapper:
         convert_cache_to_response: Callable,
         aconvert_cache_to_response: Callable,
         log: Callable,
+        name: str = "LLM",
     ) -> None:
         self.resolver = resolver
         self.gen_resolver = gen_resolver
@@ -44,6 +45,7 @@ class Wrapper:
         self.convert_kwargs_to_cache_request = convert_kwargs_to_cache_request
         self.convert_cache_to_response = convert_cache_to_response
         self.aconvert_cache_to_response = aconvert_cache_to_response
+        self.name = name
 
     def wrap_functions(self, module: Any, func_names: List[str]):
         for func_name in func_names:
@@ -79,20 +81,31 @@ class Wrapper:
         new_trace_context = trace_context.get() + [trace_id]
         token = trace_context.set(new_trace_context)
 
+        if TURN_OFF_PAREA_LOGGING:
+            return trace_id, start_time, token
+
         if template_inputs := kwargs.pop("template_inputs", None):
-            for m in kwargs["messages"] or []:
+            for m in kwargs.get("messages", []):
                 if isinstance(m, dict) and "content" in m:
                     m["content"] = safe_format_template_to_prompt(m["content"], **template_inputs)
 
-        if TURN_OFF_PAREA_LOGGING:
-            return trace_id, start_time, token
+        depth = len(new_trace_context) - 1
+        root_trace_id = new_trace_context[0]
+
+        # Get the execution order counter for the current root trace
+        counters = execution_order_counters.get()
+        if root_trace_id not in counters:
+            counters[root_trace_id] = 0
+        execution_order = counters[root_trace_id]
+        counters[root_trace_id] += 1
+
         try:
             trace_data.get()[trace_id] = TraceLog(
                 trace_id=trace_id,
-                parent_trace_id=new_trace_context[0],
-                root_trace_id=new_trace_context[0],
+                parent_trace_id=root_trace_id,
+                root_trace_id=root_trace_id,
                 start_timestamp=start_time.isoformat(),
-                trace_name="LLM",
+                trace_name=self.name,
                 end_user_identifier=None,
                 session_id=None,
                 metadata=None,
@@ -100,6 +113,8 @@ class Wrapper:
                 tags=None,
                 inputs=template_inputs,
                 experiment_uuid=os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None),
+                depth=depth,
+                execution_order=execution_order,
             )
 
             parent_trace_id = new_trace_context[-2] if len(new_trace_context) > 1 else None

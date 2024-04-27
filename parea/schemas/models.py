@@ -140,6 +140,10 @@ class TraceLog(EvaluatedLog):
     comments: Optional[List[TraceLogCommentSchema]] = None
     annotations: Optional[Dict[int, Dict[str, TraceLogAnnotationSchema]]] = None
 
+    # for trace building
+    depth: int = 0
+    execution_order: int = 0
+
 
 @define
 class TraceLogTree(TraceLog):
