@@ -13,7 +13,7 @@ from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID, TURN_OFF_PAREA_LOGGING
 from parea.evals.utils import _make_evaluations
 from parea.helpers import timezone_aware_now
 from parea.schemas.models import TraceLog, UpdateTraceScenario
-from parea.utils.trace_utils import call_eval_funcs_then_log, fill_trace_data, trace_context, trace_data, execution_order_counters
+from parea.utils.trace_utils import call_eval_funcs_then_log, execution_order_counters, fill_trace_data, trace_context, trace_data
 from parea.wrapper.utils import safe_format_template_to_prompt, skip_decorator_if_func_in_stack
 
 logger = logging.getLogger()
