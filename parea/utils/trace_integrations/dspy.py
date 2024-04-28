@@ -1,10 +1,15 @@
-from typing import Any, Callable, Dict, Mapping, Optional, Tuple
+from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple
 
+import json
 from copy import copy, deepcopy
+from functools import wraps
 
+from dspy import Example, Module, Prediction
 from wrapt import BoundFunctionWrapper, FunctionWrapper, wrap_object
 
 from parea import trace
+from parea.schemas import EvaluationResult, Log
+from parea.utils.universal_encoder import json_dumps
 
 _DSPY_MODULE_NAME = "dspy"
 _DSP_MODULE_NAME = "dsp"
@@ -48,7 +53,7 @@ class DSPyInstrumentor:
 
         wrap_object(
             module=_DSPY_MODULE_NAME,
-            name="Retrieve.forward",
+            name="Retrieve.__call__",
             factory=CopyableFunctionWrapper,
             args=(_GeneralDSPyWrapper("forward"),),
         )
@@ -181,3 +186,41 @@ def _get_signature_name(signature: Any) -> Optional[str]:
     ) is None:
         return None
     return str(qual_name.split(".")[-1])
+
+
+def convert_dspy_eval_to_parea(dspy_eval):
+    """Given a DSPy evaluation function, convert it to a Parea evaluation function."""
+
+    @wraps(dspy_eval)
+    def wrapper(log: Log):
+        inputs_dict = log.inputs or {}
+        target_dict = json.loads(log.target) if log.target else {}
+        output_dict = json.loads(log.output) if log.output else {}
+        ex = Example(**inputs_dict, **target_dict).with_inputs(*inputs_dict.keys())
+        pred = Prediction(**output_dict)
+        score = dspy_eval(ex, pred)
+        return EvaluationResult(score=score, name=dspy_eval.__name__)
+
+    return wrapper
+
+
+def convert_dspy_examples_to_parea_dicts(examples: List[Example]) -> List[Dict]:
+    """Convert a list of DSPy examples to a list of dictionaries suitable for Parea."""
+    converted_examples = []
+    for example in examples:
+        _dict = {k: v for k, v in example.inputs().items()}
+        _target = {k: v for k, v in example.labels().items()}
+        if _target:
+            _dict["target"] = json_dumps(_target)
+        converted_examples.append(_dict)
+    return converted_examples
+
+
+def attach_evals_to_module(module: Module, eval_funcs: List) -> Callable:
+    """Attach evaluation functions to a DSPy module to apply them async after execution of module."""
+
+    @trace(name=module.__class__.__name__, eval_funcs=[convert_dspy_eval_to_parea(f) for f in eval_funcs])
+    def inner(*args, **kwargs):
+        return module(*args, **kwargs)
+
+    return inner
