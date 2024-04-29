@@ -220,6 +220,7 @@ class UpdateTraceScenario(str, Enum):
     CHAIN: str = "chain"
     USAGE: str = "usage"
     OPENAICONFIG: str = "openaiconfig"
+    LANGCHAIN_CHILD: str = "langchain_child"
 
 
 @define
