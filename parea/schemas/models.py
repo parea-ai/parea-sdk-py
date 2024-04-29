@@ -1,5 +1,6 @@
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
+import json
 from enum import Enum
 
 from attrs import define, field, validators
@@ -269,6 +270,33 @@ class TestCaseCollection:
 
     def get_all_test_inputs_and_targets_dict(self) -> Iterable[Dict[str, str]]:
         return ({**test_case.inputs, "target": test_case.target} for test_case in self.test_cases.values())
+
+    def write_to_finetune_jsonl(self, file_path: str):
+        """Converts dataset to finetune jsonl format and writes to file_path."""
+        jsonl_rows = []
+        for inputs, target in self.get_all_test_inputs_and_targets_tuple():
+            messages = json.loads(inputs["messages"])
+            try:
+                function_call = json.loads(target)
+                if isinstance(function_call, List):
+                    function_call = function_call[0]
+                if not "arguments" in function_call:
+                    # tool use format, need to convert
+                    function_call = function_call["function"]
+                function_call["arguments"] = json.dumps(function_call["arguments"])
+                assistant_response = {"role": "assistant", "function_call": function_call}
+            except json.JSONDecodeError:
+                assistant_response = {"role": "assistant", "content": target}
+            messages.append(assistant_response)
+            converted_row = {"messages": messages}
+            if functions := inputs.get("functions", None):
+                if loaded_functions := json.loads(functions):
+                    converted_row["functions"] = loaded_functions
+            jsonl_rows.append(converted_row)
+
+        data = [json.dumps(line) for line in jsonl_rows]
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write("\n".join(data))
 
 
 @define
