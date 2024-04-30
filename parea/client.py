@@ -55,6 +55,7 @@ ADD_TEST_CASES_ENDPOINT = "/testcases"
 GET_TRACE_LOG_ENDPOINT = "/trace_log/{trace_id}"
 LIST_EXPERIMENTS_ENDPOINT = "/experiments"
 GET_EXPERIMENT_LOGS_ENDPOINT = "/experiment/{experiment_uuid}/trace_logs"
+GET_EXPERIMENT_ENDPOINT = "/experiment/{experiment_uuid}"
 
 
 @define
@@ -394,6 +395,20 @@ class Parea:
     async def aget_experiment_trace_logs(self, experiment_uuid: str, filters: TraceLogFilters = TraceLogFilters()) -> List[TraceLog]:
         response = await self._client.request_async("POST", GET_EXPERIMENT_LOGS_ENDPOINT.format(experiment_uuid=experiment_uuid), data=asdict(filters))
         return structure_trace_logs_from_api(response.json())
+
+    def get_experiment(self, experiment_uuid: str) -> Optional[ExperimentWithPinnedStatsSchema]:
+        filter_conditions = ListExperimentUUIDsFilters(experiment_uuids=[experiment_uuid])
+        response = self._client.request("POST", LIST_EXPERIMENTS_ENDPOINT, data=asdict(filter_conditions))
+        response_json = response.json()
+        result = response_json[0] if isinstance(response_json, list) else None
+        return structure(result, ExperimentWithPinnedStatsSchema)
+
+    async def aget_experiment(self, experiment_uuid: str) -> Optional[ExperimentWithPinnedStatsSchema]:
+        filter_conditions = ListExperimentUUIDsFilters(experiment_uuids=[experiment_uuid])
+        response = await self._client.request_async("POST", LIST_EXPERIMENTS_ENDPOINT, data=asdict(filter_conditions))
+        response_json = response.json()
+        result = response_json[0] if isinstance(response_json, list) else None
+        return structure(result, ExperimentWithPinnedStatsSchema)
 
 
 def patch_openai_client_classes(openai_client, parea_client: Parea):

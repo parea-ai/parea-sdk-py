@@ -335,6 +335,7 @@ class ListExperimentUUIDsFilters:
     metadata_filter: Optional[Dict[str, Any]] = None
     experiment_name_filter: Optional[str] = None
     run_name_filter: Optional[str] = None
+    experiment_uuids: Optional[List[str]] = None
 
 
 class ExperimentStatus(str, Enum):
