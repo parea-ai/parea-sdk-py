@@ -55,7 +55,6 @@ ADD_TEST_CASES_ENDPOINT = "/testcases"
 GET_TRACE_LOG_ENDPOINT = "/trace_log/{trace_id}"
 LIST_EXPERIMENTS_ENDPOINT = "/experiments"
 GET_EXPERIMENT_LOGS_ENDPOINT = "/experiment/{experiment_uuid}/trace_logs"
-GET_EXPERIMENT_ENDPOINT = "/experiment/{experiment_uuid}"
 
 
 @define
