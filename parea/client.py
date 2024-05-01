@@ -395,6 +395,20 @@ class Parea:
         response = await self._client.request_async("POST", GET_EXPERIMENT_LOGS_ENDPOINT.format(experiment_uuid=experiment_uuid), data=asdict(filters))
         return structure_trace_logs_from_api(response.json())
 
+    def get_experiment(self, experiment_uuid: str) -> Optional[ExperimentWithPinnedStatsSchema]:
+        filter_conditions = ListExperimentUUIDsFilters(experiment_uuids=[experiment_uuid])
+        response = self._client.request("POST", LIST_EXPERIMENTS_ENDPOINT, data=asdict(filter_conditions))
+        response_json = response.json()
+        result = response_json[0] if isinstance(response_json, list) else None
+        return structure(result, ExperimentWithPinnedStatsSchema)
+
+    async def aget_experiment(self, experiment_uuid: str) -> Optional[ExperimentWithPinnedStatsSchema]:
+        filter_conditions = ListExperimentUUIDsFilters(experiment_uuids=[experiment_uuid])
+        response = await self._client.request_async("POST", LIST_EXPERIMENTS_ENDPOINT, data=asdict(filter_conditions))
+        response_json = response.json()
+        result = response_json[0] if isinstance(response_json, list) else None
+        return structure(result, ExperimentWithPinnedStatsSchema)
+
 
 def patch_openai_client_classes(openai_client, parea_client: Parea):
     """Creates a subclass of the given openai_client to always wrap it with Parea at instantiation."""
