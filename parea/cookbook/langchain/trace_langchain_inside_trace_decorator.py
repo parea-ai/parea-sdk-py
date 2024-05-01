@@ -13,7 +13,7 @@ load_dotenv()
 
 oai_client = OpenAI()
 
-p = Parea(api_key=os.getenv("PAREA_API_KEY"), project_name="testing")
+p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 handler = PareaAILangchainTracer()
 p.wrap_openai_client(oai_client)
 
