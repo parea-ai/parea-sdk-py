@@ -23,8 +23,8 @@ class PareaAILangchainTracer(BaseTracer):
         self.parent_trace_id = run.id
         # using .dict() since langchain Run class currently set to Pydantic v1
         data = run.dict()
+        data["_parea_root_trace_id"] = self._parea_root_trace_id or None
         if run.execution_order == 1:
-            data["_parea_root_trace_id"] = self._parea_root_trace_id or None
             data["_parea_parent_trace_id"] = self._parea_parent_trace_id or None
         parea_logger.record_vendor_log(data, TraceIntegrations.LANGCHAIN)
 
