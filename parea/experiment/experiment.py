@@ -7,6 +7,7 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from functools import partial
+from urllib.parse import quote
 
 from attrs import define, field
 from tqdm import tqdm
@@ -159,8 +160,11 @@ async def experiment(
     if dataset_level_eval_results:
         stat_name_to_avg_std.update(**{eval_result.name: eval_result.score for eval_result in dataset_level_eval_results})
     print(f"Experiment {experiment_name} Run {run_name} stats:\n{json_dumps(stat_name_to_avg_std, indent=2)}\n\n")
-    print(f"View experiment & traces at: https://app.parea.ai/experiments/{experiment_name}/{experiment_uuid}\n")
+    print(f"View experiment & traces at: https://app.parea.ai/experiments/{quote(experiment_name)}/{experiment_uuid}\n")
     save_results_to_dvc_if_init(run_name, stat_name_to_avg_std)
+
+    del os.environ[PAREA_OS_ENV_EXPERIMENT_UUID]
+
     return experiment_stats
 
 

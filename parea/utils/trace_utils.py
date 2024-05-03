@@ -120,6 +120,8 @@ def fill_trace_data(trace_id: str, data: Dict[str, Any], scenario: UpdateTraceSc
         elif scenario == UpdateTraceScenario.CHAIN:
             trace_data.get()[trace_id].parent_trace_id = data["parent_trace_id"]
             trace_data.get()[data["parent_trace_id"]].children.append(trace_id)
+        elif scenario == UpdateTraceScenario.LANGCHAIN_CHILD:
+            trace_data.get()[data["parent_trace_id"]].children.append(trace_id)
         elif scenario == UpdateTraceScenario.OPENAICONFIG:
             trace_data.get()[trace_id].configuration = data["configuration"]
             trace_data.get()[trace_id].output = data["output"]

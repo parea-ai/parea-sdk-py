@@ -1,6 +1,7 @@
 from typing import Any, Callable, Dict, Optional, Sequence
 
 from collections import defaultdict
+from copy import deepcopy
 from datetime import datetime
 
 from anthropic import AsyncMessageStreamManager, AsyncStream, Client, MessageStreamManager, Stream
@@ -124,7 +125,7 @@ class AnthropicWrapper:
 
     @staticmethod
     def _kwargs_to_llm_configuration(kwargs, model=None) -> LLMInputs:
-        functions = [d for d in kwargs.get("tools", [])]
+        functions = deepcopy([d for d in kwargs.get("tools", [])])
         for func in functions:
             if "input_schema" in func:
                 func["parameters"] = func.pop("input_schema")
