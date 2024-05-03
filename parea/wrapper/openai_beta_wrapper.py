@@ -10,8 +10,8 @@ from datetime import datetime
 from openai import AsyncOpenAI
 from openai.types.beta.threads import Run
 
-from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID, TURN_OFF_PAREA_LOGGING
-from parea.helpers import gen_trace_id, timezone_aware_now
+from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
+from parea.helpers import gen_trace_id, is_logging_disabled, timezone_aware_now
 from parea.schemas import TraceLog, UpdateTraceScenario
 from parea.utils.trace_utils import check_multiple_return_values, logger_all_possible, make_output, trace_context, trace_data
 from parea.utils.universal_encoder import json_dumps
@@ -58,7 +58,7 @@ class BaseWrapper:
         new_trace_context = trace_context.get() + [trace_id]
         token = trace_context.set(new_trace_context)
 
-        if TURN_OFF_PAREA_LOGGING:
+        if is_logging_disabled():
             return trace_id, start_time, token
 
         try:

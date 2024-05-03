@@ -5,7 +5,7 @@ from uuid import UUID
 from langchain_core.tracers import BaseTracer
 from langchain_core.tracers.schemas import ChainRun, LLMRun, Run, ToolRun
 
-from parea.constants import TURN_OFF_PAREA_LOGGING
+from parea.helpers import is_logging_disabled
 from parea.parea_logger import parea_logger
 from parea.schemas import UpdateTraceScenario
 from parea.schemas.log import TraceIntegrations
@@ -18,7 +18,7 @@ class PareaAILangchainTracer(BaseTracer):
     _parea_parent_trace_id: str = None
 
     def _persist_run(self, run: Union[Run, LLMRun, ChainRun, ToolRun]) -> None:
-        if TURN_OFF_PAREA_LOGGING:
+        if is_logging_disabled():
             return
         self.parent_trace_id = run.id
         # using .dict() since langchain Run class currently set to Pydantic v1
