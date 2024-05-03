@@ -11,8 +11,8 @@ from datetime import datetime
 from functools import wraps
 from random import random
 
-from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID, TURN_OFF_PAREA_LOGGING
-from parea.helpers import gen_trace_id, timezone_aware_now
+from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
+from parea.helpers import gen_trace_id, is_logging_disabled, timezone_aware_now
 from parea.parea_logger import parea_logger
 from parea.schemas import EvaluationResult
 from parea.schemas.models import TraceLog, UpdateTraceScenario
@@ -153,7 +153,7 @@ def trace(
         new_trace_context = trace_context.get() + [trace_id]
         token = trace_context.set(new_trace_context)
 
-        if TURN_OFF_PAREA_LOGGING:
+        if is_logging_disabled():
             return trace_id, start_time, token
 
         try:
@@ -226,7 +226,7 @@ def trace(
             output_as_list = check_multiple_return_values(func)
             try:
                 result = await func(*args, **kwargs)
-                if not TURN_OFF_PAREA_LOGGING and not log_omit_outputs:
+                if not is_logging_disabled() and not log_omit_outputs:
                     fill_trace_data(trace_id, {"result": result, "output_as_list": output_as_list, "eval_funcs_names": eval_funcs_names}, UpdateTraceScenario.RESULT)
                 return result
             except Exception as e:
@@ -246,7 +246,7 @@ def trace(
             output_as_list = check_multiple_return_values(func)
             try:
                 result = func(*args, **kwargs)
-                if not TURN_OFF_PAREA_LOGGING and not log_omit_outputs:
+                if not is_logging_disabled() and not log_omit_outputs:
                     fill_trace_data(trace_id, {"result": result, "output_as_list": output_as_list, "eval_funcs_names": eval_funcs_names}, UpdateTraceScenario.RESULT)
                 return result
             except Exception as e:

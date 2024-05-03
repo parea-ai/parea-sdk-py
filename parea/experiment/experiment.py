@@ -14,9 +14,9 @@ from tqdm import tqdm
 from tqdm.asyncio import tqdm_asyncio
 
 from parea import Parea
-from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID, TURN_OFF_PAREA_LOGGING
+from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.experiment.dvc import save_results_to_dvc_if_init
-from parea.helpers import duplicate_dicts, gen_random_name
+from parea.helpers import duplicate_dicts, gen_random_name, is_logging_disabled
 from parea.schemas import EvaluationResult
 from parea.schemas.models import CreateExperimentRequest, ExperimentSchema, ExperimentStatsSchema, FinishExperimentRequestSchema
 from parea.utils.trace_utils import thread_ids_running_evals, trace_data
@@ -212,7 +212,7 @@ class Experiment:
         param run_name: The run name of the experiment. This name must be unique across experiment runs.
         If no run name is provided a memorable name will be generated automatically.
         """
-        if TURN_OFF_PAREA_LOGGING:
+        if is_logging_disabled():
             print("Parea logging is turned off. Experiment can't be run without logging. Set env var TURN_OFF_PAREA_LOGGING to False to enable.")
             return
 
@@ -232,7 +232,7 @@ class Experiment:
         param run_name: The run name of the experiment. This name must be unique across experiment runs.
         If no run name is provided a memorable name will be generated automatically.
         """
-        if TURN_OFF_PAREA_LOGGING:
+        if is_logging_disabled():
             print("Parea logging is turned off. Experiment can't be run without logging. Set env var TURN_OFF_PAREA_LOGGING to False to enable.")
             return
 

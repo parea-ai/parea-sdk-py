@@ -10,7 +10,7 @@ import pytz
 from attr import asdict, fields_dict
 from cattrs import GenConverter
 
-from parea.constants import ADJECTIVES, NOUNS
+from parea.constants import ADJECTIVES, NOUNS, TURN_OFF_PAREA_LOGGING
 from parea.schemas.models import Completion, TraceLog, UpdateLog
 from parea.utils.universal_encoder import json_dumps
 
@@ -97,3 +97,29 @@ def structure_trace_log_from_api(d: dict) -> TraceLog:
 
 def structure_trace_logs_from_api(data: List[dict]) -> List[TraceLog]:
     return [structure_trace_log_from_api(d) for d in data]
+
+
+PAREA_LOGGING_DISABLED = False
+
+
+def disable_parea_logging():
+    global PAREA_LOGGING_DISABLED
+    PAREA_LOGGING_DISABLED = True
+
+
+def enable_logging():
+    global PAREA_LOGGING_DISABLED
+    PAREA_LOGGING_DISABLED = False
+
+
+def is_logging_disabled() -> bool:
+    global PAREA_LOGGING_DISABLED
+    return PAREA_LOGGING_DISABLED or TURN_OFF_PAREA_LOGGING
+
+
+class TurnOffPareaLogging:
+    def __enter__(self):
+        disable_parea_logging()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        enable_logging()

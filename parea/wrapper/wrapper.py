@@ -9,9 +9,9 @@ from datetime import datetime
 from uuid import uuid4
 
 from parea.cache.cache import Cache
-from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID, TURN_OFF_PAREA_LOGGING
+from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.evals.utils import _make_evaluations
-from parea.helpers import timezone_aware_now
+from parea.helpers import is_logging_disabled, timezone_aware_now
 from parea.schemas.models import TraceLog, UpdateTraceScenario
 from parea.utils.trace_utils import call_eval_funcs_then_log, fill_trace_data, trace_context, trace_data
 from parea.wrapper.utils import safe_format_template_to_prompt, skip_decorator_if_func_in_stack
@@ -84,7 +84,7 @@ class Wrapper:
                 if isinstance(m, dict) and "content" in m:
                     m["content"] = safe_format_template_to_prompt(m["content"], **template_inputs)
 
-        if TURN_OFF_PAREA_LOGGING:
+        if is_logging_disabled():
             return trace_id, start_time, token
         try:
             trace_data.get()[trace_id] = TraceLog(
