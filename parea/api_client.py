@@ -49,7 +49,7 @@ def retry_on_502(func: Callable[..., Any]) -> Callable[..., Any]:
         """Determines if the function should retry on error."""
         is_502_error = isinstance(error, httpx.HTTPStatusError) and error.response.status_code == 502
         is_last_retry = current_retry == MAX_RETRIES - 1
-        return not is_last_retry and (isinstance(error, (httpx.ConnectError, httpx.ReadError)) or is_502_error)
+        return not is_last_retry and (isinstance(error, (httpx.ConnectError, httpx.ReadError, httpx.RemoteProtocolError)) or is_502_error)
 
     if asyncio.iscoroutinefunction(func):
         return async_wrapper
