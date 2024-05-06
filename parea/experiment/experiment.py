@@ -163,7 +163,8 @@ async def experiment(
     print(f"View experiment & traces at: https://app.parea.ai/experiments/{quote(experiment_name)}/{experiment_uuid}\n")
     save_results_to_dvc_if_init(run_name, stat_name_to_avg_std)
 
-    del os.environ[PAREA_OS_ENV_EXPERIMENT_UUID]
+    if os.environ.get(PAREA_OS_ENV_EXPERIMENT_UUID, None):
+        del os.environ[PAREA_OS_ENV_EXPERIMENT_UUID]
 
     return experiment_stats
 
