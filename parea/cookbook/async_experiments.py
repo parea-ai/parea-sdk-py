@@ -39,7 +39,9 @@ def model_call_factory(model: str):
 
 
 async def main():
-    await asyncio.gather(*[p.experiment(name=model, data=DATA, func=model_call_factory(model), n_trials=4).arun(run_name=f"{model}-{str(uuid.uuid4())[:4]}") for model in models])
+    await asyncio.gather(
+        *[p.experiment(name="Write-Haikus", data=DATA, func=model_call_factory(model), n_trials=4).arun(run_name=f"{model}-{str(uuid.uuid4())[:4]}") for model in models]
+    )
 
 
 if __name__ == "__main__":
