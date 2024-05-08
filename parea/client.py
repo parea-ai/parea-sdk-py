@@ -87,6 +87,10 @@ class Parea:
         if integration:
             self._client.add_integration(integration)
 
+        if integration == "instructor":
+            from parea.utils.trace_integrations.instructor import instrument_instructor_validation_errors
+            instrument_instructor_validation_errors()
+
     def wrap_anthropic_client(self, client: "Anthropic", integration: Optional[str] = None) -> None:
         from parea.wrapper.anthropic.anthropic import AnthropicWrapper
 

@@ -1,14 +1,17 @@
-from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple
+from typing import Any, Callable, Mapping, Tuple
 
 import contextvars
+
+from instructor.retry import InstructorRetryException
+
+from parea.utils.trace_utils import trace_insert
 
 from parea.helpers import gen_trace_id
 from wrapt import wrap_object
 
 from parea import trace
-# from parea.schemas import EvaluationResult, Log
+from parea.schemas import EvaluationResult
 from parea.utils.trace_integrations.wrapt_utils import CopyableFunctionWrapper
-# from parea.utils.universal_encoder import json_dumps
 
 instructor_trace_id = contextvars.ContextVar("instructor_trace_id", default='')
 instructor_val_err_count = contextvars.ContextVar("instructor_val_err_count", default=0)
@@ -17,7 +20,6 @@ instructor_val_errs = contextvars.ContextVar("instructor_val_errs", default=[])
 
 def instrument_instructor_validation_errors() -> None:
     for retry_method in ['retry_async', 'retry_sync']:
-        print('trying to patch')
         wrap_object(
             module='instructor.patch',
             name=f"{retry_method}",
@@ -25,12 +27,12 @@ def instrument_instructor_validation_errors() -> None:
             args=(_RetryWrapper(),),
         )
 
-    # wrap_object(
-    #     module='tenacity',
-    #     name="AttemptManager.__exit__",
-    #     factory=CopyableFunctionWrapper,
-    #     args=(_AttemptManagerExitWrapper(),),
-    # )
+    wrap_object(
+        module='tenacity',
+        name="AttemptManager.__exit__",
+        factory=CopyableFunctionWrapper,
+        args=(_AttemptManagerExitWrapper(),),
+    )
 
 
 class _RetryWrapper:
@@ -46,47 +48,30 @@ class _RetryWrapper:
         return trace(name='instructor', _trace_id=trace_id)(wrapped)(*args, **kwargs)
 
 
-# class _AttemptManagerExitWrapper:
-#     def __call__(
-#         self,
-#         wrapped: Callable[..., Any],
-#         instance: Any,
-#         args: Tuple[type, Any],
-#         kwargs: Mapping[str, Any],
-#     ) -> Any:
-#         if instructor_trace_id.get() is not None:
-#             if kwargs.get('exec_type') is not None and kwargs.get('exc_value') is not None:
-#                 instructor_val_err_count.set(instructor_val_err_count.get() + 1)
-#                 instructor_val_errs.set(instructor_val_errs.get().append(kwargs.get('exc_value')))
-#             else:
-#                 # todo: set instructor score here
-#                 instructor_trace_id.set('')
-#                 instructor_val_err_count.set(0)
-#                 instructor_val_errs.set([])
-#         return wrapped(*args, **kwargs)
-
-
-# This is the tenacity.AttemptManager implementation:
-#
-# class AttemptManager:
-#     """Manage attempt context."""
-#
-#     def __init__(self, retry_state: "RetryCallState"):
-#         self.retry_state = retry_state
-#
-#     def __enter__(self) -> None:
-#         pass
-#
-#     def __exit__(
-#         self,
-#         exc_type: t.Optional[t.Type[BaseException]],
-#         exc_value: t.Optional[BaseException],
-#         traceback: t.Optional["types.TracebackType"],
-#     ) -> t.Optional[bool]:
-#         if exc_type is not None and exc_value is not None:
-#             self.retry_state.set_exception((exc_type, exc_value, traceback))
-#             return True  # Swallow exception.
-#         else:
-#             # We don't have the result, actually.
-#             self.retry_state.set_result(None)
-#             return None
+class _AttemptManagerExitWrapper:
+    def __call__(
+        self,
+        wrapped: Callable[..., Any],
+        instance: Any,
+        args: Tuple[type, Any],
+        kwargs: Mapping[str, Any],
+    ) -> Any:
+        if instructor_trace_id.get() is not None:
+            if len(args) > 1 and args[1] is not None and isinstance(args[1], InstructorRetryException):
+                instructor_val_err_count.set(instructor_val_err_count.get() + 1)
+                reasons = []
+                for arg in args[1].args:
+                    reasons.append(str(arg))
+                instructor_val_errs.get().extend(reasons)
+            else:
+                reason = '\n\n\n'.join(instructor_val_errs.get())
+                instructor_score = EvaluationResult(
+                    name='instruction_validation_error_count',
+                    score=instructor_val_err_count.get(),
+                    reason=reason,
+                )
+                trace_insert({'scores': [instructor_score]}, instructor_trace_id.get())
+                instructor_trace_id.set('')
+                instructor_val_err_count.set(0)
+                instructor_val_errs.set([])
+        return wrapped(*args, **kwargs)
