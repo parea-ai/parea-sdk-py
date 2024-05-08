@@ -4,13 +4,13 @@ import contextvars
 
 from instructor.retry import InstructorRetryException
 
-from parea.utils.trace_utils import trace_insert
+from parea.utils.trace_utils import trace_insert, logger_update_record, trace_data
 
 from parea.helpers import gen_trace_id
 from wrapt import wrap_object
 
 from parea import trace
-from parea.schemas import EvaluationResult
+from parea.schemas import EvaluationResult, UpdateLog
 from parea.utils.trace_integrations.wrapt_utils import CopyableFunctionWrapper
 
 instructor_trace_id = contextvars.ContextVar("instructor_trace_id", default='')
@@ -35,6 +35,19 @@ def instrument_instructor_validation_errors() -> None:
     )
 
 
+def report_instructor_validation_errors() -> None:
+    reason = '\n\n\n'.join(instructor_val_errs.get())
+    instructor_score = EvaluationResult(
+        name='instruction_validation_error_count',
+        score=instructor_val_err_count.get(),
+        reason=reason,
+    )
+    trace_insert({'scores': [instructor_score]}, instructor_trace_id.get())
+    instructor_trace_id.set('')
+    instructor_val_err_count.set(0)
+    instructor_val_errs.set([])
+
+
 class _RetryWrapper:
     def __call__(
         self,
@@ -45,7 +58,24 @@ class _RetryWrapper:
     ) -> Any:
         trace_id = gen_trace_id()
         instructor_trace_id.set(trace_id)
-        return trace(name='instructor', _trace_id=trace_id)(wrapped)(*args, **kwargs)
+        try:
+            return trace(name='instructor', _trace_id=trace_id)(wrapped)(*args, **kwargs)
+        except InstructorRetryException as e:
+            instructor_val_err_count.set(instructor_val_err_count.get() + 1)
+            reasons = []
+            for arg in e.args:
+                reasons.append(str(arg))
+            instructor_val_errs.set(instructor_val_errs.get() + reasons)
+
+            report_instructor_validation_errors()
+            logger_update_record(
+                UpdateLog(
+                    trace_id=trace_id,
+                    field_name_to_value_map={'scores': trace_data.get()[trace_id].scores}
+                )
+            )
+
+            raise e
 
 
 class _AttemptManagerExitWrapper:
@@ -62,16 +92,7 @@ class _AttemptManagerExitWrapper:
                 reasons = []
                 for arg in args[1].args:
                     reasons.append(str(arg))
-                instructor_val_errs.get().extend(reasons)
+                instructor_val_errs.set(instructor_val_errs.get() + reasons)
             else:
-                reason = '\n\n\n'.join(instructor_val_errs.get())
-                instructor_score = EvaluationResult(
-                    name='instruction_validation_error_count',
-                    score=instructor_val_err_count.get(),
-                    reason=reason,
-                )
-                trace_insert({'scores': [instructor_score]}, instructor_trace_id.get())
-                instructor_trace_id.set('')
-                instructor_val_err_count.set(0)
-                instructor_val_errs.set([])
+                report_instructor_validation_errors()
         return wrapped(*args, **kwargs)

@@ -15,7 +15,7 @@ from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.helpers import gen_trace_id, is_logging_disabled, timezone_aware_now
 from parea.parea_logger import parea_logger
 from parea.schemas import EvaluationResult
-from parea.schemas.models import TraceLog, UpdateTraceScenario
+from parea.schemas.models import TraceLog, UpdateTraceScenario, UpdateLog
 from parea.utils.universal_encoder import json_dumps
 
 logger = logging.getLogger()
@@ -311,3 +311,7 @@ def logger_all_possible(trace_id: str):
 
 def thread_eval_funcs_then_log(trace_id: str, eval_funcs: List[Callable] = None):
     log_in_thread(call_eval_funcs_then_log, {"trace_id": trace_id, "eval_funcs": eval_funcs})
+
+
+def logger_update_record(data: UpdateLog):
+    log_in_thread(parea_logger.update_log, {"data": data})
