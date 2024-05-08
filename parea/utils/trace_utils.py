@@ -145,10 +145,11 @@ def trace(
     deployment_id: Optional[str] = None,
     log_omit_inputs: Optional[bool] = False,
     log_omit_outputs: Optional[bool] = False,
+    _trace_id: Optional[str] = None,
 ):
     def init_trace(func_name, _parea_target_field, args, kwargs, func) -> Tuple[str, datetime, contextvars.Token]:
         start_time = timezone_aware_now()
-        trace_id = gen_trace_id()
+        trace_id = _trace_id or gen_trace_id()
 
         new_trace_context = trace_context.get() + [trace_id]
         token = trace_context.set(new_trace_context)
