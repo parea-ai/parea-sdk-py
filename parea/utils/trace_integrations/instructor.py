@@ -3,32 +3,30 @@ from typing import Any, Callable, Mapping, Tuple
 import contextvars
 
 from instructor.retry import InstructorRetryException
-
-from parea.utils.trace_utils import trace_insert, logger_update_record, trace_data
-
-from parea.helpers import gen_trace_id
 from wrapt import wrap_object
 
 from parea import trace
+from parea.helpers import gen_trace_id
 from parea.schemas import EvaluationResult, UpdateLog
 from parea.utils.trace_integrations.wrapt_utils import CopyableFunctionWrapper
+from parea.utils.trace_utils import logger_update_record, trace_data, trace_insert
 
-instructor_trace_id = contextvars.ContextVar("instructor_trace_id", default='')
+instructor_trace_id = contextvars.ContextVar("instructor_trace_id", default="")
 instructor_val_err_count = contextvars.ContextVar("instructor_val_err_count", default=0)
 instructor_val_errs = contextvars.ContextVar("instructor_val_errs", default=[])
 
 
 def instrument_instructor_validation_errors() -> None:
-    for retry_method in ['retry_async', 'retry_sync']:
+    for retry_method in ["retry_async", "retry_sync"]:
         wrap_object(
-            module='instructor.patch',
+            module="instructor.patch",
             name=f"{retry_method}",
             factory=CopyableFunctionWrapper,
             args=(_RetryWrapper(),),
         )
 
     wrap_object(
-        module='tenacity',
+        module="tenacity",
         name="AttemptManager.__exit__",
         factory=CopyableFunctionWrapper,
         args=(_AttemptManagerExitWrapper(),),
@@ -36,23 +34,23 @@ def instrument_instructor_validation_errors() -> None:
 
 
 def report_instructor_validation_errors() -> None:
-    reason = '\n\n\n'.join(instructor_val_errs.get())
+    reason = "\n\n\n".join(instructor_val_errs.get())
     if reason:
-        reason = '\n' + reason
+        reason = "\n" + reason
     instructor_score = EvaluationResult(
-        name='instruction_validation_error_count',
+        name="instruction_validation_error_count",
         score=instructor_val_err_count.get(),
         reason=reason,
     )
     last_child_trace_id = trace_data.get()[instructor_trace_id.get()].children[-1]
     trace_insert(
         {
-            'scores': [instructor_score],
-            'configuration': trace_data.get()[last_child_trace_id].configuration,
+            "scores": [instructor_score],
+            "configuration": trace_data.get()[last_child_trace_id].configuration,
         },
-        instructor_trace_id.get()
+        instructor_trace_id.get(),
     )
-    instructor_trace_id.set('')
+    instructor_trace_id.set("")
     instructor_val_err_count.set(0)
     instructor_val_errs.set([])
 
@@ -68,17 +66,19 @@ class _RetryWrapper:
         trace_id = gen_trace_id()
         instructor_trace_id.set(trace_id)
         try:
-            inputs = kwargs.get('kwargs', {}).get('template_inputs', {})
+            inputs = kwargs.get("kwargs", {}).get("template_inputs", {})
             metadata = {}
-            for key in ['max_retries', 'response_model', 'validation_context', 'mode', 'args']:
+            for key in ["max_retries", "response_model", "validation_context", "mode", "args"]:
                 if kwargs.get(key):
                     metadata[key] = kwargs[key]
             return trace(
-                name='instructor',
+                name="instructor",
                 overwrite_trace_id=trace_id,
                 overwrite_inputs=inputs,
                 metadata=metadata,
-            )(wrapped)(*args, **kwargs)
+            )(
+                wrapped
+            )(*args, **kwargs)
         except InstructorRetryException as e:
             instructor_val_err_count.set(instructor_val_err_count.get() + 1)
             reasons = []
@@ -87,12 +87,7 @@ class _RetryWrapper:
             instructor_val_errs.set(instructor_val_errs.get() + reasons)
 
             report_instructor_validation_errors()
-            logger_update_record(
-                UpdateLog(
-                    trace_id=trace_id,
-                    field_name_to_value_map={'scores': trace_data.get()[trace_id].scores}
-                )
-            )
+            logger_update_record(UpdateLog(trace_id=trace_id, field_name_to_value_map={"scores": trace_data.get()[trace_id].scores}))
 
             raise e
 

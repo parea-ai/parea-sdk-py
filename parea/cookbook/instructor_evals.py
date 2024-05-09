@@ -1,12 +1,11 @@
 import os
 
-from dotenv import load_dotenv
-
-from pydantic import BaseModel, field_validator
-from openai import OpenAI
 import instructor
-from parea import Parea
+from dotenv import load_dotenv
+from openai import OpenAI
+from pydantic import BaseModel, field_validator
 
+from parea import Parea
 
 load_dotenv()
 
@@ -39,8 +38,8 @@ resp = client.messages.create(
         }
     ],
     template_inputs={
-        'name': "Bobby",
-        'age': 18,
+        "name": "Bobby",
+        "age": 18,
     },
     response_model=User,
 )

@@ -1,5 +1,6 @@
+from typing import Any, Dict
+
 from copy import copy, deepcopy
-from typing import Dict, Any
 
 from wrapt import BoundFunctionWrapper, FunctionWrapper
 
