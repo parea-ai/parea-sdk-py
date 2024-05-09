@@ -15,7 +15,7 @@ from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.helpers import gen_trace_id, is_logging_disabled, timezone_aware_now
 from parea.parea_logger import parea_logger
 from parea.schemas import EvaluationResult
-from parea.schemas.models import TraceLog, UpdateTraceScenario
+from parea.schemas.models import TraceLog, UpdateLog, UpdateTraceScenario
 from parea.utils.universal_encoder import json_dumps
 
 logger = logging.getLogger()
@@ -145,10 +145,12 @@ def trace(
     deployment_id: Optional[str] = None,
     log_omit_inputs: Optional[bool] = False,
     log_omit_outputs: Optional[bool] = False,
+    overwrite_trace_id: Optional[str] = None,
+    overwrite_inputs: Optional[Dict[str, Any]] = None,
 ):
     def init_trace(func_name, _parea_target_field, args, kwargs, func) -> Tuple[str, datetime, contextvars.Token]:
         start_time = timezone_aware_now()
-        trace_id = gen_trace_id()
+        trace_id = overwrite_trace_id or gen_trace_id()
 
         new_trace_context = trace_context.get() + [trace_id]
         token = trace_context.set(new_trace_context)
@@ -157,11 +159,14 @@ def trace(
             return trace_id, start_time, token
 
         try:
-            sig = inspect.signature(func)
-            parameters = sig.parameters
+            if overwrite_inputs is not None:
+                inputs = overwrite_inputs
+            else:
+                sig = inspect.signature(func)
+                parameters = sig.parameters
 
-            inputs = {k: v for k, v in zip(parameters.keys(), args)}
-            inputs.update(kwargs)
+                inputs = {k: v for k, v in zip(parameters.keys(), args)}
+                inputs.update(kwargs)
 
             # filter out any values which aren't JSON serializable
             for k, v in inputs.items():
@@ -310,3 +315,7 @@ def logger_all_possible(trace_id: str):
 
 def thread_eval_funcs_then_log(trace_id: str, eval_funcs: List[Callable] = None):
     log_in_thread(call_eval_funcs_then_log, {"trace_id": trace_id, "eval_funcs": eval_funcs})
+
+
+def logger_update_record(data: UpdateLog):
+    log_in_thread(parea_logger.update_log, {"data": data})

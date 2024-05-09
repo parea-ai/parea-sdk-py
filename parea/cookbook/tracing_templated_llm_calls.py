@@ -14,7 +14,7 @@ p.wrap_openai_client(client)
 response = client.chat.completions.create(
     model="gpt-4",
     messages=[
-        {"role": "user", "content": "Make up {{number}} people. Some {abc}: def"},
+        {"role": "user", "content": "Make up {{number}} people."},
     ],
     template_inputs={"number": "three"},
 )
