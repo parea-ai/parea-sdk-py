@@ -35,9 +35,13 @@ resp = client.messages.create(
     messages=[
         {
             "role": "user",
-            "content": "Extract Bobby is 18 years old.",
+            "content": "Extract {{name}} is {{age}} years old.",
         }
     ],
+    template_inputs={
+        'name': "Bobby",
+        'age': 18,
+    },
     response_model=User,
 )
 

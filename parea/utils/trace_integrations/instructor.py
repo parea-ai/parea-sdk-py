@@ -37,12 +37,21 @@ def instrument_instructor_validation_errors() -> None:
 
 def report_instructor_validation_errors() -> None:
     reason = '\n\n\n'.join(instructor_val_errs.get())
+    if reason:
+        reason = '\n' + reason
     instructor_score = EvaluationResult(
         name='instruction_validation_error_count',
         score=instructor_val_err_count.get(),
         reason=reason,
     )
-    trace_insert({'scores': [instructor_score]}, instructor_trace_id.get())
+    last_child_trace_id = trace_data.get()[instructor_trace_id.get()].children[-1]
+    trace_insert(
+        {
+            'scores': [instructor_score],
+            'configuration': trace_data.get()[last_child_trace_id].configuration,
+        },
+        instructor_trace_id.get()
+    )
     instructor_trace_id.set('')
     instructor_val_err_count.set(0)
     instructor_val_errs.set([])
@@ -59,7 +68,17 @@ class _RetryWrapper:
         trace_id = gen_trace_id()
         instructor_trace_id.set(trace_id)
         try:
-            return trace(name='instructor', _trace_id=trace_id)(wrapped)(*args, **kwargs)
+            inputs = kwargs.get('kwargs', {}).get('template_inputs', {})
+            metadata = {}
+            for key in ['max_retries', 'response_model', 'validation_context', 'mode', 'args']:
+                if kwargs.get(key):
+                    metadata[key] = kwargs[key]
+            return trace(
+                name='instructor',
+                overwrite_trace_id=trace_id,
+                overwrite_inputs=inputs,
+                metadata=metadata,
+            )(wrapped)(*args, **kwargs)
         except InstructorRetryException as e:
             instructor_val_err_count.set(instructor_val_err_count.get() + 1)
             reasons = []
