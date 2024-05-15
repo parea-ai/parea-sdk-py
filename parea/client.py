@@ -74,13 +74,13 @@ class Parea:
                 if project_api_response.was_created:
                     print(f"Created project {project_api_response.name}")
                 self._project = structure(asdict(project_api_response), ProjectSchema)
-                parea_logger.set_client(self._client)
                 parea_logger.set_project_uuid(self.project_uuid)
             except httpx.HTTPStatusError as e:
                 if e.response.status_code == 502:
                     logger.error(f"Error creating Parea project please try again")
                 else:
                     raise
+            parea_logger.set_client(self._client)
         else:
             logger.warning("No API key found. Parea client will not be able to send data to the Parea API.")
 
