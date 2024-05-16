@@ -38,7 +38,7 @@ def report_instructor_validation_errors() -> None:
     if reason:
         reason = "\n" + reason
     instructor_score = EvaluationResult(
-        name="instruction_validation_error_count",
+        name="instructor_validation_error_count",
         score=instructor_val_err_count.get(),
         reason=reason,
     )
