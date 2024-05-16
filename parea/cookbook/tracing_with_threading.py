@@ -1,12 +1,12 @@
-from concurrent.futures import ThreadPoolExecutor
+from typing import List
+
 import contextvars
 import os
-from typing import List
+from concurrent.futures import ThreadPoolExecutor
 
 from dotenv import load_dotenv
 
 from parea import Parea, trace
-
 
 load_dotenv()
 
