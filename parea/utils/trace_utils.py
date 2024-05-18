@@ -55,8 +55,8 @@ def check_multiple_return_values(func) -> bool:
 
 
 def make_output(result, islist) -> Optional[str]:
-    if not result:
-        return None
+    if result is None:
+        return result
     try:
         if islist:
             json_list = [json_dumps(r) for r in result]
@@ -179,6 +179,8 @@ def trace(
                         # if we can't serialize the value, just convert it to a string
                         inputs[k] = str(v)
 
+            depth = len(new_trace_context) - 1
+
             trace_data.get()[trace_id] = TraceLog(
                 trace_id=trace_id,
                 parent_trace_id=trace_id,
@@ -194,10 +196,17 @@ def trace(
                 experiment_uuid=os.environ.get(PAREA_OS_ENV_EXPERIMENT_UUID, None),
                 apply_eval_frac=apply_eval_frac,
                 deployment_id=deployment_id,
+                depth=depth,
             )
             parent_trace_id = new_trace_context[-2] if len(new_trace_context) > 1 else None
             if parent_trace_id:
                 fill_trace_data(trace_id, {"parent_trace_id": parent_trace_id}, UpdateTraceScenario.CHAIN)
+                parent_trace_data = trace_data.get()[parent_trace_id]
+                execution_order = len(parent_trace_data.children)
+            else:
+                execution_order = 0
+
+            trace_data.get()[trace_id].execution_order = execution_order
         except Exception as e:
             logger.debug(f"Error occurred initializing trace for function {func_name}, {e}")
 
