@@ -55,8 +55,8 @@ def check_multiple_return_values(func) -> bool:
 
 
 def make_output(result, islist) -> Optional[str]:
-    if not result:
-        return None
+    if result is None:
+        return result
     try:
         if islist:
             json_list = [json_dumps(r) for r in result]
