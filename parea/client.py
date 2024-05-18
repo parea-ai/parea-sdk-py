@@ -120,6 +120,14 @@ class Parea:
         if integration:
             self._client.add_integration(integration)
 
+        if integration == "marvin":
+            import marvin
+
+            marvin.utilities.openai.Client = patch_openai_client_classes(marvin.utilities.openai.Client, self)
+            marvin.utilities.openai.AsyncClient = patch_openai_client_classes(marvin.utilities.openai.AsyncClient, self)
+            marvin.utilities.openai.AzureOpenAI = patch_openai_client_classes(marvin.utilities.openai.AzureOpenAI, self)
+            marvin.utilities.openai.AsyncAzureOpenAI = patch_openai_client_classes(marvin.utilities.openai.AsyncAzureOpenAI, self)
+
     def trace_dspy(self):
         from parea.utils.trace_integrations.dspy import DSPyInstrumentor
 
