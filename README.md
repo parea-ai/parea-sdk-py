@@ -8,7 +8,7 @@
 
 [![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/parea-ai/parea-sdk/blob/master/.pre-commit-config.yaml)
 [![Semantic Versions](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--versions-e10079.svg)](https://github.com/parea-ai/parea-sdk/releases)
-[![License](https://img.shields.io/github/license/parea-ai/parea-sdk)](https://github.com/parea-ai/parea-sdk/blob/master/LICENSE)
+[![License](https://img.shields.io/github/license/parea-ai/parea-sdk)](https://github.com/parea-ai/parea-sdk-py/blob/main/LICENSE)
 
 Parea python sdk
 
@@ -35,16 +35,16 @@ function(s).
 The scores associated with the traces will be logged to the Parea [dashboard](https://app.parea.ai/logs) and/or in a
 local CSV file if you don't have a Parea API key.
 
-Evaluation functions receive an argument `log` (of type [Log](parea/schemas/models.py)) and should return a
+Evaluation functions receive an argument `log` (of type [Log](https://github.com/parea-ai/parea-sdk-py/blob/main/parea/schemas/models.py)) and should return a
 float. You don't need to start from scratch, there are pre-defined evaluation
-functions for [general purpose](parea/evals/general),
-[chat](parea/evals/chat), [RAG](parea/evals/rag), and [summarization](parea/evals/summary) apps :)
+functions for [general purpose](https://github.com/parea-ai/parea-sdk-py/blob/main/parea/evals/general),
+[chat](https://github.com/parea-ai/parea-sdk-py/blob/main/parea/evals/chat), [RAG](https://github.com/parea-ai/parea-sdk-py/blob/main/parea/evals/rag), and [summarization](https://github.com/parea-ai/parea-sdk-py/blob/main/parea/evals/summary) apps :)
 
 You can define evaluation functions locally or use the ones you have deployed to
 Parea's [Test Hub](https://app.parea.ai/test-hub).
 If you choose the latter option, the evaluation happens asynchronously and non-blocking.
 
-A fully locally working cookbook can be found [here](parea/cookbook/tracing_and_evaluating_openai_endpoint.py).
+A fully locally working cookbook can be found [here](https://github.com/parea-ai/parea-sdk-py/blob/main/parea/cookbook/tracing_and_evaluating_openai_endpoint.py).
 Alternatively, you can add the following code to your codebase to get started:
 
 ```python
@@ -233,7 +233,7 @@ and several [Issue templates](https://github.com/parea-ai/parea-sdk/tree/master/
 [![License](https://img.shields.io/github/license/parea-ai/parea-sdk)](https://github.com/parea-ai/parea-sdk/blob/master/LICENSE)
 
 This project is licensed under the terms of the `Apache Software License 2.0` license.
-See [LICENSE](https://github.com/parea-ai/parea-sdk/blob/master/LICENSE) for more details.
+See [LICENSE](https://github.com/parea-ai/parea-sdk-py/blob/main/LICENSE) for more details.
 
 ## 📃 Citation
 
