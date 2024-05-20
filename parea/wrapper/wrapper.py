@@ -13,7 +13,7 @@ from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.evals.utils import _make_evaluations
 from parea.helpers import is_logging_disabled, timezone_aware_now
 from parea.schemas.models import TraceLog, UpdateTraceScenario
-from parea.utils.trace_utils import call_eval_funcs_then_log, fill_trace_data, trace_context, trace_data
+from parea.utils.trace_utils import call_eval_funcs_then_log, fill_trace_data, trace_context, trace_data, execution_order_counters
 from parea.wrapper.utils import safe_format_template_to_prompt, skip_decorator_if_func_in_stack
 
 logger = logging.getLogger()
@@ -86,11 +86,22 @@ class Wrapper:
 
         if is_logging_disabled():
             return trace_id, start_time, token
+
+        depth = len(new_trace_context) - 1
+        root_trace_id = new_trace_context[0]
+
+        # Get the execution order counter for the current root trace
+        counters = execution_order_counters.get()
+        if root_trace_id not in counters:
+            counters[root_trace_id] = 0
+        execution_order = counters[root_trace_id]
+        counters[root_trace_id] += 1
+
         try:
             trace_data.get()[trace_id] = TraceLog(
                 trace_id=trace_id,
-                parent_trace_id=new_trace_context[0],
-                root_trace_id=new_trace_context[0],
+                parent_trace_id=root_trace_id,
+                root_trace_id=root_trace_id,
                 start_timestamp=start_time.isoformat(),
                 trace_name="LLM",
                 end_user_identifier=None,
@@ -100,6 +111,8 @@ class Wrapper:
                 tags=None,
                 inputs=template_inputs,
                 experiment_uuid=os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None),
+                depth=depth,
+                execution_order=execution_order,
             )
 
             parent_trace_id = new_trace_context[-2] if len(new_trace_context) > 1 else None

@@ -29,32 +29,29 @@ class PareaLogger:
 
     def update_log(self, data: UpdateLog) -> None:
         data = serialize_metadata_values(data)
-        print("update_log", data)
-        # self._client.request(
-        #     "PUT",
-        #     LOG_ENDPOINT,
-        #     data=asdict(data),
-        # )
+        self._client.request(
+            "PUT",
+            LOG_ENDPOINT,
+            data=asdict(data),
+        )
 
     def record_log(self, data: TraceLog) -> None:
         data = serialize_metadata_values(data)
         data.project_uuid = self._project_uuid
-        print("record_log", data)
-        # self._client.request(
-        #     "POST",
-        #     LOG_ENDPOINT,
-        #     data=asdict(data),
-        # )
+        self._client.request(
+            "POST",
+            LOG_ENDPOINT,
+            data=asdict(data),
+        )
 
     async def arecord_log(self, data: TraceLog) -> None:
         data = serialize_metadata_values(data)
         data.project_uuid = self._project_uuid
-        print("arecord_log", data)
-        # await self._client.request_async(
-        #     "POST",
-        #     LOG_ENDPOINT,
-        #     data=asdict(data),
-        # )
+        await self._client.request_async(
+            "POST",
+            LOG_ENDPOINT,
+            data=asdict(data),
+        )
 
     def write_log(self, data: TraceLog) -> None:
         data = serialize_metadata_values(data)
