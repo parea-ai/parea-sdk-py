@@ -9,7 +9,7 @@ from datetime import datetime
 from uuid import uuid4
 
 from parea.cache.cache import Cache
-from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
+from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID, TURN_OFF_PAREA_LOGGING
 from parea.evals.utils import _make_evaluations
 from parea.helpers import is_logging_disabled, timezone_aware_now
 from parea.schemas.models import TraceLog, UpdateTraceScenario
@@ -33,6 +33,7 @@ class Wrapper:
         convert_cache_to_response: Callable,
         aconvert_cache_to_response: Callable,
         log: Callable,
+        name: str = "LLM",
     ) -> None:
         self.resolver = resolver
         self.gen_resolver = gen_resolver
@@ -44,6 +45,7 @@ class Wrapper:
         self.convert_kwargs_to_cache_request = convert_kwargs_to_cache_request
         self.convert_cache_to_response = convert_cache_to_response
         self.aconvert_cache_to_response = aconvert_cache_to_response
+        self.name = name
 
     def wrap_functions(self, module: Any, func_names: List[str]):
         for func_name in func_names:
@@ -79,13 +81,13 @@ class Wrapper:
         new_trace_context = trace_context.get() + [trace_id]
         token = trace_context.set(new_trace_context)
 
-        if template_inputs := kwargs.pop("template_inputs", None):
-            for m in kwargs["messages"] or []:
-                if isinstance(m, dict) and "content" in m:
-                    m["content"] = safe_format_template_to_prompt(m["content"], **template_inputs)
-
         if is_logging_disabled():
             return trace_id, start_time, token
+
+        if template_inputs := kwargs.pop("template_inputs", None):
+            for m in kwargs.get("messages", []):
+                if isinstance(m, dict) and "content" in m:
+                    m["content"] = safe_format_template_to_prompt(m["content"], **template_inputs)
 
         depth = len(new_trace_context) - 1
         root_trace_id = new_trace_context[0]
@@ -103,7 +105,7 @@ class Wrapper:
                 parent_trace_id=root_trace_id,
                 root_trace_id=root_trace_id,
                 start_timestamp=start_time.isoformat(),
-                trace_name="LLM",
+                trace_name=self.name,
                 end_user_identifier=None,
                 session_id=None,
                 metadata=None,
