@@ -95,12 +95,12 @@ if __name__ == "__main__":
         "Whether sparkling wine is good for you.",
         additional_description="Provide a concise, few sentence argument on why sparkling wine is good for you.",
     )
-    # print(result)
-    # p.record_feedback(
-    #     FeedbackRequest(
-    #         trace_id=trace_id,
-    #         score=0.7,  # 0.0 (bad) to 1.0 (good)
-    #     )
-    # )
+    print(result)
+    p.record_feedback(
+        FeedbackRequest(
+            trace_id=trace_id,
+            score=0.7,  # 0.0 (bad) to 1.0 (good)
+        )
+    )
 
-    # print(json_call())
+    print(json_call())
