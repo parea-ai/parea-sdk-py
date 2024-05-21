@@ -198,7 +198,11 @@ def _format_function_call(response_message) -> str:
             try:
                 function_args = json.loads(body.arguments)
             except json.decoder.JSONDecodeError:
-                function_args = json.loads(clean_json_string(body.arguments))
+                try:
+                    function_args = json.loads(clean_json_string(body.arguments))
+                except Exception:
+                    function_args = str(body.arguments)
+
             if is_tool_call:
                 calls.append(
                     {
@@ -325,7 +329,10 @@ def _process_stream_response(content: list, tools: dict, data: dict, trace_id: s
 
     tool_calls = [t["function"] for t in tools.values()]
     for tool in tool_calls:
-        tool["arguments"] = json.loads(tool["arguments"])
+        try:
+            tool["arguments"] = json.loads(tool["arguments"])
+        except Exception:
+            tool["arguments"] = str(tool["arguments"])
 
     completion = final_content or json_dumps(tool_calls, indent=4)
 
