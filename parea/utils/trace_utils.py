@@ -30,6 +30,9 @@ trace_data = contextvars.ContextVar("trace_data", default={})
 # Context variable to maintain running evals in thread
 thread_ids_running_evals = contextvars.ContextVar("thread_ids_running_evals", default=[])
 
+# Add a counter variable to maintain the execution order
+execution_order_counters = contextvars.ContextVar("execution_order_counters", default={})
+
 
 def log_in_thread(target_func: Callable, data: Dict[str, Any]):
     logging_thread = threading.Thread(target=target_func, kwargs=data)
@@ -179,10 +182,20 @@ def trace(
                         # if we can't serialize the value, just convert it to a string
                         inputs[k] = str(v)
 
+            depth = len(new_trace_context) - 1
+            root_trace_id = new_trace_context[0]
+
+            # Get the execution order counter for the current root trace
+            counters = execution_order_counters.get()
+            if root_trace_id not in counters:
+                counters[root_trace_id] = 0
+            execution_order = counters[root_trace_id]
+            counters[root_trace_id] += 1
+
             trace_data.get()[trace_id] = TraceLog(
                 trace_id=trace_id,
                 parent_trace_id=trace_id,
-                root_trace_id=new_trace_context[0],
+                root_trace_id=root_trace_id,
                 start_timestamp=start_time.isoformat(),
                 trace_name=name or func_name,
                 end_user_identifier=end_user_identifier,
@@ -194,6 +207,8 @@ def trace(
                 experiment_uuid=os.environ.get(PAREA_OS_ENV_EXPERIMENT_UUID, None),
                 apply_eval_frac=apply_eval_frac,
                 deployment_id=deployment_id,
+                depth=depth,
+                execution_order=execution_order,
             )
             parent_trace_id = new_trace_context[-2] if len(new_trace_context) > 1 else None
             if parent_trace_id:

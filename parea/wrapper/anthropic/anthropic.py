@@ -34,6 +34,7 @@ class AnthropicWrapper:
             convert_kwargs_to_cache_request=self.convert_kwargs_to_cache_request,
             convert_cache_to_response=self.convert_cache_to_response,
             aconvert_cache_to_response=self.aconvert_cache_to_response,
+            name="llm-anthropic",
         )
 
     @staticmethod

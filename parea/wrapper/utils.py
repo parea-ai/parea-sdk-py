@@ -198,7 +198,11 @@ def _format_function_call(response_message) -> str:
             try:
                 function_args = json.loads(body.arguments)
             except json.decoder.JSONDecodeError:
-                function_args = json.loads(clean_json_string(body.arguments))
+                try:
+                    function_args = json.loads(clean_json_string(body.arguments))
+                except Exception:
+                    function_args = str(body.arguments)
+
             if is_tool_call:
                 calls.append(
                     {
@@ -212,8 +216,21 @@ def _format_function_call(response_message) -> str:
     return json_dumps(calls, indent=4)
 
 
+def _resolve_functions(kwargs):
+    if "functions" in kwargs:
+        return kwargs.get("functions", [])
+    elif "tools" in kwargs:
+        tools = kwargs["tools"]
+        if isinstance(tools, list):
+            return [d.get("function", {}) for d in tools]
+
+        return []  # it is either a list or Stainless's `NotGiven`
+
+    return []
+
+
 def _kwargs_to_llm_configuration(kwargs, model=None) -> LLMInputs:
-    functions = kwargs.get("functions", None) or [d.get("function", {}) for d in kwargs.get("tools", [])]
+    functions = _resolve_functions(kwargs)
     function_call_default = "auto" if functions else None
     return LLMInputs(
         model=model or kwargs.get("model", None),
@@ -242,7 +259,12 @@ def _convert_oai_messages(messages: list) -> Union[List[Union[dict, Message]], N
             if (is_chat_completion and m.role == "tool") or (isinstance(m, dict) and m.get("role") == "tool"):
                 tool_call_id = m.tool_call_id if is_chat_completion else m.get("tool_call_id")
                 content = m.content if is_chat_completion else m.get("content", "")
-                cleaned_messages.append(Message(role=Role.tool, content=json_dumps({"tool_call_id": tool_call_id, "content": content}, indent=4)))
+                cleaned_messages.append(
+                    Message(
+                        role=Role.tool,
+                        content=json_dumps({"tool_call_id": tool_call_id, "content": content}, indent=4),
+                    )
+                )
             elif is_chat_completion:
                 cleaned_messages.append(
                     Message(
@@ -307,7 +329,10 @@ def _process_stream_response(content: list, tools: dict, data: dict, trace_id: s
 
     tool_calls = [t["function"] for t in tools.values()]
     for tool in tool_calls:
-        tool["arguments"] = json.loads(tool["arguments"])
+        try:
+            tool["arguments"] = json.loads(tool["arguments"])
+        except Exception:
+            tool["arguments"] = str(tool["arguments"])
 
     completion = final_content or json_dumps(tool_calls, indent=4)
 
@@ -332,11 +357,21 @@ def _process_stream_response(content: list, tools: dict, data: dict, trace_id: s
 
 
 def convert_openai_raw_stream_to_log(content: list, tools: dict, data: dict, trace_id: str):
-    log_in_thread(_process_stream_response, {"content": content, "tools": tools, "data": data, "trace_id": trace_id})
+    log_in_thread(
+        _process_stream_response,
+        {"content": content, "tools": tools, "data": data, "trace_id": trace_id},
+    )
 
 
 def convert_openai_raw_to_log(r: dict, data: dict):
-    log_in_thread(_process_response, {"response": ChatCompletion(**r), "model_inputs": data, "trace_id": get_current_trace_id()})
+    log_in_thread(
+        _process_response,
+        {
+            "response": ChatCompletion(**r),
+            "model_inputs": data,
+            "trace_id": get_current_trace_id(),
+        },
+    )
 
 
 def safe_format_template_to_prompt(_template: str, **kwargs) -> str:

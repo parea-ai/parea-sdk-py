@@ -17,7 +17,7 @@ p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 p.wrap_openai_client(client)
 
 
-def call_llm(data: List[dict], model: str = "gpt-4-turbo", temperature: float = 0.0) -> str:
+def call_llm(data: List[dict], model: str = "gpt-4o", temperature: float = 0.0) -> str:
     return client.chat.completions.create(model=model, temperature=temperature, messages=data).choices[0].message.content
 
 
@@ -64,7 +64,7 @@ def refiner(query: str, additional_description: str, argument: str, criticism: s
             {"role": "user", "content": criticism},
             {
                 "role": "system",
-                "content": f"Please generate a new argument that incorporates the feedback from the user.",
+                "content": "Please generate a new argument that incorporates the feedback from the user.",
             },
         ],
     )
@@ -83,7 +83,7 @@ def argument_chain(query: str, additional_description: str = "") -> Tuple[str, s
 @trace(session_id="cus_1234", end_user_identifier="user_1234")
 def json_call() -> str:
     completion = client.chat.completions.create(
-        model="gpt-4-turbo-2024-04-09",
+        model="gpt-4o",
         messages=[{"role": "system", "content": "You are a helpful assistant talking in JSON."}, {"role": "user", "content": "What are you?"}],
         response_format={"type": "json_object"},
     )
