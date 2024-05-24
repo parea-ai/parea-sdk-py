@@ -87,7 +87,12 @@ class Wrapper:
         if template_inputs := kwargs.pop("template_inputs", None):
             for m in kwargs.get("messages", []):
                 if isinstance(m, dict) and "content" in m:
-                    m["content"] = safe_format_template_to_prompt(m["content"], **template_inputs)
+                    if isinstance(m["content"], str):
+                        m["content"] = safe_format_template_to_prompt(m["content"], **template_inputs)
+                    elif isinstance(m["content"], list):
+                        for i, item in enumerate(m["content"]):
+                            if isinstance(item, dict) and "text" in item:
+                                m["content"][i]["text"] = safe_format_template_to_prompt(item["text"], **template_inputs)
 
         depth = len(new_trace_context) - 1
         root_trace_id = new_trace_context[0]
