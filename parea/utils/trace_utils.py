@@ -192,6 +192,9 @@ def trace(
             execution_order = counters[root_trace_id]
             counters[root_trace_id] += 1
 
+            parent_trace_id = new_trace_context[-2] if len(new_trace_context) > 1 else None
+            parent_target = trace_data.get()[parent_trace_id].target if parent_trace_id else None
+
             trace_data.get()[trace_id] = TraceLog(
                 trace_id=trace_id,
                 parent_trace_id=trace_id,
@@ -201,7 +204,7 @@ def trace(
                 end_user_identifier=end_user_identifier,
                 session_id=session_id,
                 metadata=metadata,
-                target=_parea_target_field,
+                target=_parea_target_field or parent_target,
                 tags=tags,
                 inputs={} if log_omit_inputs else inputs,
                 experiment_uuid=os.environ.get(PAREA_OS_ENV_EXPERIMENT_UUID, None),
@@ -210,7 +213,7 @@ def trace(
                 depth=depth,
                 execution_order=execution_order,
             )
-            parent_trace_id = new_trace_context[-2] if len(new_trace_context) > 1 else None
+
             if parent_trace_id:
                 fill_trace_data(trace_id, {"parent_trace_id": parent_trace_id}, UpdateTraceScenario.CHAIN)
         except Exception as e:

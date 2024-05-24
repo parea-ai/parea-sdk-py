@@ -172,12 +172,22 @@ async def experiment(
 _experiments = []
 
 
+def data_converter(data: Union[str, int, Iterable[dict]]) -> Union[str, int, Iterable[dict]]:
+    if isinstance(data, (str, int)):
+        return data
+    else:
+        for sample in data:
+            if "target" in sample and isinstance(sample["target"], dict):
+                sample["target"] = json_dumps(sample["target"])
+        return data
+
+
 @define
 class Experiment:
     # If your dataset is defined locally it should be an iterable of k/v
     # pairs matching the expected inputs of your function. To reference a dataset you
     # have saved on Parea, use the dataset name as a string or the id as an int.
-    data: Union[str, int, Iterable[dict]]
+    data: Union[str, int, Iterable[dict]] = field(converter=data_converter)
     # The function to run. This function should accept inputs that match the keys of the data field.
     func: Callable = field()
     experiment_stats: ExperimentStatsSchema = field(init=False, default=None)

@@ -10,7 +10,10 @@ def levenshtein(log: Log) -> Union[float, None]:
     if (target := log.target) is None:
         return None
 
-    output, target = str(output), str(target)
+    return levenshtein_distance(str(output), str(target))
+
+
+def levenshtein_distance(output: str, target: str) -> float:
     max_len = max(len(x) for x in [output, target])
 
     score = 1
