@@ -93,12 +93,7 @@ class Parea:
         BetaWrappers(client).init()
 
         if integration:
-            self._client.add_integration(integration)
-
-        if integration == "instructor":
-            from parea.utils.trace_integrations.instructor import instrument_instructor_validation_errors
-
-            instrument_instructor_validation_errors()
+            self._add_integration(integration)
 
     def wrap_anthropic_client(self, client: "Anthropic", integration: Optional[str] = None) -> None:
         from parea.wrapper.anthropic.anthropic import AnthropicWrapper
@@ -106,7 +101,15 @@ class Parea:
         AnthropicWrapper().init(log=logger_all_possible, cache=self.cache, client=client)
 
         if integration:
-            self._client.add_integration(integration)
+            self._add_integration(integration)
+
+    def _add_integration(self, integration: str) -> None:
+        self._client.add_integration(integration)
+
+        if integration == "instructor":
+            from parea.utils.trace_integrations.instructor import instrument_instructor_validation_errors
+
+            instrument_instructor_validation_errors()
 
     def auto_trace_openai_clients(self, integration: Optional[str]) -> None:
         import openai
