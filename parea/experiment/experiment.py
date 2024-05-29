@@ -70,6 +70,8 @@ def apply_dataset_eval(dataset_level_evals: List[Callable]) -> List[EvaluationRe
         except Exception as e:
             logger.exception(f"Error occurred calling dataset level eval function '{dataset_level_eval.__name__}': {e}", exc_info=e)
             continue
+        if result is None:
+            continue
 
         if isinstance(result, EvaluationResult):
             results.append(result)
