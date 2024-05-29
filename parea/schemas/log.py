@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional, Union
 
+import math
 from enum import Enum
 
 from attrs import define, field
@@ -70,8 +71,13 @@ class Log:
 @define
 class EvaluationResult:
     name: str
-    score: float
+    score: float = field()
     reason: Optional[str] = None
+
+    @score.validator
+    def _check_score_is_finite(self, attribute, value):
+        if not math.isfinite(value):
+            raise ValueError(f"Score must be finite, got {value}")
 
 
 @define
