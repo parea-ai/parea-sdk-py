@@ -2,6 +2,7 @@ from typing import Callable, Dict, Iterable, List, Optional, Union
 
 import asyncio
 import inspect
+import logging
 import os
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
@@ -23,6 +24,7 @@ from parea.utils.trace_utils import thread_ids_running_evals, trace_data
 from parea.utils.universal_encoder import json_dumps
 
 STAT_ATTRS = ["latency", "input_tokens", "output_tokens", "total_tokens", "cost"]
+logger = logging.getLogger()
 
 
 def calculate_avg_std_for_experiment(experiment_stats: ExperimentStatsSchema) -> Dict[str, str]:
@@ -63,7 +65,12 @@ def apply_dataset_eval(dataset_level_evals: List[Callable]) -> List[EvaluationRe
 
     results = []
     for dataset_level_eval in dataset_level_evals:
-        result = dataset_level_eval(root_traces)
+        try:
+            result = dataset_level_eval(root_traces)
+        except Exception as e:
+            logger.exception(f"Error occurred calling dataset level eval function '{dataset_level_eval.__name__}': {e}", exc_info=e)
+            continue
+
         if isinstance(result, EvaluationResult):
             results.append(result)
         elif isinstance(result, list):
