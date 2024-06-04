@@ -1,11 +1,10 @@
-import asyncio
 import os
 
 import anthropic
 from dotenv import load_dotenv
 
 from parea import Parea
-from parea.cookbook.data.anthropic_tool_use_examples import missing_information, multiple_tool_use, single_tool_use
+from parea.cookbook.assets.data.anthropic_tool_use_examples import missing_information, multiple_tool_use, single_tool_use
 
 load_dotenv()
 

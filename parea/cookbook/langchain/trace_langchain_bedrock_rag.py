@@ -19,7 +19,7 @@ handler = PareaAILangchainTracer()
 
 
 def get_docs():
-    loader = TextLoader("../data/2022-letter.txt")
+    loader = TextLoader("../assets/data/2022-letter.txt")
     letter = loader.load()
     text_splitter = RecursiveCharacterTextSplitter(separators=["\n\n", "\n"], chunk_size=4000, chunk_overlap=100)
     return text_splitter.split_documents(letter)

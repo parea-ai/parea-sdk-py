@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from openai.lib.azure import AsyncAzureOpenAI, AzureOpenAI
 
 from parea import Parea, trace
-from parea.cookbook.data.openai_input_examples import functions_example, simple_example
+from parea.cookbook.assets.data.openai_input_examples import functions_example, simple_example
 
 load_dotenv()
 

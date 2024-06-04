@@ -4,7 +4,7 @@ import httpx
 from dotenv import load_dotenv
 
 from parea import Parea, aprocess_stream_and_yield, convert_openai_raw_to_log, process_stream_and_yield, trace
-from parea.cookbook.data.openai_input_examples import functions_example, simple_example, tool_calling_example
+from parea.cookbook.assets.data.openai_input_examples import functions_example, simple_example, tool_calling_example
 from parea.wrapper import get_formatted_openai_response
 
 load_dotenv()
