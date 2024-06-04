@@ -30,8 +30,6 @@ class PareaAILangchainTracer(BaseTracer):
         # check if run has an attribute execution order
         if hasattr(run, "execution_order") and run.execution_order == 1:
             data["_parea_parent_trace_id"] = self._parea_parent_trace_id or None
-        else:
-            logger.warning("Execution order is not set for Langchain. May not be able to connect root trace.")
         parea_logger.record_vendor_log(data, TraceIntegrations.LANGCHAIN)
 
     def get_parent_trace_id(self) -> UUID:
@@ -44,8 +42,6 @@ class PareaAILangchainTracer(BaseTracer):
             if parent_trace_id := get_current_trace_id():
                 self._parea_parent_trace_id = parent_trace_id
                 fill_trace_data(str(run.id), {"parent_trace_id": parent_trace_id}, UpdateTraceScenario.LANGCHAIN_CHILD)
-        else:
-            logger.warning("Execution order is not set for Langchain. May not be able to connect root trace.")
 
     def _on_llm_end(self, run: Run) -> None:
         self._persist_run(run)
