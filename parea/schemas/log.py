@@ -48,7 +48,7 @@ class LLMInputs:
 
     model: Optional[str] = None
     provider: Optional[str] = None
-    model_params: Optional[ModelParams] = None
+    model_params: Optional[ModelParams] = ModelParams()
     messages: Optional[List[Message]] = None
     functions: Optional[List[Any]] = None
     function_call: Optional[Union[str, Dict[str, str]]] = None

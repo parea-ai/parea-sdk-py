@@ -304,19 +304,21 @@ class Parea:
         )
         return structure(r.json(), CreateGetProjectResponseSchema)
 
-    def get_collection(self, test_collection_identifier: Union[str, int]) -> TestCaseCollection:
+    def get_collection(self, test_collection_identifier: Union[str, int]) -> Optional[TestCaseCollection]:
         r = self._client.request(
             "GET",
             GET_COLLECTION_ENDPOINT.format(test_collection_identifier=test_collection_identifier),
         )
-        return structure(r.json(), TestCaseCollection)
+        collection = r.json()
+        return structure(collection, TestCaseCollection) if collection else None
 
-    async def aget_collection(self, test_collection_identifier: Union[str, int]) -> TestCaseCollection:
+    async def aget_collection(self, test_collection_identifier: Union[str, int]) -> Optional[TestCaseCollection]:
         r = await self._client.request_async(
             "GET",
             GET_COLLECTION_ENDPOINT.format(test_collection_identifier=test_collection_identifier),
         )
-        return structure(r.json(), TestCaseCollection)
+        collection = r.json()
+        return structure(collection, TestCaseCollection) if collection else None
 
     def create_test_collection(self, data: List[Dict[str, Any]], name: Optional[str] = None) -> None:
         request: CreateTestCaseCollection = create_test_collection(data, name)
