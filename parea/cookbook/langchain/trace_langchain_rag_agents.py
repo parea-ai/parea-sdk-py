@@ -15,7 +15,7 @@ load_dotenv()
 
 p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
-loader = TextLoader("../data/state_of_the_union.txt")
+loader = TextLoader("../assets/data/state_of_the_union.txt")
 
 
 documents = loader.load()

@@ -44,7 +44,7 @@ You can define evaluation functions locally or use the ones you have deployed to
 Parea's [Test Hub](https://app.parea.ai/test-hub).
 If you choose the latter option, the evaluation happens asynchronously and non-blocking.
 
-A fully locally working cookbook can be found [here](parea/cookbook/tracing_and_evaluating_openai_endpoint.py).
+A fully locally working cookbook can be found [here](parea/cookbook/openai/tracing_and_evaluating_openai_endpoint.py).
 Alternatively, you can add the following code to your codebase to get started:
 
 ```python

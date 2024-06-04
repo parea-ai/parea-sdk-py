@@ -1,6 +1,10 @@
+from typing import Optional
+
+import base64
 import json
 import os
 
+import requests
 from anthropic import Anthropic
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -26,13 +30,6 @@ def image_maker(query: str) -> str:
     caption = {"original_prompt": query, "revised_prompt": response.data[0].revised_prompt}
     trace_insert({"images": [TraceLogImage(url=image_url, caption=json.dumps(caption))]})
     return image_url
-
-
-from typing import Optional
-
-import base64
-
-import requests
 
 
 @trace
