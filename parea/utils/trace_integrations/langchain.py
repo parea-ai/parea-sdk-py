@@ -1,5 +1,6 @@
 from typing import Union
 
+import logging
 from uuid import UUID
 
 from langchain_core.tracers import BaseTracer
@@ -10,6 +11,8 @@ from parea.parea_logger import parea_logger
 from parea.schemas import UpdateTraceScenario
 from parea.schemas.log import TraceIntegrations
 from parea.utils.trace_utils import fill_trace_data, get_current_trace_id, get_root_trace_id
+
+logger = logging.getLogger()
 
 
 class PareaAILangchainTracer(BaseTracer):
@@ -24,7 +27,8 @@ class PareaAILangchainTracer(BaseTracer):
         # using .dict() since langchain Run class currently set to Pydantic v1
         data = run.dict()
         data["_parea_root_trace_id"] = self._parea_root_trace_id or None
-        if run.execution_order == 1:
+        # check if run has an attribute execution order
+        if hasattr(run, "execution_order") and run.execution_order == 1:
             data["_parea_parent_trace_id"] = self._parea_parent_trace_id or None
         parea_logger.record_vendor_log(data, TraceIntegrations.LANGCHAIN)
 
@@ -32,8 +36,8 @@ class PareaAILangchainTracer(BaseTracer):
         return self.parent_trace_id
 
     def _on_run_create(self, run: Run) -> None:
-        if run.execution_order == 1:
-            # need to check if any traces already exist\
+        if hasattr(run, "execution_order") and run.execution_order == 1:
+            # need to check if any traces already exist
             self._parea_root_trace_id = get_root_trace_id()
             if parent_trace_id := get_current_trace_id():
                 self._parea_parent_trace_id = parent_trace_id

@@ -34,6 +34,14 @@ thread_ids_running_evals = contextvars.ContextVar("thread_ids_running_evals", de
 execution_order_counters = contextvars.ContextVar("execution_order_counters", default={})
 
 
+def clear_trace_context():
+    global trace_context, trace_data, thread_ids_running_evals, execution_order_counters
+    trace_context = contextvars.ContextVar("trace_context", default=[])
+    trace_data = contextvars.ContextVar("trace_data", default={})
+    thread_ids_running_evals = contextvars.ContextVar("thread_ids_running_evals", default=[])
+    execution_order_counters = contextvars.ContextVar("execution_order_counters", default={})
+
+
 def log_in_thread(target_func: Callable, data: Dict[str, Any]):
     logging_thread = threading.Thread(target=target_func, kwargs=data)
     logging_thread.start()
