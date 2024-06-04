@@ -14,6 +14,8 @@ load_dotenv()
 
 p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
+NUM_INTERACTIONS = 5
+
 
 class Person(BaseModel):
     name: str
@@ -26,7 +28,6 @@ class Email(BaseModel):
 
 
 mock_DB: dict[str, Email] = {}
-NUM_INTERACTIONS = 5
 
 
 def call_llm(messages: List[Message]) -> CompletionResponse:
