@@ -28,7 +28,7 @@ class PareaAILangchainTracer(BaseTracer):
         data = run.dict()
         data["_parea_root_trace_id"] = self._parea_root_trace_id or None
         # check if run has an attribute execution order
-        if hasattr(run, "execution_order") and run.execution_order == 1:
+        if (hasattr(run, "execution_order") and run.execution_order == 1) or run.parent_run_id is None:
             data["_parea_parent_trace_id"] = self._parea_parent_trace_id or None
         parea_logger.record_vendor_log(data, TraceIntegrations.LANGCHAIN)
 
@@ -36,7 +36,7 @@ class PareaAILangchainTracer(BaseTracer):
         return self.parent_trace_id
 
     def _on_run_create(self, run: Run) -> None:
-        if hasattr(run, "execution_order") and run.execution_order == 1:
+        if (hasattr(run, "execution_order") and run.execution_order == 1) or run.parent_run_id is None:
             # need to check if any traces already exist
             self._parea_root_trace_id = get_root_trace_id()
             if parent_trace_id := get_current_trace_id():
