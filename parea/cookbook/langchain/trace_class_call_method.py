@@ -27,10 +27,7 @@ class LangChainModule:
     @trace(name="langchain_caller_call")
     def __call__(self, query: str) -> str:
         chain = self.get_chain()
-        return chain.invoke(
-            {"input": "Write a Hello World program in Python using FastAPI."},
-            config={"callbacks": [self.handler]},
-        )
+        return chain.invoke({"input": query}, config={"callbacks": [self.handler]})
 
 
 class LLMCaller:
