@@ -16,6 +16,7 @@ from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.experiment.datasets import create_test_cases, create_test_collection
 from parea.helpers import gen_trace_id, serialize_metadata_values, structure_trace_log_from_api, structure_trace_logs_from_api
 from parea.parea_logger import parea_logger
+from parea.schemas import EvaluationResult
 from parea.schemas.models import (
     Completion,
     CompletionResponse,
@@ -33,6 +34,7 @@ from parea.schemas.models import (
     TestCaseCollection,
     TraceLog,
     TraceLogFilters,
+    TraceLogTree,
     UseDeployedPrompt,
     UseDeployedPromptResponse,
 )
@@ -397,11 +399,30 @@ class Parea:
 
         return data
 
-    def get_trace_log(self, trace_id: str) -> TraceLog:
+    def get_trace_log(self, trace_id: str) -> TraceLogTree:
         response = self._client.request("GET", GET_TRACE_LOG_ENDPOINT.format(trace_id=trace_id))
         return structure_trace_log_from_api(response.json())
 
-    async def aget_trace_log(self, trace_id: str) -> TraceLog:
+    def get_trace_log_scores(self, trace_id: str, check_context: bool = True) -> List[EvaluationResult]:
+        """
+        Get the scores from the trace log. If the scores are not present in the trace log, fetch them from the DB.
+        Args:
+            trace_id: The trace id to get the scores for.
+            check_context: If True, will check the context for the scores first before fetching from the DB.
+
+        Returns: A list of EvaluationResult objects.
+        """
+        # try to get trace_id scores from context
+        if check_context:
+            if scores := (trace_data.get()[trace_id].scores or []):
+                print("Scores from context", scores)
+                return scores
+
+        response = self._client.request("GET", GET_TRACE_LOG_ENDPOINT.format(trace_id=trace_id))
+        tree: TraceLogTree = structure_trace_log_from_api(response.json())
+        return extract_scores(tree)
+
+    async def aget_trace_log(self, trace_id: str) -> TraceLogTree:
         response = await self._client.request_async("GET", GET_TRACE_LOG_ENDPOINT.format(trace_id=trace_id))
         return structure_trace_log_from_api(response.json())
 
@@ -413,11 +434,11 @@ class Parea:
         response = await self._client.request_async("POST", LIST_EXPERIMENTS_ENDPOINT, data=asdict(filter_conditions))
         return structure(response.json(), List[ExperimentWithPinnedStatsSchema])
 
-    def get_experiment_trace_logs(self, experiment_uuid: str, filters: TraceLogFilters = TraceLogFilters()) -> List[TraceLog]:
+    def get_experiment_trace_logs(self, experiment_uuid: str, filters: TraceLogFilters = TraceLogFilters()) -> List[TraceLogTree]:
         response = self._client.request("POST", GET_EXPERIMENT_LOGS_ENDPOINT.format(experiment_uuid=experiment_uuid), data=asdict(filters))
         return structure_trace_logs_from_api(response.json())
 
-    async def aget_experiment_trace_logs(self, experiment_uuid: str, filters: TraceLogFilters = TraceLogFilters()) -> List[TraceLog]:
+    async def aget_experiment_trace_logs(self, experiment_uuid: str, filters: TraceLogFilters = TraceLogFilters()) -> List[TraceLogTree]:
         response = await self._client.request_async("POST", GET_EXPERIMENT_LOGS_ENDPOINT.format(experiment_uuid=experiment_uuid), data=asdict(filters))
         return structure_trace_logs_from_api(response.json())
 
@@ -446,3 +467,16 @@ def patch_openai_client_classes(openai_client, parea_client: Parea):
     subclass = type(openai_client.__name__, (openai_client,), {"__init__": new_init})
 
     return subclass
+
+
+def extract_scores(tree: TraceLogTree) -> List[EvaluationResult]:
+    scores: List[EvaluationResult] = []
+
+    def traverse(node: TraceLogTree):
+        if node.scores:
+            scores.extend(node.scores or [])
+        for child in node.children_logs:
+            traverse(child)
+
+    traverse(tree)
+    return scores

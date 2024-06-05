@@ -11,7 +11,7 @@ from attr import asdict, fields_dict
 from cattrs import GenConverter
 
 from parea.constants import ADJECTIVES, NOUNS, TURN_OFF_PAREA_LOGGING
-from parea.schemas.models import Completion, TraceLog, UpdateLog
+from parea.schemas.models import Completion, TraceLog, TraceLogTree, UpdateLog
 from parea.utils.universal_encoder import json_dumps
 
 
@@ -81,7 +81,7 @@ def timezone_aware_now() -> datetime:
     return datetime.now(pytz.utc)
 
 
-def structure_trace_log_from_api(d: dict) -> TraceLog:
+def structure_trace_log_from_api(d: dict) -> TraceLogTree:
     def structure_union_type(obj: Any, cl: type) -> Any:
         if isinstance(obj, str):
             return obj
@@ -92,10 +92,10 @@ def structure_trace_log_from_api(d: dict) -> TraceLog:
 
     converter = GenConverter()
     converter.register_structure_hook(Union[str, Dict[str, str], None], structure_union_type)
-    return converter.structure(d, TraceLog)
+    return converter.structure(d, TraceLogTree)
 
 
-def structure_trace_logs_from_api(data: List[dict]) -> List[TraceLog]:
+def structure_trace_logs_from_api(data: List[dict]) -> List[TraceLogTree]:
     return [structure_trace_log_from_api(d) for d in data]
 
 
