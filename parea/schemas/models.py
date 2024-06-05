@@ -147,7 +147,7 @@ class TraceLog(EvaluatedLog):
 
 @define
 class TraceLogTree(TraceLog):
-    children: Optional[List[TraceLog]] = field(factory=list)
+    children_logs: Optional[List[TraceLog]] = field(factory=list)
 
 
 @define
