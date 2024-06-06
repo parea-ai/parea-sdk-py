@@ -237,7 +237,9 @@ class Experiment:
 
         try:
             self._gen_run_name_if_none(run_name)
-            experiment_schema: ExperimentSchema = self.p.create_experiment(CreateExperimentRequest(name=self.experiment_name, run_name=run_name, metadata=self.metadata))
+            experiment_schema: ExperimentSchema = self.p.create_experiment(
+                CreateExperimentRequest(name=self.experiment_name, run_name=self.run_name, metadata=self.metadata)
+            )
             self.experiment_uuid = experiment_schema.uuid
             self.experiment_stats = asyncio.run(
                 experiment(self.experiment_name, self.run_name, self.data, self.func, self.p, self.experiment_uuid, self.n_trials, self.dataset_level_evals, self.n_workers)
@@ -259,7 +261,9 @@ class Experiment:
 
         try:
             self._gen_run_name_if_none(run_name)
-            experiment_schema: ExperimentSchema = await self.p.acreate_experiment(CreateExperimentRequest(name=self.experiment_name, run_name=run_name, metadata=self.metadata))
+            experiment_schema: ExperimentSchema = await self.p.acreate_experiment(
+                CreateExperimentRequest(name=self.experiment_name, run_name=self.run_name, metadata=self.metadata)
+            )
             self.experiment_uuid = experiment_schema.uuid
             self.experiment_stats = await experiment(
                 self.experiment_name, self.run_name, self.data, self.func, self.p, self.experiment_uuid, self.n_trials, self.dataset_level_evals, self.n_workers
