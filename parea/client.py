@@ -113,7 +113,7 @@ class Parea:
 
             instrument_instructor_validation_errors()
 
-    def auto_trace_openai_clients(self, integration: Optional[str]) -> None:
+    def auto_trace_openai_clients(self, integration: Optional[str] = None) -> None:
         import openai
 
         openai._ModuleClient = patch_openai_client_classes(openai._ModuleClient, self)
