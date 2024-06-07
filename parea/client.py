@@ -1,9 +1,8 @@
-from typing import Any, AsyncIterable, Callable, Dict, Iterable, List, Optional, Union
-
 import asyncio
 import logging
 import os
 import time
+from typing import Any, AsyncIterable, Callable, Dict, Iterable, List, Optional, Union
 
 import httpx
 from attrs import asdict, define, field
@@ -14,7 +13,8 @@ from parea.api_client import HTTPClient
 from parea.cache.cache import Cache
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.experiment.datasets import create_test_cases, create_test_collection
-from parea.helpers import gen_trace_id, serialize_metadata_values, structure_trace_log_from_api, structure_trace_logs_from_api
+from parea.helpers import gen_trace_id, serialize_metadata_values, structure_trace_log_from_api, \
+    structure_trace_logs_from_api
 from parea.parea_logger import parea_logger
 from parea.schemas import EvaluationResult
 from parea.schemas.models import (
@@ -32,15 +32,15 @@ from parea.schemas.models import (
     ListExperimentUUIDsFilters,
     ProjectSchema,
     TestCaseCollection,
-    TraceLog,
     TraceLogFilters,
     TraceLogTree,
     UseDeployedPrompt,
     UseDeployedPromptResponse,
 )
-from parea.utils.trace_utils import get_current_trace_id, get_root_trace_id, logger_all_possible, logger_record_log, trace_data
+from parea.utils.trace_utils import get_current_trace_id, get_root_trace_id, logger_all_possible, trace_data
 
 load_dotenv()
+
 
 logger = logging.getLogger()
 

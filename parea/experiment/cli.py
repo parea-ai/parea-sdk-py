@@ -2,7 +2,6 @@ from typing import List
 
 import argparse
 import csv
-import importlib
 import os
 import sys
 import traceback
@@ -18,8 +17,8 @@ def load_from_path(module_path):
         sys.path.insert(0, dir_name)
 
     module_name = os.path.basename(module_path)
-    spec = importlib.util.spec_from_file_location(module_name, module_path)
-    module = importlib.util.module_from_spec(spec)
+    spec = util.spec_from_file_location(module_name, module_path)
+    module = util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
     if spec.name not in sys.modules:

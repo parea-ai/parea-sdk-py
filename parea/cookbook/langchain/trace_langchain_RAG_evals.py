@@ -4,7 +4,6 @@ from operator import itemgetter
 
 import boto3
 from dotenv import load_dotenv
-
 # LangChain libs
 from langchain.chat_models import ChatOpenAI
 from langchain.document_loaders import RecursiveUrlLoader
@@ -13,7 +12,6 @@ from langchain.embeddings import OpenAIEmbeddings
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema.output_parser import StrOutputParser
 from langchain.text_splitter import TokenTextSplitter
-from langchain.vectorstores import Chroma
 from langchain_community.llms.bedrock import Bedrock
 from langchain_community.vectorstores.faiss import FAISS
 

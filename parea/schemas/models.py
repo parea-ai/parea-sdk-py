@@ -159,6 +159,7 @@ class CacheRequest:
 class UpdateLog:
     trace_id: str
     field_name_to_value_map: Dict[str, Any]
+    root_trace_id: Optional[str] = None
 
 
 @define

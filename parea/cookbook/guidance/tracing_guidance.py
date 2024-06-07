@@ -1,7 +1,7 @@
 import os
 
 from dotenv import load_dotenv
-from guidance import assistant, gen, models, select, user
+from guidance import assistant, gen, models, user
 
 from parea import Parea, trace
 

@@ -53,9 +53,6 @@ class PareaLogger:
             data=asdict(data),
         )
 
-    def write_log(self, data: TraceLog) -> None:
-        data = serialize_metadata_values(data)
-
     def default_log(self, data: TraceLog) -> None:
         if self._client:
             if data.target:

@@ -87,7 +87,8 @@ class _RetryWrapper:
             instructor_val_errs.set(instructor_val_errs.get() + reasons)
 
             report_instructor_validation_errors()
-            logger_update_record(UpdateLog(trace_id=trace_id, field_name_to_value_map={"scores": trace_data.get()[trace_id].scores}))
+            current_log = trace_data.get()[trace_id]
+            logger_update_record(UpdateLog(trace_id=trace_id, field_name_to_value_map={"scores": current_log.scores}, root_trace_id=current_log.root_trace_id))
 
             raise e
 
