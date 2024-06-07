@@ -4,6 +4,7 @@ from operator import itemgetter
 
 import boto3
 from dotenv import load_dotenv
+
 # LangChain libs
 from langchain.chat_models import ChatOpenAI
 from langchain.document_loaders import RecursiveUrlLoader
