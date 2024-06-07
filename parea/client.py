@@ -32,15 +32,15 @@ from parea.schemas.models import (
     ListExperimentUUIDsFilters,
     ProjectSchema,
     TestCaseCollection,
-    TraceLog,
     TraceLogFilters,
     TraceLogTree,
     UseDeployedPrompt,
     UseDeployedPromptResponse,
 )
-from parea.utils.trace_utils import get_current_trace_id, get_root_trace_id, logger_all_possible, logger_record_log, trace_data
+from parea.utils.trace_utils import get_current_trace_id, get_root_trace_id, logger_all_possible, trace_data
 
 load_dotenv()
+
 
 logger = logging.getLogger()
 

@@ -11,7 +11,7 @@ from openai import __version__ as openai_version
 from parea.constants import ALL_NON_AZURE_MODELS_INFO, AZURE_MODEL_INFO
 from parea.parea_logger import parea_logger
 from parea.schemas.log import LLMInputs, Message, ModelParams, Role
-from parea.schemas.models import UpdateLog, UpdateTraceScenario
+from parea.schemas.models import UpdateTraceScenario
 from parea.utils.trace_utils import fill_trace_data, get_current_trace_id, log_in_thread, trace_data, trace_insert
 from parea.utils.universal_encoder import json_dumps
 

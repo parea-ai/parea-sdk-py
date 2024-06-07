@@ -13,7 +13,6 @@ from langchain.embeddings import OpenAIEmbeddings
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema.output_parser import StrOutputParser
 from langchain.text_splitter import TokenTextSplitter
-from langchain.vectorstores import Chroma
 from langchain_community.llms.bedrock import Bedrock
 from langchain_community.vectorstores.faiss import FAISS
 
