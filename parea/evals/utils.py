@@ -42,8 +42,11 @@ def safe_json_loads(s) -> dict:
 def call_openai(
     messages, model, temperature=1.0, max_tokens=None, top_p=1.0, frequency_penalty=0.0, presence_penalty=0.0, response_format=None, n=1, is_azure=False
 ) -> Union[str, List[str]]:
+    openai.api_type = "openai"
     if is_azure:
         from openai.lib.azure import AzureOpenAI
+
+        openai.api_type = "azure"
 
         completion = AzureOpenAI().chat.completions.create(
             model=model,
@@ -94,9 +97,11 @@ def call_openai(
 
 
 def embed(model, input, is_azure=False) -> List[float]:
+    openai.api_type = "openai"
     if is_azure:
         from openai.lib.azure import AzureOpenAI
 
+        openai.api_type = "azure"
         return AzureOpenAI().embeddings.create(model=model, input=input, encoding_format="float").data[0].embedding
     if openai_version.startswith("0."):
         return openai.Embedding.create(model=model, input=input, encoding_format="float").data[0]["embedding"]
