@@ -33,10 +33,10 @@ class Message:
 
 @define
 class ModelParams:
-    temp: float = 1.0
-    top_p: float = 1.0
-    frequency_penalty: float = 0.0
-    presence_penalty: float = 0.0
+    temp: Union[float, None] = 1.0
+    top_p: Union[float, None] = 1.0
+    frequency_penalty: Union[float, None] = 0.0
+    presence_penalty: Union[float, None] = 0.0
     max_length: Optional[int] = None
     response_format: Optional[dict] = None
     safe_prompt: Optional[bool] = None
