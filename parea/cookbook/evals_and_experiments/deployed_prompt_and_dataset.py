@@ -16,14 +16,14 @@ p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 def eval_fun(log: Log) -> EvaluationResult:
     # access the output and target from the log
     # output, target = log.output, log.target
-    response_text: str = call_openai(
+    response: str = call_openai(
         model="gpt-4o",
-        messages=[{"role": "system", "content": "Use JSON. provide a score and reason."}],  # CHANGE THIS
+        messages=[{"role": "system", "content": "Use JSON. provide a score and reason."}],  # <- CHANGE THIS
         response_format={"type": "json_object"},
         temperature=0.0,
     )
-    response = json.loads(response_text)
-    return EvaluationResult(name="YOUR_EVAL_NAME", score=response["score"], reason=response["reason"])
+    response_dict = json.loads(response)
+    return EvaluationResult(name="YOUR_EVAL_NAME", score=response_dict["score"], reason=response_dict["reason"])
 
 
 @trace(eval_funcs=[eval_fun])
