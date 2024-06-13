@@ -110,16 +110,19 @@ class UniversalEncoder(json.JSONEncoder):
             return str(obj)
         elif isinstance(obj, Decimal):
             return float(obj)
-        elif callable(obj):
-            return f"<callable {obj.__name__}>"
-        elif isinstance(obj, bytes):
-            return obj.decode(errors="ignore")
         elif is_numpy_instance(obj):
             return obj.tolist()
         elif is_pandas_instance(obj):
             return obj.to_dict(orient="records")
         elif dspy_response := self.handle_dspy_response(obj):
             return dspy_response
+        elif callable(obj):
+            try:
+                return f"<callable {obj.__name__}>"
+            except AttributeError:
+                return str(obj)
+        elif isinstance(obj, bytes):
+            return obj.decode(errors="ignore")
         else:
             return super().default(obj)
 
