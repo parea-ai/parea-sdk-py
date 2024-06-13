@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 from dotenv import load_dotenv
@@ -34,4 +35,4 @@ async def amain():
 
 if __name__ == "__main__":
     print(main())
-    # print(asyncio.run(amain()))
+    print(asyncio.run(amain()))
