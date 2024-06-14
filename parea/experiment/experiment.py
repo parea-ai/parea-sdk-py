@@ -93,6 +93,7 @@ async def experiment(
     n_trials: int = 1,
     dataset_level_evals: Optional[List[Callable]] = None,
     n_workers: int = 10,
+    stop_on_error: bool = False,
 ) -> ExperimentStatsSchema:
     """Creates an experiment and runs the function on the data iterator.
     param experiment_name: The name of the experiment. Used to organize experiments within a project.
@@ -107,6 +108,7 @@ async def experiment(
     param dataset_level_evals: A list of functions to run on the dataset level. Each function should accept a list of EvaluatedLogs and return a float or a
         EvaluationResult. If a float is returned, the name of the function will be used as the name of the evaluation.
     param n_workers: The number of workers to use for running the experiment.
+    param stop_on_error: If True, the experiment will stop running if an exception is raised.
     """
     if isinstance(data, (str, int)):
         print(f"Fetching test collection: {data}")
@@ -152,10 +154,13 @@ async def experiment(
                     await coro
                     pbar.update(1)
                 except Exception as e:
-                    print(f"\nExperiment stopped due to an error: {str(e)}\n")
                     status = ExperimentStatus.FAILED
-                    for task in tasks:
-                        task.cancel()
+                    if stop_on_error:
+                        print(f"\nExperiment stopped due to an error: {str(e)}\n")
+                        for task in tasks:
+                            task.cancel()
+                    else:
+                        pbar.update(1)
         except asyncio.CancelledError:
             pass
 
@@ -220,6 +225,7 @@ class Experiment:
     n_workers: int = field(default=10)
     # The number of times to run the experiment on the same data.
     n_trials: int = field(default=1)
+    stop_on_error: bool = field(default=False)
 
     def __attrs_post_init__(self):
         global _experiments
@@ -253,7 +259,18 @@ class Experiment:
             experiment_schema: ExperimentSchema = self.p.create_experiment(CreateExperimentRequest(name=self.experiment_name, run_name=self.run_name, metadata=self.metadata))
             self.experiment_uuid = experiment_schema.uuid
             self.experiment_stats = asyncio.run(
-                experiment(self.experiment_name, self.run_name, self.data, self.func, self.p, self.experiment_uuid, self.n_trials, self.dataset_level_evals, self.n_workers)
+                experiment(
+                    self.experiment_name,
+                    self.run_name,
+                    self.data,
+                    self.func,
+                    self.p,
+                    self.experiment_uuid,
+                    self.n_trials,
+                    self.dataset_level_evals,
+                    self.n_workers,
+                    self.stop_on_error,
+                )
             )
         except Exception as e:
             import traceback
@@ -277,7 +294,7 @@ class Experiment:
             )
             self.experiment_uuid = experiment_schema.uuid
             self.experiment_stats = await experiment(
-                self.experiment_name, self.run_name, self.data, self.func, self.p, self.experiment_uuid, self.n_trials, self.dataset_level_evals, self.n_workers
+                self.experiment_name, self.run_name, self.data, self.func, self.p, self.experiment_uuid, self.n_trials, self.dataset_level_evals, self.n_workers, self.stop_on_error
             )
         except Exception as e:
             import traceback
