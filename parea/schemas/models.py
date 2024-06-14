@@ -1,7 +1,6 @@
-from typing import Any, Dict, Iterable, List, Optional, Tuple
-
 import json
 from enum import Enum
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from attrs import define, field, validators
 
@@ -147,7 +146,7 @@ class TraceLog(EvaluatedLog):
 
 @define
 class TraceLogTree(TraceLog):
-    children_logs: Optional[List[TraceLog]] = field(factory=list)
+    children_logs: Optional[List["TraceLogTree"]] = field(factory=list)
 
 
 @define

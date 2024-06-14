@@ -1,7 +1,6 @@
-from typing import Any, Dict, List, Optional, Union
-
 import math
 from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
 from attrs import define, field
 
@@ -33,10 +32,10 @@ class Message:
 
 @define
 class ModelParams:
-    temp: Union[float, None] = 1.0
-    top_p: Union[float, None] = 1.0
-    frequency_penalty: Union[float, None] = 0.0
-    presence_penalty: Union[float, None] = 0.0
+    temp: Optional[float] = 1.0
+    top_p: Optional[float] = 1.0
+    frequency_penalty: Optional[float] = 0.0
+    presence_penalty: Optional[float] = 0.0
     max_length: Optional[int] = None
     response_format: Optional[dict] = None
     safe_prompt: Optional[bool] = None
