@@ -146,16 +146,20 @@ async def experiment(
         tasks = [asyncio.ensure_future(loop.run_in_executor(executor, partial(limit_concurrency_sync, sample))) for
                  sample in data]
 
-    done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_EXCEPTION)
     status = ExperimentStatus.COMPLETED
-    for task in done:
+    with tqdm(total=len(tasks), desc="Running samples", unit="sample") as pbar:
         try:
-            await task
-        except Exception as e:
-            print(f"Experiment stopped due to an error: {str(e)}")
-            for _p in pending:
-                _p.cancel()
-            status = ExperimentStatus.FAILED
+            for coro in asyncio.as_completed(tasks):
+                try:
+                    await coro
+                    pbar.update(1)
+                except Exception as e:
+                    print(f"\nExperiment stopped due to an error: {str(e)}\n")
+                    status = ExperimentStatus.FAILED
+                    for task in tasks:
+                        task.cancel()
+        except asyncio.CancelledError:
+            pass
 
     await asyncio.sleep(0.2)
     total_evals = len(thread_ids_running_evals.get())
