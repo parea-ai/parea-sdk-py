@@ -403,7 +403,7 @@ class Parea:
 
         return data
 
-    def get_trace_log(self, trace_id: str, return_children: bool = True) -> TraceLogTree:
+    def get_trace_log(self, trace_id: str, return_children: bool = True) -> Union[TraceLogTree, TraceLog]:
         response = self._client.request("GET", GET_TRACE_LOG_ENDPOINT.format(trace_id=trace_id))
         return structure_trace_log_from_api(response.json(), return_children)
 
@@ -423,10 +423,10 @@ class Parea:
                 return scores
 
         response = self._client.request("GET", GET_TRACE_LOG_ENDPOINT.format(trace_id=trace_id))
-        tree: TraceLogTree = structure_trace_log_from_api(response.json(), return_children)
+        tree = structure_trace_log_from_api(response.json(), return_children)
         return extract_scores(tree)
 
-    async def aget_trace_log(self, trace_id: str, return_children: bool = True) -> TraceLogTree:
+    async def aget_trace_log(self, trace_id: str, return_children: bool = True) -> Union[TraceLogTree, TraceLog]:
         response = await self._client.request_async("GET", GET_TRACE_LOG_ENDPOINT.format(trace_id=trace_id))
         return structure_trace_log_from_api(response.json(), return_children)
 
