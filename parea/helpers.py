@@ -81,7 +81,7 @@ def timezone_aware_now() -> datetime:
     return datetime.now(pytz.utc)
 
 
-def structure_trace_log_from_api(d: dict, return_children: bool = False) -> Union[TraceLogTree, TraceLog]:
+def structure_trace_log_from_api(d: dict) -> TraceLogTree:
     def structure_union_type(obj: Any, cl: type) -> Any:
         if isinstance(obj, str):
             return obj
@@ -92,13 +92,11 @@ def structure_trace_log_from_api(d: dict, return_children: bool = False) -> Unio
 
     converter = GenConverter()
     converter.register_structure_hook(Union[str, Dict[str, str], None], structure_union_type)
-    if return_children:
-        return converter.structure(d, TraceLogTree)
-    return converter.structure(d, TraceLog)
+    return converter.structure(d, TraceLogTree)
 
 
-def structure_trace_logs_from_api(data: List[dict], return_children: bool = False) -> List[Union[TraceLogTree, TraceLog]]:
-    return [structure_trace_log_from_api(d, return_children) for d in data]
+def structure_trace_logs_from_api(data: List[dict]) -> List[TraceLogTree]:
+    return [structure_trace_log_from_api(d) for d in data]
 
 
 PAREA_LOGGING_DISABLED = False

@@ -32,7 +32,6 @@ from parea.schemas.models import (
     ListExperimentUUIDsFilters,
     ProjectSchema,
     TestCaseCollection,
-    TraceLog,
     TraceLogFilters,
     TraceLogTree,
     UseDeployedPrompt,
@@ -403,32 +402,32 @@ class Parea:
 
         return data
 
-    def get_trace_log(self, trace_id: str, return_children: bool = True) -> Union[TraceLogTree, TraceLog]:
+    def get_trace_log(self, trace_id: str) -> TraceLogTree:
         response = self._client.request("GET", GET_TRACE_LOG_ENDPOINT.format(trace_id=trace_id))
-        return structure_trace_log_from_api(response.json(), return_children)
+        return structure_trace_log_from_api(response.json())
 
-    def get_trace_log_scores(self, trace_id: str, check_context: bool = True, return_children: bool = True) -> List[EvaluationResult]:
+    def get_trace_log_scores(self, trace_id: str, check_context: bool = True) -> List[EvaluationResult]:
         """
         Get the scores from the trace log. If the scores are not present in the trace log, fetch them from the DB.
         Args:
             trace_id: The trace id to get the scores for.
             check_context: If True, will check the context for the scores first before fetching from the DB.
-            return_children: If True, will return the children logs in the tree structure.
 
         Returns: A list of EvaluationResult objects.
         """
         # try to get trace_id scores from context
         if check_context:
             if scores := (trace_data.get()[trace_id].scores or []):
+                print("Scores from context", scores)
                 return scores
 
         response = self._client.request("GET", GET_TRACE_LOG_ENDPOINT.format(trace_id=trace_id))
-        tree = structure_trace_log_from_api(response.json(), return_children)
+        tree: TraceLogTree = structure_trace_log_from_api(response.json())
         return extract_scores(tree)
 
-    async def aget_trace_log(self, trace_id: str, return_children: bool = True) -> Union[TraceLogTree, TraceLog]:
+    async def aget_trace_log(self, trace_id: str) -> TraceLogTree:
         response = await self._client.request_async("GET", GET_TRACE_LOG_ENDPOINT.format(trace_id=trace_id))
-        return structure_trace_log_from_api(response.json(), return_children)
+        return structure_trace_log_from_api(response.json())
 
     def list_experiments(self, filter_conditions: Optional[ListExperimentUUIDsFilters] = ListExperimentUUIDsFilters()) -> List[ExperimentWithPinnedStatsSchema]:
         response = self._client.request("POST", LIST_EXPERIMENTS_ENDPOINT, data=asdict(filter_conditions))
@@ -438,15 +437,13 @@ class Parea:
         response = await self._client.request_async("POST", LIST_EXPERIMENTS_ENDPOINT, data=asdict(filter_conditions))
         return structure(response.json(), List[ExperimentWithPinnedStatsSchema])
 
-    def get_experiment_trace_logs(self, experiment_uuid: str, filters: TraceLogFilters = TraceLogFilters(), return_children: bool = False) -> List[Union[TraceLogTree, TraceLog]]:
+    def get_experiment_trace_logs(self, experiment_uuid: str, filters: TraceLogFilters = TraceLogFilters()) -> List[TraceLogTree]:
         response = self._client.request("POST", GET_EXPERIMENT_LOGS_ENDPOINT.format(experiment_uuid=experiment_uuid), data=asdict(filters))
-        return structure_trace_logs_from_api(response.json(), return_children)
+        return structure_trace_logs_from_api(response.json())
 
-    async def aget_experiment_trace_logs(
-        self, experiment_uuid: str, filters: TraceLogFilters = TraceLogFilters(), return_children: bool = False
-    ) -> List[Union[TraceLogTree, TraceLog]]:
+    async def aget_experiment_trace_logs(self, experiment_uuid: str, filters: TraceLogFilters = TraceLogFilters()) -> List[TraceLogTree]:
         response = await self._client.request_async("POST", GET_EXPERIMENT_LOGS_ENDPOINT.format(experiment_uuid=experiment_uuid), data=asdict(filters))
-        return structure_trace_logs_from_api(response.json(), return_children)
+        return structure_trace_logs_from_api(response.json())
 
     def get_experiment(self, experiment_uuid: str) -> Optional[ExperimentWithPinnedStatsSchema]:
         filter_conditions = ListExperimentUUIDsFilters(experiment_uuids=[experiment_uuid])
@@ -475,15 +472,14 @@ def patch_openai_client_classes(openai_client, parea_client: Parea):
     return subclass
 
 
-def extract_scores(tree: Union[TraceLogTree, TraceLog]) -> List[EvaluationResult]:
+def extract_scores(tree: TraceLogTree) -> List[EvaluationResult]:
     scores: List[EvaluationResult] = []
 
-    def traverse(node: Union[TraceLogTree, TraceLog]):
+    def traverse(node: TraceLogTree):
         if node.scores:
             scores.extend(node.scores or [])
-        if isinstance(node, TraceLogTree):
-            for child in node.children_logs or []:
-                traverse(child)
+        for child in node.children_logs:
+            traverse(child)
 
     traverse(tree)
     return scores
