@@ -9,7 +9,7 @@ load_dotenv()
 
 p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
-experiments = p.list_experiments(ListExperimentUUIDsFilters(experiment_name_filter="Greeting"))
+experiments = p.list_experiments(ListExperimentUUIDsFilters(experiment_name_filter="greeting"))
 print(f"Num. experiments: {len(experiments)}")
 trace_logs = p.get_experiment_trace_logs(experiments[0].uuid)
 print(f"Num. trace logs: {len(trace_logs)}")
