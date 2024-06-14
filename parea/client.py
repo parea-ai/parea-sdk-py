@@ -475,14 +475,15 @@ def patch_openai_client_classes(openai_client, parea_client: Parea):
     return subclass
 
 
-def extract_scores(tree: TraceLogTree) -> List[EvaluationResult]:
+def extract_scores(tree: Union[TraceLogTree, TraceLog]) -> List[EvaluationResult]:
     scores: List[EvaluationResult] = []
 
-    def traverse(node: TraceLogTree):
+    def traverse(node: Union[TraceLogTree, TraceLog]):
         if node.scores:
             scores.extend(node.scores or [])
-        for child in node.children_logs:
-            traverse(child)
+        if isinstance(node, TraceLogTree):
+            for child in node.children_logs or []:
+                traverse(child)
 
     traverse(tree)
     return scores
