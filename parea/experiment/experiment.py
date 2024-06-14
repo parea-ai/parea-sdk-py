@@ -19,7 +19,8 @@ from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.experiment.dvc import save_results_to_dvc_if_init
 from parea.helpers import duplicate_dicts, gen_random_name, is_logging_disabled
 from parea.schemas import EvaluationResult
-from parea.schemas.models import CreateExperimentRequest, ExperimentSchema, ExperimentStatsSchema, FinishExperimentRequestSchema
+from parea.schemas.models import CreateExperimentRequest, ExperimentSchema, ExperimentStatsSchema, \
+    FinishExperimentRequestSchema, ExperimentStatus
 from parea.utils.trace_utils import thread_ids_running_evals, trace_data
 from parea.utils.universal_encoder import json_dumps
 
@@ -138,13 +139,23 @@ async def experiment(
         return func(_parea_target_field=target, **sample_copy)
 
     if inspect.iscoroutinefunction(func):
-        tasks = [limit_concurrency(sample) for sample in data]
+        tasks = [asyncio.ensure_future(limit_concurrency(sample)) for sample in data]
     else:
         executor = ThreadPoolExecutor(max_workers=n_workers)
         loop = asyncio.get_event_loop()
-        tasks = [loop.run_in_executor(executor, partial(limit_concurrency_sync, sample)) for sample in data]
-    for _task in tqdm_asyncio.as_completed(tasks, total=len_test_cases):
-        await _task
+        tasks = [asyncio.ensure_future(loop.run_in_executor(executor, partial(limit_concurrency_sync, sample))) for
+                 sample in data]
+
+    done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_EXCEPTION)
+    status = ExperimentStatus.COMPLETED
+    for task in done:
+        try:
+            await task
+        except Exception as e:
+            print(f"Experiment stopped due to an error: {str(e)}")
+            for _p in pending:
+                _p.cancel()
+            status = ExperimentStatus.FAILED
 
     await asyncio.sleep(0.2)
     total_evals = len(thread_ids_running_evals.get())
@@ -162,7 +173,7 @@ async def experiment(
     else:
         dataset_level_eval_results = []
 
-    experiment_stats: ExperimentStatsSchema = p.finish_experiment(experiment_uuid, FinishExperimentRequestSchema(dataset_level_stats=dataset_level_eval_results))
+    experiment_stats: ExperimentStatsSchema = p.finish_experiment(experiment_uuid, FinishExperimentRequestSchema(status=status, dataset_level_stats=dataset_level_eval_results))
     stat_name_to_avg_std = calculate_avg_std_for_experiment(experiment_stats)
     if dataset_level_eval_results:
         stat_name_to_avg_std.update(**{eval_result.name: eval_result.score for eval_result in dataset_level_eval_results})

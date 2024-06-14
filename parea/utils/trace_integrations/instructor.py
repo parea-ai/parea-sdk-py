@@ -71,8 +71,11 @@ class _RetryWrapper:
             for key in ["max_retries", "response_model", "validation_context", "mode", "args"]:
                 if kwargs.get(key):
                     metadata[key] = kwargs[key]
+            trace_name = "instructor"
+            if "response_model" in kwargs and kwargs["response_model"] and hasattr(kwargs["response_model"], "__name__"):
+                trace_name = kwargs["response_model"].__name__
             return trace(
-                name="instructor",
+                name=trace_name,
                 overwrite_trace_id=trace_id,
                 overwrite_inputs=inputs,
                 metadata=metadata,

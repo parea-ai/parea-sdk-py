@@ -329,8 +329,16 @@ class CreateTestCaseCollection(CreateTestCases):
     column_names: List[str] = field(factory=list)
 
 
+class ExperimentStatus(str, Enum):
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
 @define
 class FinishExperimentRequestSchema:
+    status: ExperimentStatus
     dataset_level_stats: Optional[List[EvaluationResult]] = field(factory=list)
 
 
@@ -341,13 +349,6 @@ class ListExperimentUUIDsFilters:
     experiment_name_filter: Optional[str] = None
     run_name_filter: Optional[str] = None
     experiment_uuids: Optional[List[str]] = None
-
-
-class ExperimentStatus(str, Enum):
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    FAILED = "failed"
 
 
 class StatisticOperation(str, Enum):
