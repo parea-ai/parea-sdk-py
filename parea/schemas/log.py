@@ -1,6 +1,7 @@
+from typing import Any, Dict, List, Optional, Union
+
 import math
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
 
 from attrs import define, field
 
