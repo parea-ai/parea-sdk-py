@@ -36,9 +36,10 @@ def func(lang: str, framework: str) -> str:
 
 if __name__ == "__main__":
     p.experiment(
+        name="Hello World Example",  # this is the name of the experiment
         data="Hello World Example",  # this is the name of your Dataset in Parea (Dataset page)
         func=func,
-    ).run(name="hello-world-example")
+    ).run()
 
     # Or use a dataset using its ID instead of the name
     # p.experiment(

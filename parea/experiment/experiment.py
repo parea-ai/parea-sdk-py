@@ -19,8 +19,7 @@ from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.experiment.dvc import save_results_to_dvc_if_init
 from parea.helpers import duplicate_dicts, gen_random_name, is_logging_disabled
 from parea.schemas import EvaluationResult
-from parea.schemas.models import CreateExperimentRequest, ExperimentSchema, ExperimentStatsSchema, \
-    FinishExperimentRequestSchema, ExperimentStatus
+from parea.schemas.models import CreateExperimentRequest, ExperimentSchema, ExperimentStatsSchema, ExperimentStatus, FinishExperimentRequestSchema
 from parea.utils.trace_utils import thread_ids_running_evals, trace_data
 from parea.utils.universal_encoder import json_dumps
 
@@ -143,8 +142,7 @@ async def experiment(
     else:
         executor = ThreadPoolExecutor(max_workers=n_workers)
         loop = asyncio.get_event_loop()
-        tasks = [asyncio.ensure_future(loop.run_in_executor(executor, partial(limit_concurrency_sync, sample))) for
-                 sample in data]
+        tasks = [asyncio.ensure_future(loop.run_in_executor(executor, partial(limit_concurrency_sync, sample))) for sample in data]
 
     status = ExperimentStatus.COMPLETED
     with tqdm(total=len(tasks), desc="Running samples", unit="sample") as pbar:
