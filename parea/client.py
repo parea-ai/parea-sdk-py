@@ -352,7 +352,7 @@ class Parea:
         metadata: Optional[Dict[str, str]] = None,
         dataset_level_evals: Optional[List[Callable]] = None,
         n_workers: int = 10,
-        stop_on_error: bool = False,
+        stop_on_error: bool = True,
     ):
         """
         :param data: If your dataset is defined locally it should be an iterable of k/v

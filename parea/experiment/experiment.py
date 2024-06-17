@@ -93,7 +93,7 @@ async def experiment(
     n_trials: int = 1,
     dataset_level_evals: Optional[List[Callable]] = None,
     n_workers: int = 10,
-    stop_on_error: bool = False,
+    stop_on_error: bool = True,
 ) -> ExperimentStatsSchema:
     """Creates an experiment and runs the function on the data iterator.
     param experiment_name: The name of the experiment. Used to organize experiments within a project.
@@ -156,7 +156,7 @@ async def experiment(
                 except Exception as e:
                     status = ExperimentStatus.FAILED
                     if stop_on_error:
-                        print(f"\nExperiment stopped due to an error: {str(e)}\n")
+                        print(f"\nExperiment stopped due to an error (note you can deactivate this behavior by setting stop_on_error=False): {str(e)}\n")
                         for task in tasks:
                             task.cancel()
                     else:
@@ -225,7 +225,7 @@ class Experiment:
     n_workers: int = field(default=10)
     # The number of times to run the experiment on the same data.
     n_trials: int = field(default=1)
-    stop_on_error: bool = field(default=False)
+    stop_on_error: bool = field(default=True)
 
     def __attrs_post_init__(self):
         global _experiments
