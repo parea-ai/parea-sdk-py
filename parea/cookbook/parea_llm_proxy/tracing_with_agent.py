@@ -15,7 +15,7 @@ load_dotenv()
 p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
 # Parea SDK makes it easy to use different LLMs with the same apis structure and standardized request/response schemas.
-LLM_OPTIONS = [("gpt-3.5-turbo-0125", "openai"), ("gpt-4-0125-preview", "openai"), ("claude-instant-1", "anthropic"), ("claude-2.1", "anthropic")]
+LLM_OPTIONS = [("gpt-3.5-turbo-0125", "openai"), ("gpt-4o", "openai"), ("claude-3-haiku-20240307", "anthropic"), ("claude-3-opus-20240229", "anthropic")]
 LIMIT = 1
 
 
