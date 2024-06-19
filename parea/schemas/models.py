@@ -1,7 +1,6 @@
-from typing import Any, Dict, Iterable, List, Optional, Tuple
-
 import json
 from enum import Enum
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from attrs import define, field, validators
 
@@ -65,6 +64,7 @@ class Prompt:
 @define
 class UseDeployedPromptResponse:
     deployment_id: str
+    version_number: int
     name: Optional[str] = None
     functions: Optional[List[str]] = None
     function_call: Optional[str] = None
