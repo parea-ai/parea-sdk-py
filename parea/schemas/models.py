@@ -65,6 +65,7 @@ class Prompt:
 @define
 class UseDeployedPromptResponse:
     deployment_id: str
+    version_number: int
     name: Optional[str] = None
     functions: Optional[List[str]] = None
     function_call: Optional[str] = None
