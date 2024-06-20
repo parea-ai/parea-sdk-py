@@ -354,6 +354,11 @@ ANTHROPIC_MODEL_INFO: Dict[str, Dict[str, Union[float, int, Dict[str, float]]]] 
         "prompt": 0.25,
         "completion": 1.25,
     },
+    "claude-3-5-sonnet-20240620": {
+        "token_limit": {"max_prompt_tokens": 200000, "max_completion_tokens": 4096},
+        "prompt": 3.00,
+        "completion": 15.00,
+    },
 }
 ALL_NON_AZURE_MODELS_INFO = {**OPENAI_MODEL_INFO, **ANTHROPIC_MODEL_INFO}
 

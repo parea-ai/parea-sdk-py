@@ -41,20 +41,20 @@ async def main():
     async for u in user:
         print(u)
 
-    user2 = client.completions.create_partial(
-        model="gpt-3.5-turbo",
-        max_tokens=1024,
-        max_retries=3,
-        messages=[
-            {
-                "role": "user",
-                "content": "Please crea a user",
-            }
-        ],
-        response_model=UserDetail,
-    )
-    async for u in user2:
-        print(u)
+    # user2 = client.completions.create_partial(
+    #     model="gpt-3.5-turbo",
+    #     max_tokens=1024,
+    #     max_retries=3,
+    #     messages=[
+    #         {
+    #             "role": "user",
+    #             "content": "Please crea a user",
+    #         }
+    #     ],
+    #     response_model=UserDetail,
+    # )
+    # async for u in user2:
+    #     print(u)
 
 
 if __name__ == "__main__":
