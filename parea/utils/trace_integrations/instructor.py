@@ -1,7 +1,7 @@
-from json import JSONDecodeError
 from typing import Any, Callable, Mapping, Tuple
 
 import contextvars
+from json import JSONDecodeError
 
 from instructor.retry import InstructorRetryException
 from pydantic import ValidationError

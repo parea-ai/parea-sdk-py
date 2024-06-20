@@ -4,7 +4,6 @@ import instructor
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
 
-
 from parea import Parea
 
 load_dotenv()
@@ -18,7 +17,6 @@ client = instructor.from_openai(client)
 
 
 from pydantic import BaseModel
-
 
 
 class UserDetail(BaseModel):

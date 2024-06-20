@@ -12,9 +12,8 @@ from parea.cache.cache import Cache
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.evals.utils import _make_evaluations
 from parea.helpers import is_logging_disabled, timezone_aware_now
-from parea.schemas.models import TraceLog, UpdateTraceScenario, UpdateLog
-from parea.utils.trace_utils import call_eval_funcs_then_log, execution_order_counters, fill_trace_data, trace_context, \
-    trace_data, logger_update_record
+from parea.schemas.models import TraceLog, UpdateLog, UpdateTraceScenario
+from parea.utils.trace_utils import call_eval_funcs_then_log, execution_order_counters, fill_trace_data, logger_update_record, trace_context, trace_data
 from parea.wrapper.utils import safe_format_template_to_prompt, skip_decorator_if_func_in_stack
 
 logger = logging.getLogger()
