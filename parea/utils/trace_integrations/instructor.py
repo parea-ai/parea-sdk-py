@@ -1,8 +1,10 @@
+from json import JSONDecodeError
 from typing import Any, Callable, Mapping, Tuple
 
 import contextvars
 
 from instructor.retry import InstructorRetryException
+from pydantic import ValidationError
 from wrapt import wrap_object
 
 from parea import trace
@@ -31,6 +33,12 @@ def instrument_instructor_validation_errors() -> None:
         factory=CopyableFunctionWrapper,
         args=(_AttemptManagerExitWrapper(),),
     )
+
+
+def get_reasons(exception: Exception) -> list[str]:
+    if isinstance(exception, InstructorRetryException):
+        return [str(arg) for arg in exception.args]
+    return [str(exception)]
 
 
 def report_instructor_validation_errors() -> None:
@@ -82,11 +90,9 @@ class _RetryWrapper:
             )(
                 wrapped
             )(*args, **kwargs)
-        except InstructorRetryException as e:
+        except (InstructorRetryException, ValidationError, JSONDecodeError) as e:
             instructor_val_err_count.set(instructor_val_err_count.get() + 1)
-            reasons = []
-            for arg in e.args:
-                reasons.append(str(arg))
+            reasons = get_reasons(e)
             instructor_val_errs.set(instructor_val_errs.get() + reasons)
 
             report_instructor_validation_errors()
@@ -105,11 +111,9 @@ class _AttemptManagerExitWrapper:
         kwargs: Mapping[str, Any],
     ) -> Any:
         if instructor_trace_id.get() is not None:
-            if len(args) > 1 and args[1] is not None and isinstance(args[1], InstructorRetryException):
+            if len(args) > 1 and args[1] is not None and isinstance(args[1], (InstructorRetryException, ValidationError, JSONDecodeError)):
                 instructor_val_err_count.set(instructor_val_err_count.get() + 1)
-                reasons = []
-                for arg in args[1].args:
-                    reasons.append(str(arg))
+                reasons = get_reasons(args[1])
                 instructor_val_errs.set(instructor_val_errs.get() + reasons)
             else:
                 report_instructor_validation_errors()
