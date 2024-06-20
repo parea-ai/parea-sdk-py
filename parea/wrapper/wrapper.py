@@ -12,8 +12,9 @@ from parea.cache.cache import Cache
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.evals.utils import _make_evaluations
 from parea.helpers import is_logging_disabled, timezone_aware_now
-from parea.schemas.models import TraceLog, UpdateTraceScenario
-from parea.utils.trace_utils import call_eval_funcs_then_log, execution_order_counters, fill_trace_data, trace_context, trace_data
+from parea.schemas.models import TraceLog, UpdateTraceScenario, UpdateLog
+from parea.utils.trace_utils import call_eval_funcs_then_log, execution_order_counters, fill_trace_data, trace_context, \
+    trace_data, logger_update_record
 from parea.wrapper.utils import safe_format_template_to_prompt, skip_decorator_if_func_in_stack
 
 logger = logging.getLogger()
@@ -213,7 +214,22 @@ class Wrapper:
 
             self.log(trace_id)
             try:
+                trace_context_before_reset = trace_context.get()
                 trace_context.reset(context_token)
+                trace_context_after_reset = trace_context.get()
+                if len(trace_context_after_reset) > len(trace_context_before_reset):
+                    # this can happen if this is a streaming call and the LLM client got modified (e.g. instructor)
+                    # so we need to manually reset the trace context to the previous state
+                    trace_context.set(trace_context_before_reset)
+                    # if the parent trace didn't have any output, we can also update the output
+                    if (parent_trace_id := trace_data.get()[trace_id].parent_trace_id) is not None and not trace_data.get()[parent_trace_id].output:
+                        logger_update_record(
+                            UpdateLog(
+                                trace_id=parent_trace_id,
+                                field_name_to_value_map={"output": trace_data.get()[trace_id].output},
+                                root_trace_id=trace_data.get()[parent_trace_id].root_trace_id,
+                            )
+                        )
             except IndexError:
                 pass
 
