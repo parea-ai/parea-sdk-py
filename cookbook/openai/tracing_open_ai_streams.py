@@ -4,8 +4,8 @@ import os
 from dotenv import load_dotenv
 from openai import AsyncOpenAI, OpenAI
 
-from parea import Parea, trace
 from cookbook.assets.data.openai_input_examples import functions_example, simple_example_json
+from parea import Parea, trace
 
 load_dotenv()
 
