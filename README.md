@@ -1,20 +1,35 @@
-# Parea Python SDK
+<p align="center">
+<a href="https://docs.parea.ai"><img src="assets/PareaLogoLight.png" alt="Test, evaluate & monitor your AI application" width="150px"></a>
+</p>
 
-<div align="center">
+<p align="center">
+<b>Test, evaluate & monitor your AI application</b>
+</p>
 
-[![Build status](https://github.com/parea-ai/parea-sdk/workflows/build/badge.svg?branch=master&event=push)](https://github.com/parea-ai/parea-sdk/actions?query=workflow%3Abuild)
-[![Dependencies Status](https://img.shields.io/badge/dependencies-up%20to%20date-brightgreen.svg)](https://github.com/parea-ai/parea-sdk/pulls?utf8=%E2%9C%93&q=is%3Apr%20author%3Aapp%2Fdependabot)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+<p align=center>
+<a href="https://pypi.org/project/parea-ai/"><img alt="PyPI" src="https://img.shields.io/pypi/v/parea-ai?label=Release&style=flat-square"></a>
+<a href="https://pypistats.org/packages/parea-ai"><img alt="PyPI - Downloads from official pypistats" src="https://img.shields.io/pypi/dm/parea-ai?style=flat-square"></a>
+<a href="https://img.shields.io/github/license/parea-ai/parea-sdk"><img alt="License" src="https://img.shields.io/github/license/parea-ai/parea-sdk?style=flat-square"></a>
+</p>
 
-[![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/parea-ai/parea-sdk/blob/master/.pre-commit-config.yaml)
-[![Semantic Versions](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--versions-e10079.svg)](https://github.com/parea-ai/parea-sdk/releases)
-[![License](https://img.shields.io/github/license/parea-ai/parea-sdk)](https://github.com/parea-ai/parea-sdk/blob/master/LICENSE)
+<p align="center">
+<a href="https://x.com/PareaAI">🐦 Twitter/X</a>
+<span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+<a href="https://discord.gg/KSEvFRvdue">📢 Discord</a>
+<span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+<a href="https://app.parea.ai/?ref=gh">Parea AI</a>
+<span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+<a href="https://docs.parea.ai">📙 Documentation</a>
+</p>
 
-Parea python sdk
 
-</div>
+[Parea AI](https://www.parea.ai) provides a SDK to evaluate & monitor your AI applications. Below you can see quickstarts to:
 
-[Python SDK Docs](https://docs.parea.ai/api-reference/sdk/python)
+- [evaluate & test](#evaluating-your-llm-app) your LLM App
+- [instrument logging & observability](#logging--observability) for your LLM App
+- [deploying prompts](#deploying-prompts) to enable collaboration between engineers & subject-matter experts
+
+Our full docs are [here](https://docs.parea.ai/).
 
 ## Installation
 
@@ -28,127 +43,161 @@ or install with `Poetry`
 poetry add parea-ai
 ```
 
+
 ## Evaluating Your LLM App
 
-You can evaluate any step of your LLM app by wrapping it with a decorator, called `trace`, and specifying the evaluation
-function(s).
-The scores associated with the traces will be logged to the Parea [dashboard](https://app.parea.ai/logs) and/or in a
-local CSV file if you don't have a Parea API key.
-
-Evaluation functions receive an argument `log` (of type [Log](parea/schemas/models.py)) and should return a
-float. You don't need to start from scratch, there are pre-defined evaluation
-functions for [general purpose](parea/evals/general),
-[chat](parea/evals/chat), [RAG](parea/evals/rag), and [summarization](parea/evals/summary) apps :)
-
-You can define evaluation functions locally or use the ones you have deployed to
-Parea's [Test Hub](https://app.parea.ai/test-hub).
-If you choose the latter option, the evaluation happens asynchronously and non-blocking.
-
-A fully locally working cookbook can be found [here](parea/cookbook/openai/tracing_and_evaluating_openai_endpoint.py).
-Alternatively, you can add the following code to your codebase to get started:
+Testing your AI app means to execute it over a dataset and score it with an evaluation function.
+This is done in Parea by defining & running experiments.
+Below you can see can example of how to test a greeting bot with the Levenshtein distance metric. 
 
 ```python
-import os
-from parea import Parea, InMemoryCache, trace
-from parea.schemas.log import Log
+from parea import Parea, trace
+from parea.evals.general import levenshtein
 
-Parea(api_key=os.getenv("PAREA_API_KEY"), cache=InMemoryCache())  # use InMemoryCache if you don't have a Parea API key
+p = Parea(api_key="<<PAREA_API_KEY>>")  # replace with Parea AI API key
 
+# use the trace decorator to score the output with the Levenshtein distance  
+@trace(eval_funcs=[levenshtein])
+def greeting(name: str) -> str:
+    return f"Hello {name}"
 
-def locally_defined_eval_function(log: Log) -> float:
-  ...
+data = [
+    {"name": "Foo", "target": "Hi Foo"},
+    {"name": "Bar", "target": "Hello Bar"},
+]
 
-
-@trace(eval_func_names=['deployed_eval_function_name'], eval_funcs=[locally_defined_eval_function])
-def function_to_evaluate(*args, **kwargs) -> ...:
-  ...
+p.experiment(
+    name="Greeting",
+    data=data,
+    func=greeting,
+).run()
 ```
 
-### Run Experiments
+In the snippet above, we used the `trace` decorator to capture any inputs & outputs of the function.
+This decorator also enables to score the output by executing the `levenshtein` eval in the background.
+Then, we defined an experiment via `p.experiment` to evaluate our function (`greeting`) over  a dataset (here a list of dictionaries).
+Finally, calling `run` will execute the experiment, and create a report of outputs, scores & traces for any sample of the dataset.
+You can find a link to the executed experiment [here](). (todo: fill-in experiment) 
 
-You can run an experiment for your LLM application by defining the `Experiment` class and passing it the name, the data and the
-function you want to run. You need annotate the function with the `trace` decorator to trace its inputs, outputs, latency, etc.
-as well as to specify which evaluation functions should be applied to it (as shown above).
+
+
+### More Resources
+
+Read more about how to write, run & analyze experiments in our [docs](https://docs.parea.ai/evaluation/overview).
+
+
+## Logging & Observability
+
+By wrapping the respective clients, you can automatically log all your LLM calls to OpenAI & Anthropic.
+Additionally, using the `trace` decorator you can create hierarchical traces of your LLM application to e.g. associate LLM calls with the retrieval step of a RAG pipeline.
+You can see the full observability documentation [here](https://docs.parea.ai/observability/overview) and our integrations into LangChain, Instructor, DSPy, LiteLLM & more [here](https://docs.parea.ai/integrations/langchain).
+
+### Automatically log all your OpenAI calls
+
+To automatically log any OpenAI call, you can wrap the OpenAI client with the Parea client using the `wrap_openai_client` method.
 
 ```python
-from parea import Experiment
-
-Experiment(
-    name="Experiment Name",        # Name of the experiment (str)
-    data=[{"n": "10"}],            # Data to run the experiment on (list of dicts)
-    func=function_to_evaluate,     # Function to run (callable)
-)
-```
-
-Then you can run the experiment by using the `experiment` command and give it the path to the python file.
-This will run your experiment with the specified inputs and create a report with the results which can be viewed under
-the [Experiments tab](https://app.parea.ai/experiments).
-
-```bash
-parea experiment <path/to/experiment_file.py>
-```
-
-Full working example in our [docs](https://docs.parea.ai/evaluation/offline/experiments).
-
-## Debugging Chains & Agents
-
-You can iterate on your chains & agents much faster by using a local cache. This will allow you to make changes to your
-code & prompts without waiting for all previous, valid LLM responses. Simply add these two lines to the beginning your
-code and start
-[a local redis cache](https://redis.io/docs/getting-started/install-stack/):
-
-```python
-from parea import Parea, InMemoryCache
-
-Parea(cache=InMemoryCache())
-```
-
-If you set `cache = None` for `Parea`, no cache will be used.
-
-### Benchmark your LLM app across many inputs
-
-You can benchmark your LLM app across many inputs by using the `benchmark` command. This will run your the entry point
-of your app with the specified inputs and create a report with the results.
-
-```bash
-parea benchmark --func app:main --csv_path benchmark.csv
-```
-
-The CSV file will be used to fill in the arguments to your function. The report will be a CSV file of all the traces. If
-you
-set your Parea API key, the traces will also be logged to the Parea dashboard. Note, for this feature you need to have a
-redis cache running. Please, raise a GitHub issue if you would like to use this feature without a redis cache.
-
-### Automatically log all your LLM call traces
-
-You can automatically log all your LLM traces to the Parea dashboard by setting the `PAREA_API_KEY` environment variable
-or specifying it in the `Parea` initialization.
-This will help you debug issues your customers are facing by stepping through the LLM call traces and recreating the
-issue
-in your local setup & code.
-
-```python
+from openai import OpenAI
 from parea import Parea
 
-Parea(
-  api_key=os.getenv("PAREA_API_KEY"),  # default value
-  cache=...
+client = OpenAI(api_key="OPENAI_API_KEY")
+
+# All you need to do is add these two lines
+p = Parea(api_key="PAREA_API_KEY")  # replace with your API key
+p.wrap_openai_client(client)
+
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[
+        {
+            "role": "user",
+            "content": "Write a Hello World program in Python using FastAPI.",
+        }
+    ],
 )
+print(response.choices[0].message.content)
 ```
 
-## Use a deployed prompt
+### Automatically log all your Anthropic calls
+
+To automatically log any Anthropic call, you can wrap the Anthropic client with the Parea client using the `wrap_anthropic_client` method.
 
 ```python
-import os
+import anthropic
+from parea import Parea
 
-from dotenv import load_dotenv
+p = Parea(api_key="PAREA_API_KEY")  # replace with your API key
 
+client = anthropic.Anthropic()
+p.wrap_anthropic_client(client)
+
+message = client.messages.create(
+    model="claude-3-opus-20240229",
+    max_tokens=1024,
+    messages=[
+        {
+            "role": "user",
+            "content": "Write a Hello World program in Python using FastAPI.",
+        }
+    ],
+)
+print(message.content[0].text)
+```
+
+### Nested traces
+
+By using the `trace` decorator, you can create hierarchical traces of your LLM application.
+
+```python
+from openai import OpenAI
+from parea import Parea, trace
+
+client = OpenAI(api_key="OPENAI_API_KEY")  # replace with your API key
+
+p = Parea(api_key="PAREA_API_KEY")  # replace with your API key
+p.wrap_openai_client(client)
+
+
+# We generally recommend creating a helper function to make LLM API calls.
+def llm(messages: list[dict[str, str]]) -> str:
+    response = client.chat.completions.create(model="gpt-4o", messages=messages)
+    return response.choices[0].message.content
+
+
+# This will give the Span the name of the function.
+# Without the decorator the default name for all LLM call logs is `llm-openai`
+@trace
+def hello_world(lang: str, framework: str):
+    return llm([{"role": "user", "content": f"Write a Hello World program in {lang} using {framework}."}])
+
+@trace
+def critique_code(code: str):
+    return llm([{"role": "user", "content": f"How can we improve this code: \n {code}"}])
+
+# Our top level function is called chain. By adding the trace decorator here,
+# all sub-functions will automatically be logged and associated with this trace.
+# Notice, you can also add metadata to the trace, we'll revisit this functionality later.
+@trace(metadata={"purpose": "example"}, end_user_identifier="John Doe")
+def chain(lang: str, framework: str) -> str:
+    return critique_code(hello_world(lang, framework))
+
+
+print(chain("Python", "FastAPI"))
+```
+
+## Deploying Prompts
+
+Deployed prompts enable collaboration with non-engineers such as product managers & subject-matter experts.
+Users can iterate, refine & test prompts on Parea's playground.
+After tinkering, you can deploy that prompt which means that it is exposed via an API endpoint to integrate it into your application.
+Checkout our full docs [here](https://docs.parea.ai/platform/deployment).
+
+```python
 from parea import Parea
 from parea.schemas.models import Completion, UseDeployedPrompt, CompletionResponse, UseDeployedPromptResponse
 
-load_dotenv()
 
-p = Parea(api_key=os.getenv("PAREA_API_KEY"))
+p = Parea(api_key="<PAREA_API_KEY>")
 
 # You will find this deployment_id in the Parea dashboard
 deployment_id = '<DEPLOYMENT_ID>'
@@ -178,55 +227,9 @@ def main():
   deployed_prompt: UseDeployedPromptResponse = p.get_prompt(data=test_get_prompt)
   print("\n\n")
   print(deployed_prompt)
-
-
-async def main_async():
-  completion_response: CompletionResponse = await p.acompletion(data=test_completion)
-  print(completion_response)
-  deployed_prompt: UseDeployedPromptResponse = await p.aget_prompt(data=test_get_prompt)
-  print("\n\n")
-  print(deployed_prompt)
 ```    
 
-### Logging results from LLM providers [Example]
 
-```python
-import os
-
-import openai
-from dotenv import load_dotenv
-
-from parea import Parea
-
-load_dotenv()
-
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
-p = Parea(api_key=os.getenv("PAREA_API_KEY"))
-
-x = "Golang"
-y = "Fiber"
-messages = [{
-  "role": "user",
-  "content": f"Write a hello world program using {x} and the {y} framework."
-}]
-model = "gpt-3.5-turbo"
-temperature = 0.0
-
-
-# define your OpenAI call as you would normally and we'll automatically log the results
-def main():
-  openai.chat.completions.create(model=model, temperature=temperature, messages=messages).choices[0].message.content
-```
-
-### Open source community features
-
-Ready-to-use [Pull Requests templates](https://github.com/parea-ai/parea-sdk/blob/master/.github/PULL_REQUEST_TEMPLATE.md)
-and several [Issue templates](https://github.com/parea-ai/parea-sdk/tree/master/.github/ISSUE_TEMPLATE).
-
-- Files such as: `LICENSE`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, and `SECURITY.md` are generated automatically.
-- [Semantic Versions](https://semver.org/) specification
-  with [`Release Drafter`](https://github.com/marketplace/actions/release-drafter).
 
 ## 🛡 License
 
@@ -239,7 +242,7 @@ See [LICENSE](https://github.com/parea-ai/parea-sdk/blob/master/LICENSE) for mor
 
 ```bibtex
 @misc{parea-sdk,
-  author = {joel-parea-ai},
+  author = {joel-parea-ai,joschkabraun},
   title = {Parea python sdk},
   year = {2023},
   publisher = {GitHub},
