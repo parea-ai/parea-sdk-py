@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import threading
+import traceback
 from collections import ChainMap
 from datetime import datetime
 from functools import wraps
@@ -43,7 +44,8 @@ def clear_trace_context():
 
 
 def log_in_thread(target_func: Callable, data: Dict[str, Any]):
-    logging_thread = threading.Thread(target=target_func, kwargs=data)
+    context = contextvars.copy_context()
+    logging_thread = threading.Thread(target=context.run, args=(target_func,), kwargs=data)
     logging_thread.start()
 
 
@@ -262,7 +264,7 @@ def trace(
                 return result
             except Exception as e:
                 logger.exception(f"Error occurred in function {func.__name__}, {e}")
-                fill_trace_data(trace_id, {"error": str(e)}, UpdateTraceScenario.ERROR)
+                fill_trace_data(trace_id, {"error": traceback.format_exc()}, UpdateTraceScenario.ERROR)
                 raise e
             finally:
                 try:
@@ -282,7 +284,7 @@ def trace(
                 return result
             except Exception as e:
                 logger.exception(f"Error occurred in function {func.__name__}, {e}")
-                fill_trace_data(trace_id, {"error": str(e)}, UpdateTraceScenario.ERROR)
+                fill_trace_data(trace_id, {"error": traceback.format_exc()}, UpdateTraceScenario.ERROR)
                 raise e
             finally:
                 try:
@@ -305,7 +307,6 @@ def trace(
 
 def call_eval_funcs_then_log(trace_id: str, eval_funcs: List[Callable] = None):
     data = trace_data.get()[trace_id]
-    # parea_logger.default_log(data=data)
 
     if eval_funcs and data.status == "success" and random() <= data.apply_eval_frac:
         thread_ids_running_evals.get().append(trace_id)
@@ -314,7 +315,7 @@ def call_eval_funcs_then_log(trace_id: str, eval_funcs: List[Callable] = None):
         scores = []
         for func in eval_funcs:
             try:
-                score = func(data)
+                score = trace()(func)(data)
                 if isinstance(score, EvaluationResult):
                     scores.append(score)
                 elif isinstance(score, list):
@@ -323,7 +324,6 @@ def call_eval_funcs_then_log(trace_id: str, eval_funcs: List[Callable] = None):
                     scores.append(EvaluationResult(name=func.__name__, score=score))
             except Exception as e:
                 logger.exception(f"Error occurred calling evaluation function '{func.__name__}', {e}", exc_info=e)
-        # parea_logger.update_log(data=UpdateLog(trace_id=trace_id, field_name_to_value_map={"scores": scores}))
         trace_data.get()[trace_id].scores = scores
         thread_ids_running_evals.get().remove(trace_id)
 

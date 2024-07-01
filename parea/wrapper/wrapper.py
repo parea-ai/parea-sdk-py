@@ -130,7 +130,6 @@ class Wrapper:
 
         return trace_id, start_time, token
 
-    @skip_decorator_if_func_in_stack(call_eval_funcs_then_log, _make_evaluations)
     def async_decorator(self, orig_func: Callable) -> Callable:
         @functools.wraps(orig_func)
         async def wrapper(*args, **kwargs):
@@ -162,7 +161,6 @@ class Wrapper:
 
         return wrapper
 
-    @skip_decorator_if_func_in_stack(call_eval_funcs_then_log, _make_evaluations)
     def sync_decorator(self, orig_func: Callable) -> Callable:
         @functools.wraps(orig_func)
         def wrapper(*args, **kwargs):
