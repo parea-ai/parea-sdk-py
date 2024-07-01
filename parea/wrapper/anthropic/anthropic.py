@@ -9,7 +9,10 @@ from anthropic.types import ContentBlockDeltaEvent, Message, MessageDeltaEvent, 
 
 from parea.cache.cache import Cache
 from parea.helpers import timezone_aware_now
-from parea.schemas import CacheRequest, LLMInputs, ModelParams, TraceLog
+from parea.schemas import CacheRequest, LLMInputs
+from parea.schemas import ModelParams
+from parea.schemas import Role as PareaRole
+from parea.schemas import TraceLog
 from parea.utils.trace_utils import make_output, trace_data
 from parea.wrapper import Wrapper
 from parea.wrapper.anthropic.stream_wrapper import AnthropicAsyncStreamWrapper, AnthropicStreamWrapper, MessageAsyncStreamManagerWrapper, MessageStreamManagerWrapper
@@ -126,13 +129,19 @@ class AnthropicWrapper:
     @staticmethod
     def _kwargs_to_llm_configuration(kwargs, model=None) -> LLMInputs:
         functions = deepcopy([d for d in kwargs.get("tools", [])])
+        messages = kwargs.get("messages", None)
+        if system_msg := kwargs.get("system", None):
+            if not messages:
+                messages = []
+            messages = messages.copy()
+            messages.insert(0, dict(role=PareaRole.system, content=system_msg))
         for func in functions:
             if "input_schema" in func:
                 func["parameters"] = func.pop("input_schema")
         return LLMInputs(
             model=model or kwargs.get("model", None),
             provider="anthropic",
-            messages=kwargs.get("messages", None),
+            messages=messages,
             model_params=ModelParams(
                 temp=kwargs.get("temperature", 1.0),
                 max_length=kwargs.get("max_tokens", None),
