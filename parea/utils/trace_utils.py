@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import threading
+import traceback
 from collections import ChainMap
 from datetime import datetime
 from functools import wraps
@@ -263,7 +264,7 @@ def trace(
                 return result
             except Exception as e:
                 logger.exception(f"Error occurred in function {func.__name__}, {e}")
-                fill_trace_data(trace_id, {"error": str(e)}, UpdateTraceScenario.ERROR)
+                fill_trace_data(trace_id, {"error": traceback.format_exc()}, UpdateTraceScenario.ERROR)
                 raise e
             finally:
                 try:
@@ -283,7 +284,7 @@ def trace(
                 return result
             except Exception as e:
                 logger.exception(f"Error occurred in function {func.__name__}, {e}")
-                fill_trace_data(trace_id, {"error": str(e)}, UpdateTraceScenario.ERROR)
+                fill_trace_data(trace_id, {"error": traceback.format_exc()}, UpdateTraceScenario.ERROR)
                 raise e
             finally:
                 try:
