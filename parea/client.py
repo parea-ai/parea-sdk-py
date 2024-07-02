@@ -1,9 +1,8 @@
-from typing import Any, AsyncIterable, Callable, Dict, Iterable, List, Optional, Union
-
 import asyncio
 import logging
 import os
 import time
+from typing import Any, AsyncIterable, Callable, Dict, Iterable, List, Optional, Union
 
 import httpx
 from attrs import asdict, define, field
@@ -14,7 +13,8 @@ from parea.api_client import HTTPClient
 from parea.cache.cache import Cache
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.experiment.datasets import create_test_cases, create_test_collection
-from parea.helpers import gen_trace_id, serialize_metadata_values, structure_trace_log_from_api, structure_trace_logs_from_api
+from parea.helpers import gen_trace_id, serialize_metadata_values, structure_trace_log_from_api, \
+    structure_trace_logs_from_api
 from parea.parea_logger import parea_logger
 from parea.schemas import EvaluationResult
 from parea.schemas.models import (
@@ -36,6 +36,7 @@ from parea.schemas.models import (
     TraceLogTree,
     UseDeployedPrompt,
     UseDeployedPromptResponse,
+    UpdateTestCase,
 )
 from parea.utils.trace_utils import get_current_trace_id, get_root_trace_id, logger_all_possible, trace_data
 
@@ -54,6 +55,7 @@ PROJECT_ENDPOINT = "/project"
 GET_COLLECTION_ENDPOINT = "/collection/{test_collection_identifier}"
 CREATE_COLLECTION_ENDPOINT = "/collection"
 ADD_TEST_CASES_ENDPOINT = "/testcases"
+UPDATE_TEST_CASE_ENDPOINT = "/update_test_case/{dataset_id}/{test_case_id}"
 GET_TRACE_LOG_ENDPOINT = "/trace_log/{trace_id}"
 LIST_EXPERIMENTS_ENDPOINT = "/experiments"
 GET_EXPERIMENT_LOGS_ENDPOINT = "/experiment/{experiment_uuid}/trace_logs"
@@ -341,6 +343,51 @@ class Parea:
             "POST",
             ADD_TEST_CASES_ENDPOINT,
             data=asdict(request),
+        )
+
+    async def acreate_test_collection(self, data: List[Dict[str, Any]], name: Optional[str] = None) -> None:
+        request: CreateTestCaseCollection = create_test_collection(data, name)
+        await self._client.request_async(
+            "POST",
+            CREATE_COLLECTION_ENDPOINT,
+            data=asdict(request),
+        )
+
+    async def aadd_test_cases(
+        self,
+        data: List[Dict[str, Any]],
+        name: Optional[str] = None,
+        dataset_id: Optional[int] = None,
+    ) -> None:
+        request = CreateTestCases(id=dataset_id, name=name, test_cases=create_test_cases(data))
+        await self._client.request_async(
+            "POST",
+            ADD_TEST_CASES_ENDPOINT,
+            data=asdict(request),
+        )
+
+    def update_test_case(
+        self,
+        dataset_id: int,
+        test_case_id: int,
+        update_request: UpdateTestCase,
+    ) -> None:
+        self._client.request(
+            "POST",
+            UPDATE_TEST_CASE_ENDPOINT.format(dataset_id=dataset_id, test_case_id=test_case_id),
+            data=asdict(update_request),
+        )
+
+    async def aupdate_test_case(
+        self,
+        dataset_id: int,
+        test_case_id: int,
+        update_request: UpdateTestCase,
+    ) -> None:
+        await self._client.request_async(
+            "POST",
+            UPDATE_TEST_CASE_ENDPOINT.format(dataset_id=dataset_id, test_case_id=test_case_id),
+            data=asdict(update_request),
         )
 
     def experiment(
