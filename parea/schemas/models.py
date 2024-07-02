@@ -1,6 +1,7 @@
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+
 import json
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from attrs import define, field, validators
 

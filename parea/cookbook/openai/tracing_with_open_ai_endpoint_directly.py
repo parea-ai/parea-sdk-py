@@ -1,6 +1,7 @@
+from typing import List, Tuple
+
 import os
 from datetime import datetime
-from typing import List, Tuple
 
 from dotenv import load_dotenv
 from openai import OpenAI

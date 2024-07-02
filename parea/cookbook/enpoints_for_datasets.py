@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 
 from parea import Parea
-from parea.schemas import TestCaseCollection, TestCase, UpdateTestCase
+from parea.schemas import TestCase, TestCaseCollection, UpdateTestCase
 
 load_dotenv()
 
