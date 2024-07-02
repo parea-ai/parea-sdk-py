@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import json
 from enum import Enum
@@ -328,6 +328,13 @@ class CreateTestCases:
 class CreateTestCaseCollection(CreateTestCases):
     # column names excluding reserved names, target and tags
     column_names: List[str] = field(factory=list)
+
+
+@define
+class UpdateTestCase:
+    inputs: Optional[Dict[str, Any]] = None
+    target: Optional[Union[int, float, str, bool]] = None
+    tags: Optional[List[str]] = None
 
 
 class ExperimentStatus(str, Enum):
