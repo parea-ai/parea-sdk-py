@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 from parea import Parea, get_current_trace_id, trace, trace_insert
+from parea.schemas import FeedbackRequest
 
 load_dotenv()
 
@@ -90,16 +91,16 @@ def json_call() -> str:
 
 
 if __name__ == "__main__":
-    # result, trace_id = argument_chain(
-    #     "Whether sparkling wine is good for you.",
-    #     additional_description="Provide a concise, few sentence argument on why sparkling wine is good for you.",
-    # )
-    # print(result)
-    # p.record_feedback(
-    #     FeedbackRequest(
-    #         trace_id=trace_id,
-    #         score=0.7,  # 0.0 (bad) to 1.0 (good)
-    #     )
-    # )
+    result, trace_id = argument_chain(
+        "Whether sparkling wine is good for you.",
+        additional_description="Provide a concise, few sentence argument on why sparkling wine is good for you.",
+    )
+    print(result)
+    p.record_feedback(
+        FeedbackRequest(
+            trace_id=trace_id,
+            score=0.7,  # 0.0 (bad) to 1.0 (good)
+        )
+    )
 
     print(json_call())
