@@ -63,9 +63,9 @@ GET_EXPERIMENT_LOGS_ENDPOINT = "/experiment/{experiment_uuid}/trace_logs"
 
 @define
 class Parea:
-    api_key: str = field(init=True, default=os.getenv("PAREA_API_KEY"))
-    project_name: str = field(init=True, default="default")
-    cache: Cache = field(init=True, default=None)
+    api_key: str = field(default=os.getenv("PAREA_API_KEY"))
+    project_name: str = field(default="default")
+    cache: Cache = field(default=None)
     _project: ProjectSchema = field(init=False, default=None)
     _client: HTTPClient = field(init=False, default=HTTPClient())
 

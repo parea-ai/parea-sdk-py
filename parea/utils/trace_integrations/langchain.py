@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Any, Dict, List, Optional, Union
 
 import logging
 from uuid import UUID
@@ -19,6 +19,29 @@ class PareaAILangchainTracer(BaseTracer):
     parent_trace_id: UUID
     _parea_root_trace_id: str = None
     _parea_parent_trace_id: str = None
+    _session_id: Optional[str] = None
+    _tags: List[str] = []
+    _metadata: Dict[str, Any] = {}
+    _end_user_identifier: Optional[str] = None
+    _deployment_id: Optional[str] = None
+
+    def __init__(
+        self,
+        session_id: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        end_user_identifier: Optional[str] = None,
+        deployment_id: Optional[str] = None,
+        **kwargs: Any,
+    ):
+        super().__init__(**kwargs)
+        self._session_id = session_id
+        self._end_user_identifier = end_user_identifier
+        self._deployment_id = deployment_id
+        if tags:
+            self._tags = tags
+        if metadata:
+            self._metadata = metadata
 
     def _persist_run(self, run: Union[Run, LLMRun, ChainRun, ToolRun]) -> None:
         if is_logging_disabled():
@@ -27,6 +50,11 @@ class PareaAILangchainTracer(BaseTracer):
         # using .dict() since langchain Run class currently set to Pydantic v1
         data = run.dict()
         data["_parea_root_trace_id"] = self._parea_root_trace_id or None
+        data["_session_id"] = self._session_id or None
+        data["_tags"] = self._tags or None
+        data["_metadata"] = self._metadata or None
+        data["_end_user_identifier"] = self._end_user_identifier or None
+        data["_deployment_id"] = self._deployment_id or None
         # check if run has an attribute execution order
         if (hasattr(run, "execution_order") and run.execution_order == 1) or run.parent_run_id is None:
             data["_parea_parent_trace_id"] = self._parea_parent_trace_id or None

@@ -22,7 +22,7 @@ chain = prompt | llm | StrOutputParser()
 def main():
     return chain.invoke(
         {"input": "Write a Hello World program in Python using FastAPI."},
-        config={"callbacks": [handler]},
+        config={"callbacks": [PareaAILangchainTracer(session_id="123", tags=["fastapi"], metadata={"key": "value"}, end_user_identifier="user123", deployment_id="456")]},
     )
 
 

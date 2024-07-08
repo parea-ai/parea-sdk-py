@@ -90,8 +90,18 @@ def structure_trace_log_from_api(d: dict) -> TraceLogTree:
         else:
             return None
 
+    def structure_float_or_none(obj: Any, cl: type) -> Optional[float]:
+        if obj is None:
+            return None
+        try:
+            return float(obj)
+        except (ValueError, TypeError):
+            return None
+
     converter = GenConverter()
     converter.register_structure_hook(Union[str, Dict[str, str], None], structure_union_type)
+    converter.register_structure_hook(float, structure_float_or_none)
+    converter.register_structure_hook(Optional[float], structure_float_or_none)
     return converter.structure(d, TraceLogTree)
 
 
