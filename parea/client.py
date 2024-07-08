@@ -81,7 +81,7 @@ class Parea:
                 parea_logger.set_project_uuid(self.project_uuid)
             except httpx.HTTPStatusError as e:
                 if e.response.status_code == 502:
-                    logger.error(f"Error creating Parea project please try again")
+                    logger.error("Error creating Parea project please try again")
                 else:
                     raise
             parea_logger.set_client(self._client)
