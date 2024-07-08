@@ -12,7 +12,6 @@ from parea.utils.trace_integrations.langchain import PareaAILangchainTracer
 load_dotenv()
 
 p = Parea(api_key=os.getenv("PAREA_API_KEY"))
-handler = PareaAILangchainTracer()
 
 
 CONTEXT = """Company: Nike. 2023
@@ -63,11 +62,11 @@ def main(question):
             "context": CONTEXT,
             "question": question,
         },
-        config={"callbacks": [handler]},
+        config={"callbacks": [PareaAILangchainTracer(deployment_id="p-JTDYylldIrMbMisT70DJZ")]},
     )
     summary = summary_chain.invoke(
         {"content": answer},
-        config={"callbacks": [handler]},
+        config={"callbacks": [PareaAILangchainTracer(deployment_id="p-OGWAo6yvVKr1hUBY6bmHw")]},
     )
     return summary
 

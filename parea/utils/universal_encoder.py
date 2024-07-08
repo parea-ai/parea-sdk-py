@@ -128,4 +128,8 @@ class UniversalEncoder(json.JSONEncoder):
 
 
 def json_dumps(obj, **kwargs) -> str:
-    return json.dumps(obj, cls=UniversalEncoder, **kwargs) if not isinstance(obj, str) else obj
+    try:
+        return json.dumps(obj, cls=UniversalEncoder, **kwargs) if not isinstance(obj, str) else obj
+    except TypeError as e:
+        logger.debug(f"Error serializing object: {obj} with error: {e}")
+        return str(obj)

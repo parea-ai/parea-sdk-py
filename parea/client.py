@@ -63,9 +63,9 @@ GET_EXPERIMENT_LOGS_ENDPOINT = "/experiment/{experiment_uuid}/trace_logs"
 
 @define
 class Parea:
-    api_key: str = field(init=True, default=os.getenv("PAREA_API_KEY"))
-    project_name: str = field(init=True, default="default")
-    cache: Cache = field(init=True, default=None)
+    api_key: str = field(default=os.getenv("PAREA_API_KEY"))
+    project_name: str = field(default="default")
+    cache: Cache = field(default=None)
     _project: ProjectSchema = field(init=False, default=None)
     _client: HTTPClient = field(init=False, default=HTTPClient())
 
@@ -81,7 +81,7 @@ class Parea:
                 parea_logger.set_project_uuid(self.project_uuid)
             except httpx.HTTPStatusError as e:
                 if e.response.status_code == 502:
-                    logger.error(f"Error creating Parea project please try again")
+                    logger.error("Error creating Parea project please try again")
                 else:
                     raise
             parea_logger.set_client(self._client)
