@@ -50,11 +50,11 @@ class PareaAILangchainTracer(BaseTracer):
         # using .dict() since langchain Run class currently set to Pydantic v1
         data = run.dict()
         data["_parea_root_trace_id"] = self._parea_root_trace_id or None
-        data["_session_id"] = self._session_id or None
-        data["_tags"] = self._tags or None
-        data["_metadata"] = self._metadata or None
-        data["_end_user_identifier"] = self._end_user_identifier or None
-        data["_deployment_id"] = self._deployment_id or None
+        data["_session_id"] = self._session_id
+        data["_tags"] = self._tags
+        data["_metadata"] = self._metadata
+        data["_end_user_identifier"] = self._end_user_identifier
+        data["_deployment_id"] = self._deployment_id
         # check if run has an attribute execution order
         if (hasattr(run, "execution_order") and run.execution_order == 1) or run.parent_run_id is None:
             data["_parea_parent_trace_id"] = self._parea_parent_trace_id or None
