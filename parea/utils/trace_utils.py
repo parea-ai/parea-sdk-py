@@ -214,7 +214,7 @@ def trace(
                 end_user_identifier=end_user_identifier,
                 session_id=session_id,
                 metadata=metadata,
-                target=_parea_target_field or parent_target,
+                target=_parea_target_field if _parea_target_field is not None else parent_target,
                 tags=tags,
                 inputs={} if log_omit_inputs else inputs,
                 experiment_uuid=os.environ.get(PAREA_OS_ENV_EXPERIMENT_UUID, None),

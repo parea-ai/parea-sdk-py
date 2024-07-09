@@ -1,3 +1,5 @@
+from typing import Union
+
 import os
 
 from dotenv import load_dotenv
@@ -22,7 +24,7 @@ def eval_func(log: Log) -> float:
 
 
 @trace(eval_funcs=[eval_func])
-def func(topic: str) -> dict[str, str | None]:
+def func(topic: str) -> dict[str, Union[str, None]]:
     return {
         "data": (
             client.chat.completions.create(
