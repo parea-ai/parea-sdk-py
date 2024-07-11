@@ -22,14 +22,8 @@ def eval_func(log: Log) -> float:
     return random()
 
 
-def eval_func2(log: Log) -> float:
-    from random import random
-
-    return random()
-
-
 def model_call_factory(model: str):
-    @trace(eval_funcs=[eval_func, eval_func2])
+    @trace(eval_funcs=[eval_func])
     def func(topic: str) -> str:
         return p.completion(
             data=Completion(
