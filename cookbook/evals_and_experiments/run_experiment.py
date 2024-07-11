@@ -3,27 +3,15 @@ import os
 from dotenv import load_dotenv
 
 from parea import Parea, trace
-from parea.schemas import Log
+from parea.evals.general import levenshtein
 
 load_dotenv()
 
 p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
 
-def eval_func(log: Log) -> float:
-    from random import random
-
-    return random()
-
-
-def eval_func2(log: Log) -> float:
-    from random import random
-
-    return random()
-
-
 # annotate the function with the trace decorator and pass the evaluation function(s)
-@trace(eval_funcs=[eval_func, eval_func2])
+@trace(eval_funcs=[levenshtein])
 def greeting(name: str) -> str:
     return f"Hello {name}"
 
@@ -55,4 +43,5 @@ if __name__ == "__main__":
         name="greeting",
         data=data,
         func=greeting,
+        n_trials=3,
     ).run()
