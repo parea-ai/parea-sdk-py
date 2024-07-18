@@ -1,5 +1,6 @@
-import os
 from typing import Dict, Union
+
+import os
 
 from dotenv import load_dotenv
 
