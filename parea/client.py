@@ -71,6 +71,7 @@ class Parea:
 
     def __attrs_post_init__(self):
         self._client.set_api_key(self.api_key)
+        parea_logger.set_client(self._client)
 
         if self.api_key:
             try:
@@ -78,15 +79,21 @@ class Parea:
                 if project_api_response.was_created:
                     print(f"Created project {project_api_response.name}")
                 self._project = structure(asdict(project_api_response), ProjectSchema)
-                parea_logger.set_project_uuid(self.project_uuid)
+                parea_logger.set_project_uuid(self.project_uuid, self.project_name)
             except httpx.HTTPStatusError as e:
                 if e.response.status_code == 502:
                     logger.error("Error creating Parea project please try again")
                 else:
                     raise
-            parea_logger.set_client(self._client)
         else:
             logger.warning("No API key found. Parea client will not be able to send data to the Parea API.")
+
+    def _get_project_uuid(self) -> str:
+        if not (self._project and self._project.uuid):
+            project_api_response: CreateGetProjectResponseSchema = self._create_or_get_project(self.project_name or "default")
+            self._project = structure(asdict(project_api_response), ProjectSchema)
+            parea_logger.set_project_uuid(self.project_uuid, self.project_name)
+        return self._project.uuid
 
     def wrap_openai_client(self, client: "OpenAI", integration: Optional[str] = None) -> None:
         """Only necessary for instance client with OpenAI version >= 1.0.0"""
@@ -156,12 +163,12 @@ class Parea:
 
     def _add_project_uuid_to_data(self, data) -> dict:
         data_dict = asdict(data)
-        data_dict["project_uuid"] = self._project.uuid
+        data_dict["project_uuid"] = self.project_uuid
         return data_dict
 
     @property
     def project_uuid(self) -> str:
-        return self._project.uuid
+        return self._get_project_uuid()
 
     def completion(self, data: Completion) -> CompletionResponse:
         data = self._update_data_and_trace(data)
@@ -431,7 +438,7 @@ class Parea:
         data = serialize_metadata_values(data)
         inference_id = gen_trace_id()
         data.inference_id = inference_id
-        data.project_uuid = self._project.uuid
+        data.project_uuid = self.project_uuid
 
         try:
             parent_trace_id = get_current_trace_id()
