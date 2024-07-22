@@ -1,6 +1,7 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import json
+import logging
 import os
 
 from attrs import asdict, define, field
@@ -12,6 +13,8 @@ from parea.helpers import serialize_metadata_values
 from parea.schemas.log import TraceIntegrations
 from parea.schemas.models import CreateGetProjectResponseSchema, TraceLog, UpdateLog
 from parea.utils.universal_encoder import json_dumps
+
+logger = logging.getLogger()
 
 LOG_ENDPOINT = "/trace_log"
 VENDOR_LOG_ENDPOINT = "/trace_log/{vendor}"
@@ -30,10 +33,14 @@ class PareaLogger:
         self._project_uuid = project_uuid
         self._project_name = project_name
 
-    def _get_project_uuid(self) -> str:
+    def _get_project_uuid(self) -> Optional[str]:
         if not self._project_uuid:
             self._project_uuid = self._create_or_get_project(self._project_name or "default").uuid
-        return self._project_uuid
+        try:
+            return self._project_uuid
+        except Exception as e:
+            logger.error(f"PareaLogger: Error getting project uuid for project {self._project_name}: {e}")
+            return None
 
     def _create_or_get_project(self, name: str) -> CreateGetProjectResponseSchema:
         r = self._client.request(

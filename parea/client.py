@@ -88,12 +88,16 @@ class Parea:
         else:
             logger.warning("No API key found. Parea client will not be able to send data to the Parea API.")
 
-    def _get_project_uuid(self) -> str:
+    def _get_project_uuid(self) -> Optional[str]:
         if not (self._project and self._project.uuid):
             project_api_response: CreateGetProjectResponseSchema = self._create_or_get_project(self.project_name or "default")
             self._project = structure(asdict(project_api_response), ProjectSchema)
             parea_logger.set_project_uuid(self.project_uuid, self.project_name)
-        return self._project.uuid
+        try:
+            return self._project.uuid
+        except Exception as e:
+            logger.error(f"Parea: Error getting project uuid for project {self.project_name}: {e}")
+            return None
 
     def wrap_openai_client(self, client: "OpenAI", integration: Optional[str] = None) -> None:
         """Only necessary for instance client with OpenAI version >= 1.0.0"""
