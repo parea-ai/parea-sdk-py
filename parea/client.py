@@ -79,7 +79,7 @@ class Parea:
                 if project_api_response.was_created:
                     print(f"Created project {project_api_response.name}")
                 self._project = structure(asdict(project_api_response), ProjectSchema)
-                parea_logger.set_project_uuid(self.project_uuid, self.project_name)
+                parea_logger.set_project_uuid(self._project.uuid, self.project_name)
             except httpx.HTTPStatusError as e:
                 if e.response.status_code == 502:
                     logger.error("Error creating Parea project please try again")
@@ -92,7 +92,7 @@ class Parea:
         if not (self._project and self._project.uuid):
             project_api_response: CreateGetProjectResponseSchema = self._create_or_get_project(self.project_name or "default")
             self._project = structure(asdict(project_api_response), ProjectSchema)
-            parea_logger.set_project_uuid(self.project_uuid, self.project_name)
+            parea_logger.set_project_uuid(self._project.uuid, self.project_name)
         try:
             return self._project.uuid
         except Exception as e:
