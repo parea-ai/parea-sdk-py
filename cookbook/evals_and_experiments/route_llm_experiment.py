@@ -5,12 +5,12 @@ from dotenv import load_dotenv
 from routellm.controller import Controller
 
 from parea import Parea, trace, trace_insert
-from parea.schemas import EvaluationResult, Log, LLMInputs, Completion, Message, Role, ModelParams
+from parea.schemas import Completion, EvaluationResult, LLMInputs, Log, Message, ModelParams, Role
 
 load_dotenv()
 
-os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY")
+os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 
 ROUTER = "mf"
 COST_THRESHOLD = 0.11593
