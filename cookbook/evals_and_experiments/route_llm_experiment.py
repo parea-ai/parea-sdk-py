@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from routellm.controller import Controller
 
 from parea import Parea, trace, trace_insert
-from parea.schemas import EvaluationResult, Log, LLMInputs, Completion, Message, Role, ModelParams
+from parea.schemas import Completion, EvaluationResult, LLMInputs, Log, Message, ModelParams, Role
 
 load_dotenv()
 
