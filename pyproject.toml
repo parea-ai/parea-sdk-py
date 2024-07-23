@@ -81,6 +81,7 @@ langchain-openai = "^0.0.5"
 pinecone-client = "^3.1.0"
 guidance = "^0.1.13"
 markdownify = "^0.12.1"
+routellm = {extras = ["eval", "serve"], version = "^0.2.0"}
 
 [tool.black]
 # https://github.com/psf/black
