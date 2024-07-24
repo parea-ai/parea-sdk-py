@@ -6,7 +6,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 from parea import Parea, get_current_trace_id, trace
-from parea.schemas import Completion, CompletionResponse, FeedbackRequest, LLMInputs, Message, ModelParams
+from parea.schemas import Completion, CompletionResponse, FeedbackRequest, LLMInputs, Message, ModelParams, Role
 
 load_dotenv()
 
@@ -21,9 +21,7 @@ def call_llm(
     return p.completion(
         data=Completion(
             llm_configuration=LLMInputs(
-                model=model,
-                model_params=ModelParams(temp=temperature),
-                messages=[Message(**d) for d in data],
+                model=model, model_params=ModelParams(temp=temperature), messages=[Message(**d) for d in data], history=[Message(role=Role.user, content="Some history")]
             )
         )
     )
