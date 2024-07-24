@@ -6,7 +6,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 from parea import Parea, get_current_trace_id, trace
-from parea.schemas import Completion, CompletionResponse, LLMInputs, Message, ModelParams, Role
+from parea.schemas import Completion, CompletionResponse, FeedbackRequest, LLMInputs, Message, ModelParams, Role
 
 load_dotenv()
 
@@ -135,31 +135,31 @@ if __name__ == "__main__":
         additional_description="Provide a concise, few sentence argument on why coffee is good for you.",
     )
     print(result1)
-    #
-    # result2, trace_id2 = argument_chain2(
-    #     "Whether wine is good for you.",
-    #     additional_description="Provide a concise, few sentence argument on why wine is good for you.",
-    # )
-    # print(trace_id2, result2)
-    # p.record_feedback(
-    #     FeedbackRequest(
-    #         trace_id=trace_id2,
-    #         score=0.7,  # 0.0 (bad) to 1.0 (good)
-    #         target="Wine is wonderful.",
-    #     )
-    # )
-    #
-    # result3 = argument_chain3(
-    #     "Whether moonshine is good for you.",
-    #     additional_description="Provide a concise, few sentence argument on why moonshine is good for you.",
-    # )
-    # print(result3.content)
-    # p.record_feedback(
-    #     FeedbackRequest(
-    #         trace_id=result3.inference_id,
-    #         score=0.5,  # 0.0 (bad) to 1.0 (good)
-    #         target="Moonshine is wonderful. End of story.",
-    #     )
-    # )
-    #
-    # print(json_call())
+
+    result2, trace_id2 = argument_chain2(
+        "Whether wine is good for you.",
+        additional_description="Provide a concise, few sentence argument on why wine is good for you.",
+    )
+    print(trace_id2, result2)
+    p.record_feedback(
+        FeedbackRequest(
+            trace_id=trace_id2,
+            score=0.7,  # 0.0 (bad) to 1.0 (good)
+            target="Wine is wonderful.",
+        )
+    )
+
+    result3 = argument_chain3(
+        "Whether moonshine is good for you.",
+        additional_description="Provide a concise, few sentence argument on why moonshine is good for you.",
+    )
+    print(result3.content)
+    p.record_feedback(
+        FeedbackRequest(
+            trace_id=result3.inference_id,
+            score=0.5,  # 0.0 (bad) to 1.0 (good)
+            target="Moonshine is wonderful. End of story.",
+        )
+    )
+
+    print(json_call())

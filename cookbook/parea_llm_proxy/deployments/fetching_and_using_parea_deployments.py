@@ -2,7 +2,7 @@ import os
 
 from dotenv import load_dotenv
 
-from parea import Parea, trace
+from parea import Parea
 from parea.schemas.models import Completion, CompletionResponse, UseDeployedPrompt, UseDeployedPromptResponse
 
 load_dotenv()
@@ -10,7 +10,6 @@ load_dotenv()
 p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
 
-@trace
 def main() -> CompletionResponse:
     return p.completion(Completion(deployment_id="p-4cbYJ0LIy0gaWb6Z819k7", llm_inputs={"x": "python", "y": "fastapi"}))
 
@@ -20,8 +19,7 @@ def get_critic_prompt(val: str) -> UseDeployedPromptResponse:
 
 
 if __name__ == "__main__":
-    print(main())
-    # print(get_critic_prompt("Python"))
+    print(get_critic_prompt("Python"))
     # a = UseDeployedPromptResponse(
     #     deployment_id="p-87NFVeQg30Hk2Hatw1h72",
     #     name="deploy-test",
