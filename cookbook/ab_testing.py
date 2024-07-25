@@ -19,10 +19,10 @@ def generate_email(user: str) -> Tuple[str, str]:
     """Randomly chooses a prompt to perform an A/B test for generating email. Returns the email and the trace ID.
     The latter is used to tie-back the collected feedback from the user."""
     if random.random() < 0.5:
-        trace_insert({'metadata': {'ab_test': 'test_0 variant_0'}})
+        trace_insert({'metadata': {'ab_test_0': 'variant_0'}})
         prompt = f'Generate a long email for {user}'
     else:
-        trace_insert({'metadata': {'ab_test': 'test_0 variant_1'}})
+        trace_insert({'metadata': {'ab_test_0': 'variant_1'}})
         prompt = f'Generate a short email for {user}'
 
     email = client.chat.completions.create(
