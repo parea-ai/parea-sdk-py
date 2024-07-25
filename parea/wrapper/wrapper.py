@@ -14,7 +14,7 @@ from parea.evals.utils import _make_evaluations
 from parea.helpers import is_logging_disabled, timezone_aware_now
 from parea.schemas.models import TraceLog, UpdateLog, UpdateTraceScenario
 from parea.utils.trace_utils import call_eval_funcs_then_log, execution_order_counters, fill_trace_data, logger_update_record, trace_context, trace_data
-from parea.wrapper.utils import safe_format_template_to_prompt, skip_decorator_if_func_in_stack
+from parea.wrapper.utils import safe_format_template_to_prompt, skip_decorator_if_func_in_stack_for_evals
 
 logger = logging.getLogger()
 
@@ -130,6 +130,7 @@ class Wrapper:
 
         return trace_id, start_time, token
 
+    @skip_decorator_if_func_in_stack_for_evals(call_eval_funcs_then_log, _make_evaluations)
     def async_decorator(self, orig_func: Callable) -> Callable:
         @functools.wraps(orig_func)
         async def wrapper(*args, **kwargs):
@@ -161,6 +162,7 @@ class Wrapper:
 
         return wrapper
 
+    @skip_decorator_if_func_in_stack_for_evals(call_eval_funcs_then_log, _make_evaluations)
     def sync_decorator(self, orig_func: Callable) -> Callable:
         @functools.wraps(orig_func)
         def wrapper(*args, **kwargs):
