@@ -12,7 +12,7 @@ from datetime import datetime
 from functools import wraps
 from random import random
 
-from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
+from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID, TURN_OFF_PAREA_EVAL_LOGGING
 from parea.helpers import gen_trace_id, is_logging_disabled, timezone_aware_now
 from parea.parea_logger import parea_logger
 from parea.schemas import EvaluationResult
@@ -315,7 +315,10 @@ def call_eval_funcs_then_log(trace_id: str, eval_funcs: List[Callable] = None):
         scores = []
         for func in eval_funcs:
             try:
-                score = trace()(func)(data)
+                if TURN_OFF_PAREA_EVAL_LOGGING:
+                    score = func(data)
+                else:
+                    score = trace()(func)(data)
                 if isinstance(score, EvaluationResult):
                     scores.append(score)
                 elif isinstance(score, list):
