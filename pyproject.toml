@@ -6,7 +6,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry]
 name = "parea-ai"
 packages = [{ include = "parea" }]
-version = "0.2.190"
+version = "0.2.191"
 description = "Parea python sdk"
 readme = "README.md"
 authors = ["joel-parea-ai <joel@parea.ai>"]
@@ -69,10 +69,12 @@ pytest-cov = "^4.1.0"
 parea = 'parea:main'
 
 [tool.poetry.group.dev.dependencies]
-langchain = "^0.0.351"
+langchain = "^0.1.20"
 langchainhub = "^0.1.14"
 faiss-cpu = "^1.7.4"
-langchain-experimental = "^0.0.47"
+langchain-experimental = "^0.0.58"
+langchain-community = "^0.0.38"
+langchain-core = "^0.1.52"
 anthropic = "^0.25.1"
 ragas = "^0.0.22"
 html2text = "^2020.1.16"
@@ -81,7 +83,8 @@ langchain-openai = "^0.0.5"
 pinecone-client = "^3.1.0"
 guidance = "^0.1.13"
 markdownify = "^0.12.1"
-routellm = {extras = ["eval", "serve"], version = "^0.2.0"}
+routellm = { extras = ["eval", "serve"], version = "^0.2.0" }
+cohere = "^5.6.2"
 
 [tool.black]
 # https://github.com/psf/black

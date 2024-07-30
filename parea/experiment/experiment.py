@@ -12,7 +12,6 @@ from urllib.parse import quote
 
 from attrs import define, field
 from tqdm import tqdm
-from tqdm.asyncio import tqdm_asyncio
 
 from parea import Parea
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
@@ -68,7 +67,7 @@ def apply_dataset_eval(dataset_level_evals: List[Callable]) -> List[EvaluationRe
         try:
             result = dataset_level_eval(root_traces)
         except Exception as e:
-            logger.exception(f"Error occurred calling dataset level eval function '{dataset_level_eval.__name__}': {e}", exc_info=e)
+            logger.error(f"Error occurred calling dataset level eval function '{dataset_level_eval.__name__}': {e}", exc_info=e)
             continue
         if result is None:
             continue
