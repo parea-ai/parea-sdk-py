@@ -245,7 +245,7 @@ def trace(
                     output = access_output_of_func(output)
                     output_for_eval_metrics = json_dumps(output)
                 except Exception as e:
-                    logger.exception(f"Error accessing output of func with output: {output}. Error: {e}", exc_info=e)
+                    logger.error(f"Error accessing output of func with output: {output}. Error: {e}", exc_info=e)
             trace_data.get()[trace_id].output_for_eval_metrics = output_for_eval_metrics
 
         thread_eval_funcs_then_log(trace_id, eval_funcs)
@@ -263,7 +263,7 @@ def trace(
                     fill_trace_data(trace_id, {"result": result, "output_as_list": output_as_list, "eval_funcs_names": eval_funcs_names}, UpdateTraceScenario.RESULT)
                 return result
             except Exception as e:
-                logger.exception(f"Error occurred in function {func.__name__}, {e}")
+                logger.error(f"Error occurred in function {func.__name__}, {e}")
                 fill_trace_data(trace_id, {"error": traceback.format_exc()}, UpdateTraceScenario.ERROR)
                 raise e
             finally:
@@ -283,7 +283,7 @@ def trace(
                     fill_trace_data(trace_id, {"result": result, "output_as_list": output_as_list, "eval_funcs_names": eval_funcs_names}, UpdateTraceScenario.RESULT)
                 return result
             except Exception as e:
-                logger.exception(f"Error occurred in function {func.__name__}, {e}")
+                logger.error(f"Error occurred in function {func.__name__}, {e}")
                 fill_trace_data(trace_id, {"error": traceback.format_exc()}, UpdateTraceScenario.ERROR)
                 raise e
             finally:
@@ -326,7 +326,7 @@ def call_eval_funcs_then_log(trace_id: str, eval_funcs: List[Callable] = None):
                 elif score is not None:
                     scores.append(EvaluationResult(name=func.__name__, score=score))
             except Exception as e:
-                logger.exception(f"Error occurred calling evaluation function '{func.__name__}', {e}", exc_info=e)
+                logger.error(f"Error occurred calling evaluation function '{func.__name__}', {e}", exc_info=e)
         trace_data.get()[trace_id].scores = scores
         thread_ids_running_evals.get().remove(trace_id)
 
