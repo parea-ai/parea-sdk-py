@@ -202,7 +202,7 @@ def data_converter(data: Union[str, int, Iterable[dict]]) -> Union[str, int, Ite
         return data
     else:
         for sample in data:
-            if "target" in sample and isinstance(sample["target"], dict):
+            if isinstance(sample, dict) and "target" in sample and isinstance(sample["target"], dict):
                 sample["target"] = json_dumps(sample["target"])
         return data
 
