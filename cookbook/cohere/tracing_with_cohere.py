@@ -78,5 +78,5 @@ if __name__ == "__main__":
         "Whether sparkling wine is good for you.",
         additional_description="Provide a concise, few sentence argument on why sparkling wine is good for you.",
     )
-    # print(result)
-    # print(json_call())
+    print(result)
+    print(json_call())

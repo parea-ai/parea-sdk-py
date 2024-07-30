@@ -436,7 +436,7 @@ COHERE_MODEL_INFO: Dict[str, Dict[str, Union[float, int, Dict[str, int]]]] = {
         "token_limit": {"max_completion_tokens": 512, "max_prompt_tokens": 512},
     },
 }
-COHERE_SEARCH_MODELS: set[str] = {
+COHERE_SEARCH_MODELS = {
     "rerank-english-v3.0",
     "rerank-multilingual-v3.0",
     "rerank-english-v2.0",
