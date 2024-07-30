@@ -371,7 +371,78 @@ ANTHROPIC_MODEL_INFO: Dict[str, Dict[str, Union[float, int, Dict[str, float]]]] 
         "completion": 15.00,
     },
 }
-ALL_NON_AZURE_MODELS_INFO = {**OPENAI_MODEL_INFO, **ANTHROPIC_MODEL_INFO}
+COHERE_MODEL_INFO: Dict[str, Dict[str, Union[float, int, Dict[str, int]]]] = {
+    "command-r-plus": {
+        "prompt": 3.0,
+        "completion": 15.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
+    "command-r": {
+        "prompt": 0.5,
+        "completion": 1.5,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
+    "command": {
+        "prompt": 1.0,
+        "completion": 2.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
+    },
+    "command-nightly": {
+        "prompt": 1.0,
+        "completion": 2.0,
+        "token_limit": {"max_completion_tokens": 128000, "max_prompt_tokens": 128000},
+    },
+    "command-light": {
+        "prompt": 0.3,
+        "completion": 0.6,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
+    },
+    "command-light-nightly": {
+        "prompt": 0.3,
+        "completion": 0.6,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
+    },
+    "c4ai-aya-23": {
+        "prompt": 0.0,
+        "completion": 0.0,
+        "token_limit": {"max_completion_tokens": 8192, "max_prompt_tokens": 8192},
+    },
+    "rerank-english-v3.0": {
+        "prompt": 0,
+        "completion": 0,
+        # $ per 1K
+        "search": 2.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
+    },
+    "rerank-multilingual-v3.0": {
+        "prompt": 0,
+        "completion": 0,
+        # $ per 1K
+        "search": 2.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 4096},
+    },
+    "rerank-english-v2.0": {
+        "prompt": 0,
+        "completion": 0,
+        # $ per 1K
+        "search": 1.0,
+        "token_limit": {"max_completion_tokens": 512, "max_prompt_tokens": 512},
+    },
+    "rerank-multilingual-v2.0": {
+        "prompt": 0,
+        "completion": 0,
+        # $ per 1K
+        "search": 1.0,
+        "token_limit": {"max_completion_tokens": 512, "max_prompt_tokens": 512},
+    },
+}
+COHERE_SEARCH_MODELS: set[str] = {
+    "rerank-english-v3.0",
+    "rerank-multilingual-v3.0",
+    "rerank-english-v2.0",
+    "rerank-multilingual-v2.0",
+}
+ALL_NON_AZURE_MODELS_INFO = {**OPENAI_MODEL_INFO, **ANTHROPIC_MODEL_INFO, **COHERE_MODEL_INFO}
 
 NOUNS = (
     "abac",

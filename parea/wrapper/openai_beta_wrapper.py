@@ -136,7 +136,7 @@ class BaseWrapper:
                 )
             return result
         except Exception as e:
-            logger.exception(f"Error occurred in function {func.__name__}, {e}")
+            logger.error(f"Error occurred in function {func.__name__}, {e}")
             self.fill_trace_data(trace_id, {"error": str(e)}, UpdateTraceScenario.ERROR)
             raise e
         finally:
@@ -169,7 +169,7 @@ class BaseWrapper:
                 )
             return result
         except Exception as e:
-            logger.exception(f"Error occurred in function {func.__name__}, {e}")
+            logger.error(f"Error occurred in function {func.__name__}, {e}")
             self.fill_trace_data(trace_id, {"error": str(e)}, UpdateTraceScenario.ERROR)
             raise e
         finally:

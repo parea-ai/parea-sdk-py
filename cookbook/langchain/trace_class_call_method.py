@@ -12,6 +12,10 @@ load_dotenv()
 
 p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
+from langsmith.evaluation import LangChainStringEvaluator
+
+qa_evaluator = [LangChainStringEvaluator("cot_qa")]
+
 
 class LangChainModule:
     handler = PareaAILangchainTracer()

@@ -118,6 +118,13 @@ class Parea:
         if integration:
             self._add_integration(integration)
 
+    def wrap_cohere_client(self, client: Union["cohere.Client", "cohere.AsyncClient"], integration: Optional[str] = None) -> None:
+        from parea.wrapper.cohere.wrap_cohere import CohereClientWrapper
+
+        CohereClientWrapper().init(client=client)
+        if integration:
+            self._add_integration(integration)
+
     def _add_integration(self, integration: str) -> None:
         self._client.add_integration(integration)
 
