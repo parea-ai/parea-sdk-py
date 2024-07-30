@@ -11,29 +11,16 @@ import os
 import traceback
 
 import cohere
-from attrs import asdict, define
-from cohere import ApiMetaBilledUnits, NonStreamedChatResponse, RerankResponse
+from cohere import NonStreamedChatResponse, RerankResponse
 
-from parea.constants import COHERE_MODEL_INFO, COHERE_SEARCH_MODELS, PAREA_OS_ENV_EXPERIMENT_UUID
+from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.helpers import gen_trace_id, is_logging_disabled, timezone_aware_now
-from parea.schemas import LLMInputs, Message, ModelParams, Role, TraceLog, UpdateTraceScenario
+from parea.schemas import LLMInputs, ModelParams, TraceLog, UpdateTraceScenario
 from parea.utils.trace_utils import execution_order_counters, fill_trace_data, logger_record_log, trace_context, trace_data
 from parea.utils.universal_encoder import json_dumps
+from parea.wrapper.cohere.helpers import DEFAULT_MODEL, DEFAULT_P, DEFAULT_TEMPERATURE, chat_history_to_messages, get_output, get_usage_stats
 
 logger = logging.getLogger()
-
-DEFAULT_MODEL = "command-r-plus"
-DEFAULT_TEMPERATURE = 0.3
-DEFAULT_P = 0.75
-
-
-@define
-class CohereOutput:
-    text: Optional[str] = None
-    citations: Optional[str] = None
-    documents: Optional[str] = None
-    search_queries: Optional[str] = None
-    search_results: Optional[str] = None
 
 
 class CohereClientWrapper:
@@ -201,7 +188,7 @@ class CohereClientWrapper:
         """
         try:
             model = kwargs.get("model", DEFAULT_MODEL)
-            tools = kwargs.get("tools")
+            tools = kwargs.get("tools", None)
             configuration = LLMInputs(
                 model=model,
                 provider="cohere",
@@ -213,13 +200,13 @@ class CohereClientWrapper:
                     max_length=kwargs.get("max_tokens"),
                     response_format=kwargs.get("response_format"),
                 ),
-                messages=CohereClientWrapper._chat_history_to_messages(result, **kwargs) if isinstance(result, NonStreamedChatResponse) else None,
-                functions=json_dumps(tools) if tools else None,
+                messages=chat_history_to_messages(result, **kwargs) if isinstance(result, NonStreamedChatResponse) else None,
+                functions=tools,
             )
-            prompt_tokens, completion_tokens, cost = CohereClientWrapper._get_usage_stats(result, model)
+            prompt_tokens, completion_tokens, cost = get_usage_stats(result, model)
             data = {
                 "configuration": configuration,
-                "output": CohereClientWrapper._get_output(result),
+                "output": get_output(result),
                 "input_tokens": prompt_tokens,
                 "output_tokens": completion_tokens,
                 "total_tokens": prompt_tokens + completion_tokens,
@@ -229,77 +216,6 @@ class CohereClientWrapper:
         except Exception as e:
             logger.debug(f"Error occurred filling LLM config for trace {trace_id}, {e}", exc_info=True)
             fill_trace_data(trace_id, {"error": traceback.format_exc()}, UpdateTraceScenario.ERROR)
-
-    @staticmethod
-    def _chat_history_to_messages(result: NonStreamedChatResponse, **kwargs) -> list[Message]:
-        messages: list[Message] = []
-        if sys_message := kwargs.get("preamble", ""):
-            messages.append(Message(content=sys_message, role=Role.system))
-        if history := kwargs.get("chat_history", []):
-            messages.extend(CohereClientWrapper._to_messages(history))
-
-        messages.extend(CohereClientWrapper._to_messages([m.dict() for m in result.chat_history]))
-        return messages
-
-    @staticmethod
-    def _to_messages(chat_history: list[dict]) -> list[Message]:
-        messages: list[Message] = []
-        for message in chat_history:
-            if message["role"] == "USER":
-                messages.append(Message(content=message["message"], role=Role.user))
-            elif message["role"] == "CHATBOT":
-                messages.append(Message(content=message["message"], role=Role.assistant))
-            elif message["role"] == "SYSTEM":
-                messages.append(Message(content=message["message"], role=Role.system))
-            elif message["role"] == "TOOL":
-                messages.append(Message(content=json_dumps(message["tool_calls"]), role=Role.tool))
-
-        return messages
-
-    @staticmethod
-    @functools.lru_cache(maxsize=128)
-    def _compute_cost(prompt_tokens: int, completion_tokens: int, search_units: int, is_search_model: bool, model: str) -> float:
-        cost_per_token = COHERE_MODEL_INFO.get(model, {"prompt": 0, "completion": 0})
-        cost = ((prompt_tokens * cost_per_token["prompt"]) + (completion_tokens * cost_per_token["completion"])) / 1_000_000
-        if is_search_model:
-            cost += search_units * cost_per_token.get("search", 0) / 1_000
-        cost = round(cost, 10)
-        return cost
-
-    @staticmethod
-    def _get_usage_stats(result: Optional[NonStreamedChatResponse | RerankResponse], model: str) -> Tuple[int, int, float]:
-        bu: Optional[ApiMetaBilledUnits] = result.meta.billed_units if result else None
-        if not bu:
-            return 0, 0, 0.0
-        prompt_tokens = bu.input_tokens or 0
-        completion_tokens = bu.output_tokens or 0
-        search_units = bu.search_units or 0
-        is_search_model: bool = model in COHERE_SEARCH_MODELS
-        cost = CohereClientWrapper._compute_cost(prompt_tokens, completion_tokens, search_units, is_search_model, model)
-        return prompt_tokens, completion_tokens, cost
-
-    @staticmethod
-    def _get_output(result: Optional[NonStreamedChatResponse | RerankResponse]) -> str:
-        if not result:
-            return ""
-
-        if isinstance(result, RerankResponse):
-            output = CohereOutput(documents=CohereClientWrapper._cohere_json_list(result.results) if result.results else None)
-            return json_dumps(asdict(output))
-
-        text = result.text or CohereClientWrapper._cohere_json_list(result.tool_calls)
-        output = CohereOutput(
-            text=text,
-            citations=CohereClientWrapper._cohere_json_list(result.citations) if result.citations else None,
-            documents=CohereClientWrapper._cohere_json_list(result.documents) if result.documents else None,
-            search_queries=CohereClientWrapper._cohere_json_list(result.search_queries) if result.search_queries else None,
-            search_results=CohereClientWrapper._cohere_json_list(result.search_results) if result.search_results else None,
-        )
-        return json_dumps(asdict(output))
-
-    @staticmethod
-    def _cohere_json_list(obj: Any) -> str:
-        return json_dumps([o.dict() for o in obj])
 
     @staticmethod
     def init(client: Union[cohere.Client, cohere.AsyncClient]) -> None:

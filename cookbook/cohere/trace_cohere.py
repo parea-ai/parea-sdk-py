@@ -40,5 +40,26 @@ response = co.rerank(
 print(response)
 print("\n\n")
 
+
+response = co.chat(
+    model="command-r-plus",
+    message="Where do the tallest penguins live?",
+    documents=[
+        {"title": "Tall penguins", "snippet": "Emperor penguins are the tallest."},
+        {"title": "Penguin habitats", "snippet": "Emperor penguins only live in Antarctica."},
+        {"title": "What are animals?", "snippet": "Animals are different from plants."},
+    ],
+)
+print(response)
+print("\n\n")
+
+response = co.chat(model="command-r-plus", message="Who is more popular: Nsync or Backstreet Boys?", search_queries_only=True)
+print(response)
+print("\n\n")
+
+response = co.chat(model="command-r-plus", message="Who is more popular: Nsync or Backstreet Boys?", connectors=[{"id": "web-search"}])
+print(response)
+print("\n\n")
+
 for event in co.chat_stream(message="Who discovered gravity?"):
     print(event)
