@@ -1,3 +1,5 @@
+# checkout the associated tutorial at https://docs.parea.ai//tutorials/running-ab-tests/llm-generated-emails
+
 from typing import Tuple
 
 import os
