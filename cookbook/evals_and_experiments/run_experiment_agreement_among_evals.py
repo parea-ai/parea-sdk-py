@@ -1,11 +1,12 @@
-import random
 from typing import List
+
 import os
+import random
 
 from dotenv import load_dotenv
 
 from parea import Parea, trace
-from parea.schemas import EvaluatedLog, Log, EvaluationResult
+from parea.schemas import EvaluatedLog, EvaluationResult, Log
 
 load_dotenv()
 
@@ -14,10 +15,8 @@ p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
 def random_eval_factory(trial: int):
     def random_eval(log: Log) -> EvaluationResult:
-        return EvaluationResult(
-            score=1 if random.random() < 0.5 else 0,
-            name=f'random_eval_{trial}'
-        )
+        return EvaluationResult(score=1 if random.random() < 0.5 else 0, name=f"random_eval_{trial}")
+
     return random_eval
 
 
@@ -58,9 +57,4 @@ data = [
 
 # You can optionally run the experiment manually by calling `.run()`
 if __name__ == "__main__":
-    p.experiment(
-        name="Greeting",
-        data=data,
-        func=starts_with_f,
-        dataset_level_evals=[percent_evals_agree]
-    ).run()
+    p.experiment(name="Greeting", data=data, func=starts_with_f, dataset_level_evals=[percent_evals_agree]).run()

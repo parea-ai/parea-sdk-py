@@ -4,7 +4,7 @@ import csv
 import random
 import uuid
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytz
 from attr import asdict, fields_dict
@@ -79,6 +79,7 @@ def serialize_metadata_values(log_data: Union[TraceLog, UpdateLog, Completion]) 
 
 def timezone_aware_now() -> datetime:
     return datetime.now(pytz.utc)
+    # return datetime.now(pytz.utc) - timedelta(days=6)
 
 
 def structure_trace_log_from_api(d: dict) -> TraceLogTree:
