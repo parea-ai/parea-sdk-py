@@ -5,19 +5,24 @@ import os
 from dotenv import load_dotenv
 
 from parea import Parea, trace
-from parea.schemas import EvaluatedLog, Log
+from parea.schemas import EvaluatedLog, Log, EvaluationResult
 
 load_dotenv()
 
 p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
 
-def random_eval(log: Log) -> bool:
-    return True if random.random() < 0.5 else False
+def random_eval_factory(trial: int):
+    def random_eval(log: Log) -> EvaluationResult:
+        return EvaluationResult(
+            score=1 if random.random() < 0.5 else 0,
+            name=f'random_eval_{trial}'
+        )
+    return random_eval
 
 
 # apply random evaluation function twice
-@trace(eval_funcs=[random_eval, random_eval])
+@trace(eval_funcs=[random_eval_factory(1), random_eval_factory(2)])
 async def starts_with_f(name: str) -> str:
     if name == "Foo":
         return "1"
