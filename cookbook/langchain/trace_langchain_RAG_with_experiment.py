@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from functools import lru_cache
 from operator import itemgetter
 
 from dotenv import load_dotenv
@@ -30,22 +31,27 @@ handler = PareaAILangchainTracer()
 pinecone = PineconeClient(api_key=os.getenv("PINECONE_API_KEY"), environment=os.getenv("PINECONE_ENVIRONMENT"))
 
 
+@lru_cache()
+def get_docs(url):
+    api_loader = RecursiveUrlLoader(url)
+    raw_documents = api_loader.load()
+
+    # Transformer
+    doc_transformer = Html2TextTransformer()
+    transformed = doc_transformer.transform_documents(raw_documents)
+
+    # Splitter
+    text_splitter = TokenTextSplitter(
+        model_name="gpt-3.5-turbo",
+        chunk_size=2000,
+        chunk_overlap=200,
+    )
+    return text_splitter.split_documents(transformed)
+
+
 class DocumentRetriever:
     def __init__(self, url: str):
-        api_loader = RecursiveUrlLoader(url)
-        raw_documents = api_loader.load()
-
-        # Transformer
-        doc_transformer = Html2TextTransformer()
-        transformed = doc_transformer.transform_documents(raw_documents)
-
-        # Splitter
-        text_splitter = TokenTextSplitter(
-            model_name="gpt-3.5-turbo",
-            chunk_size=2000,
-            chunk_overlap=200,
-        )
-        documents = text_splitter.split_documents(transformed)
+        documents = get_docs(url)
 
         # Define vector store based
         embeddings = OpenAIEmbeddings()
@@ -59,7 +65,7 @@ class DocumentRetriever:
 class DocumentationChain:
     def __init__(self, url):
         retriever = DocumentRetriever(url).get_retriever()
-        model = ChatOpenAI(model="gpt-3.5-turbo-16k", temperature=0)
+        model = ChatOpenAI(model_name="gpt-4o-mini", temperature=0)
         prompt = ChatPromptTemplate.from_messages(
             [
                 (
@@ -148,7 +154,7 @@ def main(question: str) -> str:
 
 if __name__ == "__main__":
     p.experiment(
-        name="NYC_Wiki_RAG",
+        name="NYC_Wiki_RAG2",
         data=dataset,
         func=main,
     ).run()

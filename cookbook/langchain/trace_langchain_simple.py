@@ -1,4 +1,3 @@
-import asyncio
 import os
 
 from dotenv import load_dotenv
@@ -33,6 +32,15 @@ async def amain():
     )
 
 
+def struc_main():
+    for chunk in llm.stream(
+        "what color is the sky?",
+        config={"callbacks": [handler]},
+    ):
+        print(chunk.content, end=" ", flush=True)
+
+
 if __name__ == "__main__":
     print(main())
-    print(asyncio.run(amain()))
+    # print(asyncio.run(amain()))
+    # struc_main()

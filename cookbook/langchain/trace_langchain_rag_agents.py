@@ -1,15 +1,15 @@
 import os
 
 from dotenv import load_dotenv
-from langchain.agents.agent_toolkits import create_conversational_retrieval_agent, create_retriever_tool
-from langchain.chat_models import ChatOpenAI
-from langchain.document_loaders import TextLoader
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.text_splitter import CharacterTextSplitter
-from langchain.vectorstores import FAISS
+from langchain.agents.agent_toolkits import create_conversational_retrieval_agent
+from langchain_community.document_loaders import TextLoader
+from langchain_community.vectorstores import FAISS
+from langchain_core.tools import create_retriever_tool
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_text_splitters import CharacterTextSplitter
 
 from parea import Parea
-from parea.utils.trace_integrations.langchain import PareaAILangchainTracer
+from parea.utils.trace_integrations.langchain import PareaAILangchainTracer2
 
 load_dotenv()
 
@@ -38,7 +38,9 @@ agent_executor = create_conversational_retrieval_agent(llm, tools)
 
 
 def main():
-    result = agent_executor({"input": "what did the president say about kentaji brown jackson in the most recent state of the union?"}, callbacks=[PareaAILangchainTracer()])
+    result = agent_executor.invoke(
+        {"input": "what did the president say about kentaji brown jackson in the most recent state of the union?"}, config={"callbacks": [PareaAILangchainTracer2()]}
+    )
     print(result)
 
 
