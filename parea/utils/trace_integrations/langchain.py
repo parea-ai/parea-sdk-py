@@ -67,10 +67,11 @@ class PareaAILangchainTracer(LangChainTracer):
     def _set_parea_root_and_parent_trace_id(self, run) -> None:
         self.parent_trace_id = run.id
         if (hasattr(run, "execution_order") and run.execution_order == 1) or run.parent_run_id is None:
+            parea_root_trace_id = get_root_trace_id()
             if parent_trace_id := get_current_trace_id():
                 _experiment_uuid = trace_data.get()[parent_trace_id].experiment_uuid
                 fill_trace_data(str(run.id), {"parent_trace_id": parent_trace_id}, UpdateTraceScenario.LANGCHAIN_CHILD)
-                langchain_to_parea_root_data = {run.id: {"parent_trace_id": parent_trace_id, "root_trace_id": get_root_trace_id(), "experiment_uuid": _experiment_uuid}}
+                langchain_to_parea_root_data = {run.id: {"parent_trace_id": parent_trace_id, "root_trace_id": parea_root_trace_id, "experiment_uuid": _experiment_uuid}}
                 self.client.set_parea_root_and_parent_trace_id(langchain_to_parea_root_data)
 
     def get_parent_trace_id(self) -> UUID:

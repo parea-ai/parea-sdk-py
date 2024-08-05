@@ -42,5 +42,5 @@ def stream_main():
 
 
 if __name__ == "__main__":
-    print(main())
+    # print(main())
     print(asyncio.run(amain()))
