@@ -9,12 +9,12 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_text_splitters import CharacterTextSplitter
 
 from parea import Parea
-from parea.utils.trace_integrations.langchain import PareaAILangchainTracer2
+from parea.utils.trace_integrations.langchain import PareaAILangchainTracer
 
 load_dotenv()
 
 p = Parea(api_key=os.getenv("PAREA_API_KEY"))
-
+h = PareaAILangchainTracer()
 loader = TextLoader("../assets/data/state_of_the_union.txt")
 
 
@@ -38,9 +38,7 @@ agent_executor = create_conversational_retrieval_agent(llm, tools)
 
 
 def main():
-    result = agent_executor.invoke(
-        {"input": "what did the president say about kentaji brown jackson in the most recent state of the union?"}, config={"callbacks": [PareaAILangchainTracer2()]}
-    )
+    result = agent_executor.invoke({"input": "what did the president say about kentaji brown jackson in the most recent state of the union?"}, config={"callbacks": [h]})
     print(result)
 
 
