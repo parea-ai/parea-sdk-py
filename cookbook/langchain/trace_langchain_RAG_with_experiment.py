@@ -132,7 +132,7 @@ dataset = [{"question": q, "target": t} for q, t in zip(eval_questions, eval_ans
 @trace(
     eval_funcs=[
         # these are factory functions that return the actual evaluation functions, so we need to call them
-        answer_matches_target_llm_grader_factory(),
+        answer_matches_target_llm_grader_factory(model="gpt-4o-mini"),
         answer_context_faithfulness_binary_factory(),
         answer_context_faithfulness_statement_level_factory(),
         context_query_relevancy_factory(context_fields=["context"]),
@@ -148,13 +148,13 @@ def main(question: str) -> str:
     # insert the context into the trace as an input so that it can be referenced in the evaluation functions
     # context needs to be retrieved after the chain is invoked
     trace_insert({"inputs": {"context": dc.get_context()}})
-    print(output)
+    # print(output)
     return output
 
 
 if __name__ == "__main__":
     p.experiment(
-        name="NYC_Wiki_RAG2",
+        name="NYC_Wiki_RAG",
         data=dataset,
         func=main,
     ).run()

@@ -13,9 +13,7 @@ from parea.utils.trace_integrations.langchain_utils import RunLikeDict, _as_uuid
 class PareaLangchainClient:
     created: List[RunLikeDict] = []
     updated: List[RunLikeDict] = []
-    _parea_root_trace_id: Optional[str] = None
-    _parea_parent_trace_id: Optional[str] = None
-    _experiment_uuid: Optional[str] = None
+    _langchain_to_parea_root_data: Dict[str, Dict[str, str]] = {}
 
     def __init__(
         self,
@@ -35,7 +33,7 @@ class PareaLangchainClient:
     def create_run(self, *args, **kwargs) -> None:
         pass
 
-    def create_run2(self, run: Run):
+    def create_run_trace(self, run: Run):
         run_create = self._run_transform(run, copy=True)
         self.created.append(run_create)
 
@@ -47,12 +45,10 @@ class PareaLangchainClient:
         for_log: bool = False,
     ) -> dict:
         """Transform the given run object into a dictionary representation.
-
         Args:
             run (Union[ls_schemas.Run, dict]): The run object to transform.
             update (bool, optional): Whether to update the run. Defaults to False.
             copy (bool, optional): Whether to copy the run. Defaults to False.
-
         Returns:
             dict: The transformed run object as a dictionary.
         """
@@ -83,7 +79,7 @@ class PareaLangchainClient:
     def update_run(self, *args, **kwargs) -> None:
         pass
 
-    def update_run2(self, run: Run) -> None:
+    def update_run_trace(self, run: Run) -> None:
         run_update = self._run_transform(run, update=True)
         self.updated.append(run_update)
 
@@ -99,9 +95,9 @@ class PareaLangchainClient:
 
             parent_run_id = run.get("parent_run_id")
             if parent_run_id and parent_run_id in create_by_id:
-                children = set(create_by_id[parent_run_id]["children"])
-                children.add(str(run["id"]))
-                create_by_id[parent_run_id]["children"] = list(children)
+                children = create_by_id[parent_run_id]["children"]
+                if str(run["id"]) not in children:
+                    children.append(str(run["id"]))
 
         # combine post and patch dicts where possible
         if update_dicts and create_dicts:
@@ -109,11 +105,6 @@ class PareaLangchainClient:
             for run in update_dicts:
                 if run["id"] in create_by_id:
                     create_by_id[run["id"]].update({k: v for k, v in run.items() if v is not None})
-                    parent_run_id = run.get("parent_run_id")
-                    if parent_run_id and parent_run_id in create_by_id:
-                        children = set(create_by_id[parent_run_id]["children"])
-                        children.add(str(run["id"]))
-                        create_by_id[parent_run_id]["children"] = list(children)
                 else:
                     standalone_updates.append(run)
             update_dicts = standalone_updates
@@ -129,32 +120,34 @@ class PareaLangchainClient:
                 run["outputs"] = root_output
 
             self.process_log(run)
+
         if update_dicts:
-            print("update_dicts:", _dumps_json(update_dicts), "\n")
+            for run in update_dicts:
+                self.process_log(run)
 
     def stream_log(self, run: Run) -> None:
-        streaming_run: dict = run.dict() if hasattr(run, "dict") and callable(getattr(run, "dict")) else cast(dict, run)
+        streaming_run: dict = self._run_transform(run, for_log=True)
         self.process_log(streaming_run)
 
     def process_log(self, run: dict) -> None:
         run = self._fill_run_with_parea_trace_data(run)
         parea_logger.record_vendor_log(_dumps_json(run), TraceIntegrations.LANGCHAIN)
 
-    def set_parea_root_and_parent_trace_id(self, _parea_root_trace_id, _parea_parent_trace_id, _experiment_uuid) -> None:
-        self._parea_root_trace_id = _parea_root_trace_id
-        self._parea_parent_trace_id = _parea_parent_trace_id
-        self._experiment_uuid = _experiment_uuid
+    def set_parea_root_and_parent_trace_id(self, langchain_to_parea_root_data: dict) -> None:
+        self._langchain_to_parea_root_data.update(langchain_to_parea_root_data)
 
     def _fill_run_with_parea_trace_data(self, run: dict) -> dict:
-        if (run.get("execution_order", None) and run["execution_order"] == 1) or not run.get("parent_run_id", None):
-            run["_parea_parent_trace_id"] = self._parea_parent_trace_id or None
+        is_root = (run.get("execution_order", None) and run["execution_order"] == 1) or not run.get("parent_run_id", None)
+        data = self._langchain_to_parea_root_data.get(run["id"] if is_root else run["trace_id"], {})
+        if is_root:
+            run["parent_run_id"] = data.get("parent_trace_id", run["parent_run_id"])
             run["_session_id"] = self._session_id
             run["_tags"] = self._tags
             run["_metadata"] = self._metadata
             run["_end_user_identifier"] = self._end_user_identifier
             run["_deployment_id"] = self._deployment_id
 
-        run["_parea_root_trace_id"] = self._parea_root_trace_id or None
+        run["trace_id"] = data.get("root_trace_id", run["trace_id"])
         run["project_uuid"] = self.project_uuid
-        run["experiment_uuid"] = self._experiment_uuid
+        run["experiment_uuid"] = data.get("experiment_uuid")
         return run
