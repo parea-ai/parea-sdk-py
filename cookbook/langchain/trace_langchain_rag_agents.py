@@ -14,7 +14,6 @@ from parea.utils.trace_integrations.langchain import PareaAILangchainTracer
 load_dotenv()
 
 p = Parea(api_key=os.getenv("PAREA_API_KEY"))
-h = PareaAILangchainTracer()
 loader = TextLoader("../assets/data/state_of_the_union.txt")
 
 
@@ -38,7 +37,9 @@ agent_executor = create_conversational_retrieval_agent(llm, tools)
 
 
 def main():
-    result = agent_executor.invoke({"input": "what did the president say about kentaji brown jackson in the most recent state of the union?"}, config={"callbacks": [h]})
+    result = agent_executor.invoke(
+        {"input": "what did the president say about kentaji brown jackson in the most recent state of the union?"}, config={"callbacks": [PareaAILangchainTracer()]}
+    )
     print(result)
 
 

@@ -39,18 +39,26 @@ class PareaAILangchainTracer(LangChainTracer):
     def _persist_run(self, run: Run) -> None:
         if is_logging_disabled():
             return
-
-        self._set_parea_root_and_parent_trace_id(run)
-        if self.is_streaming:
-            self.client.stream_log(run)
-        else:
-            self.client.log()
+        try:
+            self._set_parea_root_and_parent_trace_id(run)
+            if self.is_streaming:
+                self.client.stream_log(run)
+            else:
+                self.client.log()
+        except Exception as e:
+            logger.exception(f"Error persisting langchain run: {e}")
 
     def _on_run_create(self, run: Run) -> None:
-        self.client.create_run_trace(run)
+        try:
+            self.client.create_run_trace(run)
+        except Exception as e:
+            logger.exception(f"Error creating langchain run: {e}")
 
     def _on_run_update(self, run: Run) -> None:
-        self.client.update_run_trace(run)
+        try:
+            self.client.update_run_trace(run)
+        except Exception as e:
+            logger.exception(f"Error updating langchain run: {e}")
 
     def on_llm_new_token(self, *args: Any, **kwargs: Any):
         super().on_llm_new_token(*args, **kwargs)
