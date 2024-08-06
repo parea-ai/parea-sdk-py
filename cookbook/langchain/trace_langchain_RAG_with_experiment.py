@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from functools import lru_cache
 from operator import itemgetter
 
 from dotenv import load_dotenv
@@ -30,22 +31,27 @@ handler = PareaAILangchainTracer()
 pinecone = PineconeClient(api_key=os.getenv("PINECONE_API_KEY"), environment=os.getenv("PINECONE_ENVIRONMENT"))
 
 
+@lru_cache()
+def get_docs(url):
+    api_loader = RecursiveUrlLoader(url)
+    raw_documents = api_loader.load()
+
+    # Transformer
+    doc_transformer = Html2TextTransformer()
+    transformed = doc_transformer.transform_documents(raw_documents)
+
+    # Splitter
+    text_splitter = TokenTextSplitter(
+        model_name="gpt-3.5-turbo",
+        chunk_size=2000,
+        chunk_overlap=200,
+    )
+    return text_splitter.split_documents(transformed)
+
+
 class DocumentRetriever:
     def __init__(self, url: str):
-        api_loader = RecursiveUrlLoader(url)
-        raw_documents = api_loader.load()
-
-        # Transformer
-        doc_transformer = Html2TextTransformer()
-        transformed = doc_transformer.transform_documents(raw_documents)
-
-        # Splitter
-        text_splitter = TokenTextSplitter(
-            model_name="gpt-3.5-turbo",
-            chunk_size=2000,
-            chunk_overlap=200,
-        )
-        documents = text_splitter.split_documents(transformed)
+        documents = get_docs(url)
 
         # Define vector store based
         embeddings = OpenAIEmbeddings()
@@ -59,7 +65,7 @@ class DocumentRetriever:
 class DocumentationChain:
     def __init__(self, url):
         retriever = DocumentRetriever(url).get_retriever()
-        model = ChatOpenAI(model="gpt-3.5-turbo-16k", temperature=0)
+        model = ChatOpenAI(model_name="gpt-4o-mini", temperature=0)
         prompt = ChatPromptTemplate.from_messages(
             [
                 (
@@ -126,7 +132,7 @@ dataset = [{"question": q, "target": t} for q, t in zip(eval_questions, eval_ans
 @trace(
     eval_funcs=[
         # these are factory functions that return the actual evaluation functions, so we need to call them
-        answer_matches_target_llm_grader_factory(),
+        answer_matches_target_llm_grader_factory(model="gpt-4o-mini"),
         answer_context_faithfulness_binary_factory(),
         answer_context_faithfulness_statement_level_factory(),
         context_query_relevancy_factory(context_fields=["context"]),
@@ -142,7 +148,7 @@ def main(question: str) -> str:
     # insert the context into the trace as an input so that it can be referenced in the evaluation functions
     # context needs to be retrieved after the chain is invoked
     trace_insert({"inputs": {"context": dc.get_context()}})
-    print(output)
+    # print(output)
     return output
 
 
