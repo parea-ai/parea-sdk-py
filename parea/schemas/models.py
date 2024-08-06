@@ -253,6 +253,26 @@ class TestCase:
     tags: List[str] = field(factory=list)
 
 
+class TestCaseResult(list):
+    def __init__(self, test_cases: Union[TestCase, List[TestCase]]):
+        super().__init__([test_cases] if isinstance(test_cases, TestCase) else test_cases)
+
+    def __getitem__(self, key):
+        result = super().__getitem__(key)
+        if isinstance(key, slice):
+            return TestCaseResult(result)
+        return result
+
+    def get_all_test_case_inputs(self) -> List[Dict[str, str]]:
+        return [case.inputs for case in self]
+
+    def get_all_test_case_targets(self) -> List[str]:
+        return [case.target for case in self if case.target is not None]
+
+    def get_all_test_inputs_and_targets_dict(self) -> List[Dict[str, Any]]:
+        return [{"inputs": case.inputs, "target": case.target} for case in self]
+
+
 @define
 class TestCaseCollection:
     id: int
@@ -261,6 +281,51 @@ class TestCaseCollection:
     last_updated_at: str
     column_names: List[str] = field(factory=list)
     test_cases: Dict[int, TestCase] = field(factory=dict)
+
+    @property
+    def testcases(self) -> TestCaseResult:
+        return TestCaseResult(list(self.test_cases.values()))
+
+    def __getitem__(self, key):
+        return self.testcases[key]
+
+    def filter_testcases(self, **kwargs) -> TestCaseResult:
+        def matches_criteria(case: TestCase) -> bool:
+            for key, value in kwargs.items():
+                if key == "inputs":
+                    if isinstance(value, dict):
+                        if not all(case.inputs.get(k) == v for k, v in value.items()):
+                            return False
+                    elif isinstance(value, list):
+                        for input_filter in value:
+                            input_key, condition_func = input_filter
+                            if input_key not in case.inputs or not condition_func(case.inputs[input_key]):
+                                return False
+                elif key == "tags":
+                    if isinstance(value, dict):
+                        match_type = value.get("match", "any")
+                        tags_to_match = value.get("tags", [])
+                        if match_type == "all":
+                            if not all(tag in case.tags for tag in tags_to_match):
+                                return False
+                        else:  # 'any'
+                            if not any(tag in case.tags for tag in tags_to_match):
+                                return False
+                    elif isinstance(value, list):
+                        if not any(tag in case.tags for tag in value):
+                            return False
+                elif key == "target":
+                    if callable(value):
+                        if not value(case.target):
+                            return False
+                    elif case.target != value:
+                        return False
+                elif not hasattr(case, key) or getattr(case, key) != value:
+                    return False
+            return True
+
+        filtered_cases = [case for case in self.test_cases.values() if matches_criteria(case)]
+        return TestCaseResult(filtered_cases)
 
     def get_all_test_case_inputs(self) -> Iterable[Dict[str, str]]:
         return (test_case.inputs for test_case in self.test_cases.values())
@@ -286,11 +351,14 @@ class TestCaseCollection:
                 function_call = json.loads(target)
                 if isinstance(function_call, List):
                     function_call = function_call[0]
-                if not "arguments" in function_call:
+                if "arguments" not in function_call:
                     # tool use format, need to convert
                     function_call = function_call["function"]
                 function_call["arguments"] = json.dumps(function_call["arguments"])
-                assistant_response = {"role": "assistant", "function_call": function_call}
+                assistant_response = {
+                    "role": "assistant",
+                    "function_call": function_call,
+                }
             except json.JSONDecodeError:
                 assistant_response = {"role": "assistant", "content": target}
             messages.append(assistant_response)
