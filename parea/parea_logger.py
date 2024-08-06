@@ -1,12 +1,10 @@
-from typing import Any, Dict, Optional
-
 import json
 import logging
 import os
+from typing import Any, Dict, Optional
 
 from attrs import asdict, define, field
 from cattrs import structure
-
 from parea.api_client import HTTPClient
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.helpers import serialize_metadata_values
@@ -59,8 +57,11 @@ class PareaLogger:
         )
 
     def record_log(self, data: TraceLog) -> None:
+        print(data)
         data = serialize_metadata_values(data)
         data.project_uuid = self._get_project_uuid()
+        d = asdict(data)
+        print("D", d)
         self._client.request(
             "POST",
             LOG_ENDPOINT,

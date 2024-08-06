@@ -1,6 +1,5 @@
-from typing import Dict, Union
-
 import os
+from typing import Dict, Union
 
 from dotenv import load_dotenv
 
@@ -142,6 +141,11 @@ OPENAI_MODEL_INFO: Dict[str, Dict[str, Union[float, int, Dict[str, int]]]] = {
         "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
     },
     "gpt-4o": {
+        "prompt": 5.0,
+        "completion": 15.0,
+        "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
+    },
+    "gpt-4o-2024-08-06": {
         "prompt": 5.0,
         "completion": 15.0,
         "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},

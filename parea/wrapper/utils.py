@@ -1,19 +1,18 @@
-from typing import Callable, Dict, List, Optional, Union
-
 import json
 import re
 import sys
 from functools import lru_cache, wraps
+from typing import Callable, Dict, List, Optional, Union
 
 import tiktoken
 from openai import __version__ as openai_version
-
 from parea.constants import ALL_NON_AZURE_MODELS_INFO, AZURE_MODEL_INFO, TURN_OFF_PAREA_EVAL_LOGGING
 from parea.parea_logger import parea_logger
 from parea.schemas.log import LLMInputs, Message, ModelParams, Role
 from parea.schemas.models import UpdateTraceScenario
 from parea.utils.trace_utils import fill_trace_data, get_current_trace_id, log_in_thread, trace_data, trace_insert
 from parea.utils.universal_encoder import json_dumps
+from pydantic._internal._model_construction import ModelMetaclass
 
 is_openai_1 = openai_version.startswith("1.")
 if is_openai_1:
@@ -234,6 +233,9 @@ def _resolve_functions(kwargs):
 def _kwargs_to_llm_configuration(kwargs, model=None) -> LLMInputs:
     functions = _resolve_functions(kwargs)
     function_call_default = "auto" if functions else None
+    response_format = kwargs.get("response_format", None)
+    response_format = str(response_format) if isinstance(response_format, ModelMetaclass) else response_format
+
     return LLMInputs(
         model=model or kwargs.get("model", None),
         provider="openai",
@@ -246,7 +248,7 @@ def _kwargs_to_llm_configuration(kwargs, model=None) -> LLMInputs:
             top_p=kwargs.get("top_p", 1.0),
             frequency_penalty=kwargs.get("frequency_penalty", 0.0),
             presence_penalty=kwargs.get("presence_penalty", 0.0),
-            response_format=kwargs.get("response_format", None),
+            response_format=response_format,
         ),
     )
 

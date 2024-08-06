@@ -1,10 +1,8 @@
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
-
 import json
 from enum import Enum
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from attrs import define, field, validators
-
 from parea.schemas import EvaluationResult
 from parea.schemas.log import EvaluatedLog, LLMInputs
 
@@ -261,6 +259,39 @@ class TestCaseCollection:
     last_updated_at: str
     column_names: List[str] = field(factory=list)
     test_cases: Dict[int, TestCase] = field(factory=dict)
+
+    @property
+    def testcases(self) -> List[TestCase]:
+        return list(self.test_cases.values())
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            return self.testcases[key]
+        elif isinstance(key, int):
+            return self.testcases[key]
+        else:
+            raise TypeError("Invalid argument type.")
+
+    def filter_testcases(self, **kwargs) -> List[TestCase]:
+        def matches_criteria(case: TestCase) -> bool:
+            for key, value in kwargs.items():
+                if key == "inputs":
+                    if isinstance(value, dict):
+                        if not all(case.inputs.get(k) == v for k, v in value.items()):
+                            return False
+                    elif isinstance(value, list):
+                        for input_filter in value:
+                            input_key, condition_func = input_filter
+                            if input_key not in case.inputs or not condition_func(case.inputs[input_key]):
+                                return False
+                elif key == "tags":
+                    if not all(tag in case.tags for tag in value):
+                        return False
+                elif not hasattr(case, key) or getattr(case, key) != value:
+                    return False
+            return True
+
+        return [case for case in self.testcases if matches_criteria(case)]
 
     def get_all_test_case_inputs(self) -> Iterable[Dict[str, str]]:
         return (test_case.inputs for test_case in self.test_cases.values())
