@@ -2,8 +2,9 @@ import os
 
 from dotenv import load_dotenv
 from openai import OpenAI
-from parea import Parea
 from pydantic import BaseModel
+
+from parea import Parea
 
 load_dotenv()
 
@@ -18,17 +19,20 @@ class CalendarEvent(BaseModel):
     participants: list[str]
 
 
-completion = client.beta.chat.completions.parse(
-    model="gpt-4o-2024-08-06",
-    messages=[
-        {"role": "system", "content": "Extract the event information."},
-        {"role": "user", "content": "Alice and Bob are going to a science fair on Friday."},
-    ],
-    response_format=CalendarEvent,
-)
+def with_pydantic():
+    completion = client.beta.chat.completions.parse(
+        model="gpt-4o-2024-08-06",
+        messages=[
+            {"role": "system", "content": "Extract the event information."},
+            {"role": "user", "content": "Alice and Bob are going to a science fair on Friday."},
+        ],
+        response_format=CalendarEvent,
+    )
+    event = completion.choices[0].message.parsed
+    print(event)
 
 
-def main():
+def with_json_schema():
     response = client.chat.completions.create(
         model="gpt-4o-2024-08-06",
         messages=[
@@ -60,11 +64,10 @@ def main():
             },
         },
     )
-
     print(response.choices[0].message.content)
 
 
-def main2():
+def with_tools():
     tools = [
         {
             "type": "function",
@@ -101,7 +104,6 @@ def main2():
 
 
 if __name__ == "__main__":
-    # event = completion.choices[0].message.parsed
-    # print(event)
-    # main()
-    main2()
+    with_pydantic()
+    with_json_schema()
+    with_tools()

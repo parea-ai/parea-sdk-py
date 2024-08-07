@@ -1,8 +1,10 @@
-import json
-from enum import Enum
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
+import json
+from enum import Enum
+
 from attrs import define, field, validators
+
 from parea.schemas import EvaluationResult
 from parea.schemas.log import EvaluatedLog, LLMInputs
 

@@ -1,23 +1,24 @@
+from typing import Any, AsyncGenerator, AsyncIterator, Callable, Dict, Generator, Iterator, Optional, Sequence, TypeVar, Union
+
 import json
 import os
 from collections import defaultdict
 from datetime import datetime
-from typing import Any, AsyncGenerator, AsyncIterator, Callable, Dict, Generator, Iterator, Optional, Sequence, TypeVar, \
-    Union
 
 import openai
 from openai import __version__ as openai_version
+
 from parea.helpers import timezone_aware_now
 from parea.utils.universal_encoder import json_dumps
-from parea.wrapper.utils import _calculate_input_tokens, _compute_cost, _format_function_call, \
-    _kwargs_to_llm_configuration, _num_tokens_from_string
+from parea.wrapper.utils import _calculate_input_tokens, _compute_cost, _format_function_call, _kwargs_to_llm_configuration, _num_tokens_from_string
 
 if openai_version.startswith("0."):
     from openai.openai_object import OpenAIObject
     from openai.util import convert_to_openai_object
 else:
-    from openai.types.chat import ChatCompletion as OpenAIObject, ParsedChatCompletionMessage
+    from openai.types.chat import ChatCompletion as OpenAIObject
     from openai.types.chat import ParsedChatCompletion as OpenAIObjectParsed
+    from openai.types.chat import ParsedChatCompletionMessage
 
     def convert_to_openai_object(kwargs) -> OpenAIObject:
         if "id" not in kwargs:
