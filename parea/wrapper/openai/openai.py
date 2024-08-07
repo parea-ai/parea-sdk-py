@@ -17,8 +17,6 @@ if openai_version.startswith("0."):
     from openai.util import convert_to_openai_object
 else:
     from openai.types.chat import ChatCompletion as OpenAIObject
-    from openai.types.chat import ParsedChatCompletion as OpenAIObjectParsed
-    from openai.types.chat import ParsedChatCompletionMessage
 
     def convert_to_openai_object(kwargs) -> OpenAIObject:
         if "id" not in kwargs:
@@ -57,9 +55,16 @@ class OpenAIWrapper:
             original_methods = {"ChatCompletion.create": module_client.ChatCompletion.create, "ChatCompletion.acreate": module_client.ChatCompletion.acreate}
         else:
             try:
-                original_methods = {"chat.completions.create": module_client.chat.completions.create, "beta.chat.completions.parse": module_client.beta.chat.completions.parse}
+                original_methods = {"chat.completions.create": module_client.chat.completions.create}
             except openai.OpenAIError:
                 original_methods = {}
+
+            try:
+                latest_methods = {"beta.chat.completions.parse": module_client.beta.chat.completions.parse}
+                original_methods.update(latest_methods)
+            except Exception:
+                pass
+
         return list(original_methods.keys())
 
     def init(self, log: Callable, cache: Cache = None, module_client=openai):
@@ -271,7 +276,13 @@ class OpenAIWrapper:
 
     @staticmethod
     def _get_output(result: Any, model: Optional[str] = None) -> str:
-        if not isinstance(result, (OpenAIObject, OpenAIObjectParsed)) and isinstance(result, dict):
+        try:
+            from openai.types.chat import ParsedChatCompletion, ParsedChatCompletionMessage
+        except ImportError:
+            ParsedChatCompletion = None
+            ParsedChatCompletionMessage = None
+
+        if not isinstance(result, (OpenAIObject, ParsedChatCompletion)) and isinstance(result, dict):
             result = convert_to_openai_object(
                 {
                     "choices": [

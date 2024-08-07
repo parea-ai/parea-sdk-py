@@ -87,8 +87,6 @@ class UniversalEncoder(json.JSONEncoder):
         except ImportError:
             return None
 
-        from openai import NotGiven
-
         if isinstance(obj, NotGiven):
             return {"not_given": None}
         return None
