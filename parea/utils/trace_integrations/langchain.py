@@ -1,9 +1,11 @@
-import logging
 from typing import Any, Dict, List, Optional, Union
+
+import logging
 from uuid import UUID
 
 from langchain_core.tracers import BaseTracer
 from langchain_core.tracers.schemas import ChainRun, LLMRun, Run, ToolRun
+
 from parea.helpers import is_logging_disabled
 from parea.parea_logger import parea_logger
 from parea.schemas import UpdateTraceScenario

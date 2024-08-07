@@ -1,10 +1,12 @@
+from typing import Any, Dict, Optional
+
 import json
 import logging
 import os
-from typing import Any, Dict, Optional
 
 from attrs import asdict, define, field
 from cattrs import structure
+
 from parea.api_client import HTTPClient
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.helpers import serialize_metadata_values

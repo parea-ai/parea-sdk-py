@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, Callable, Dict, List, Optional, TypedDict, TypeVar, Union
+
 import copy
 import datetime
 import functools
@@ -8,7 +10,6 @@ import logging
 import re
 import uuid
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, TypedDict, TypeVar, Union
 
 from orjson import orjson
 
