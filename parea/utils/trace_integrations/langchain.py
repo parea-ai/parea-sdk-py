@@ -1,11 +1,9 @@
-from typing import Any, Dict, List, Optional, Union
-
 import logging
+from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
 from langchain_core.tracers import BaseTracer
 from langchain_core.tracers.schemas import ChainRun, LLMRun, Run, ToolRun
-
 from parea.helpers import is_logging_disabled
 from parea.parea_logger import parea_logger
 from parea.schemas import UpdateTraceScenario
@@ -46,19 +44,22 @@ class PareaAILangchainTracer(BaseTracer):
     def _persist_run(self, run: Union[Run, LLMRun, ChainRun, ToolRun]) -> None:
         if is_logging_disabled():
             return
-        self.parent_trace_id = run.id
-        # using .dict() since langchain Run class currently set to Pydantic v1
-        data = run.dict()
-        data["_parea_root_trace_id"] = self._parea_root_trace_id or None
-        data["_session_id"] = self._session_id
-        data["_tags"] = self._tags
-        data["_metadata"] = self._metadata
-        data["_end_user_identifier"] = self._end_user_identifier
-        data["_deployment_id"] = self._deployment_id
-        # check if run has an attribute execution order
-        if (hasattr(run, "execution_order") and run.execution_order == 1) or run.parent_run_id is None:
-            data["_parea_parent_trace_id"] = self._parea_parent_trace_id or None
-        parea_logger.record_vendor_log(data, TraceIntegrations.LANGCHAIN)
+        try:
+            self.parent_trace_id = run.id
+            # using .dict() since langchain Run class currently set to Pydantic v1
+            data = run.dict()
+            data["_parea_root_trace_id"] = self._parea_root_trace_id or None
+            data["_session_id"] = self._session_id
+            data["_tags"] = self._tags
+            data["_metadata"] = self._metadata
+            data["_end_user_identifier"] = self._end_user_identifier
+            data["_deployment_id"] = self._deployment_id
+            # check if run has an attribute execution order
+            if (hasattr(run, "execution_order") and run.execution_order == 1) or run.parent_run_id is None:
+                data["_parea_parent_trace_id"] = self._parea_parent_trace_id or None
+            parea_logger.record_vendor_log(data, TraceIntegrations.LANGCHAIN)
+        except Exception as e:
+            logger.exception(f"Error occurred while logging langchain run: {e}", stack_info=True)
 
     def get_parent_trace_id(self) -> UUID:
         return self.parent_trace_id
