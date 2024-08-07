@@ -28,11 +28,80 @@ completion = client.beta.chat.completions.parse(
 )
 
 
+def main():
+    response = client.chat.completions.create(
+        model="gpt-4o-2024-08-06",
+        messages=[
+            {"role": "system", "content": "You are a helpful math tutor. Guide the user through the solution step by step."},
+            {"role": "user", "content": "how can I solve 8x + 7 = -23"},
+        ],
+        response_format={
+            "type": "json_schema",
+            "json_schema": {
+                "name": "math_response",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "steps": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {"explanation": {"type": "string"}, "output": {"type": "string"}},
+                                "required": ["explanation", "output"],
+                                "additionalProperties": False,
+                            },
+                        },
+                        "final_answer": {"type": "string"},
+                    },
+                    "required": ["steps", "final_answer"],
+                    "additionalProperties": False,
+                },
+                "strict": True,
+            },
+        },
+    )
+
+    print(response.choices[0].message.content)
+
+
+def main2():
+    tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "get_delivery_date",
+                "description": "Get the delivery date for a customer's order. Call this whenever you need to know the delivery date, for example when a customer asks 'Where is my package'",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "order_id": {
+                            "type": "string",
+                            "description": "The customer's order ID.",
+                        },
+                    },
+                    "required": ["order_id"],
+                    "additionalProperties": False,
+                },
+            },
+            "strict": True,
+        }
+    ]
+
+    messages = [
+        {"role": "system", "content": "You are a helpful customer support assistant. Use the supplied tools to assist the user."},
+        {"role": "user", "content": "Hi, can you tell me the delivery date for my order with id 5?"},
+    ]
+
+    response = client.chat.completions.create(
+        model="gpt-4o-2024-08-06",
+        messages=messages,
+        tools=tools,
+    )
+    print(response.choices[0].message.tool_calls)
+
+
 if __name__ == "__main__":
-    event = completion.choices[0].message.parsed
-    print(type(event))
-    print(event)
-
-
-TraceLog(configuration=LLMInputs(model='gpt-4o-2024-08-06', provider='openai', model_params=ModelParams(temp=1.0, top_p=1.0, frequency_penalty=0.0, presence_penalty=0.0, max_length=None, response_format="<class '__main__.CalendarEvent'>", safe_prompt=None), messages=[{'role': 'system', 'content': 'Extract the event information.'}, {'role': 'user', 'content': 'Alice and Bob are going to a science fair on Friday.'}], history=None, functions=[], function_call=None), inputs=None, output='{"name":"Science Fair","date":"Friday","participants":["Alice","Bob"]}', target=None, latency=1.771622, time_to_first_token=None, input_tokens=32, output_tokens=17, total_tokens=49, cost=0.000415, scores=[], trace_id='e894b955-c844-49f5-8480-71b0841f10b5', parent_trace_id='e894b955-c844-49f5-8480-71b0841f10b5', root_trace_id='e894b955-c844-49f5-8480-71b0841f10b5', start_timestamp='2024-08-06T20:26:42.365024+00:00', organization_id=None, project_uuid=None, error=None, status='success', deployment_id=None, cache_hit=False, output_for_eval_metrics=None, evaluation_metric_names=[], apply_eval_frac=1.0, feedback_score=None, trace_name='llm-openai', children=['600b25b7-417a-4409-8f96-afe8dd8fe8cf'], end_timestamp='2024-08-06T20:26:44.136646+00:00', end_user_identifier=None, session_id=None, metadata=None, tags=None, experiment_uuid=None, images=[], comments=None, annotations=None, depth=0, execution_order=0)
-D {'configuration': {'model': 'gpt-4o-2024-08-06', 'provider': 'openai', 'model_params': {'temp': 1.0, 'top_p': 1.0, 'frequency_penalty': 0.0, 'presence_penalty': 0.0, 'max_length': None, 'response_format': "<class '__main__.CalendarEvent'>", 'safe_prompt': None}, 'messages': [{'role': 'system', 'content': 'Extract the event information.'}, {'role': 'user', 'content': 'Alice and Bob are going to a science fair on Friday.'}], 'history': None, 'functions': [], 'function_call': None}, 'inputs': None, 'output': '{"name":"Science Fair","date":"Friday","participants":["Alice","Bob"]}', 'target': None, 'latency': 1.771622, 'time_to_first_token': None, 'input_tokens': 32, 'output_tokens': 17, 'total_tokens': 49, 'cost': 0.000415, 'scores': [], 'trace_id': 'e894b955-c844-49f5-8480-71b0841f10b5', 'parent_trace_id': 'e894b955-c844-49f5-8480-71b0841f10b5', 'root_trace_id': 'e894b955-c844-49f5-8480-71b0841f10b5', 'start_timestamp': '2024-08-06T20:26:42.365024+00:00', 'organization_id': None, 'project_uuid': '1c4dfe49-bf84-11ee-92b3-3a9b36099f82', 'error': None, 'status': 'success', 'deployment_id': None, 'cache_hit': False, 'output_for_eval_metrics': None, 'evaluation_metric_names': [], 'apply_eval_frac': 1.0, 'feedback_score': None, 'trace_name': 'llm-openai', 'children': ['600b25b7-417a-4409-8f96-afe8dd8fe8cf'], 'end_timestamp': '2024-08-06T20:26:44.136646+00:00', 'end_user_identifier': None, 'session_id': None, 'metadata': None, 'tags': None, 'experiment_uuid': None, 'images': [], 'comments': None, 'annotations': None, 'depth': 0, 'execution_order': 0}
+    # event = completion.choices[0].message.parsed
+    # print(event)
+    # main()
+    main2()

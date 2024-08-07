@@ -80,6 +80,18 @@ class UniversalEncoder(json.JSONEncoder):
         else:
             return None
 
+    def handle_openai_not_given(self, obj) -> Any:
+        try:
+            from openai import NotGiven
+        except ImportError:
+            return None
+
+        from openai import NotGiven
+
+        if isinstance(obj, NotGiven):
+            return {"not_given": None}
+        return None
+
     def default(self, obj: Any):
         if isinstance(obj, str):
             return obj
@@ -115,6 +127,8 @@ class UniversalEncoder(json.JSONEncoder):
             return obj.to_dict(orient="records")
         elif dspy_response := self.handle_dspy_response(obj):
             return dspy_response
+        elif is_openai_not_given := self.handle_openai_not_given(obj):
+            return is_openai_not_given["not_given"]
         elif callable(obj):
             try:
                 return f"<callable {obj.__name__}>"

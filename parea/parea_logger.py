@@ -57,11 +57,8 @@ class PareaLogger:
         )
 
     def record_log(self, data: TraceLog) -> None:
-        print(data)
         data = serialize_metadata_values(data)
         data.project_uuid = self._get_project_uuid()
-        d = asdict(data)
-        print("D", d)
         self._client.request(
             "POST",
             LOG_ENDPOINT,

@@ -1,5 +1,3 @@
-from typing import Any, AsyncGenerator, AsyncIterator, Callable, Dict, Generator, Iterator, List, Optional, Tuple
-
 import contextvars
 import inspect
 import json
@@ -11,6 +9,7 @@ from collections import ChainMap
 from datetime import datetime
 from functools import wraps
 from random import random
+from typing import Any, AsyncGenerator, AsyncIterator, Callable, Dict, Generator, Iterator, List, Optional, Tuple
 
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID, TURN_OFF_PAREA_EVAL_LOGGING
 from parea.helpers import gen_trace_id, is_logging_disabled, timezone_aware_now
@@ -49,7 +48,9 @@ def log_in_thread(target_func: Callable, data: Dict[str, Any]):
     logging_thread.start()
 
 
-def merge(old, new):
+def merge(old, new, key=None):
+    if key == "error" and old:
+        return json_dumps([old, new])
     if isinstance(old, dict) and isinstance(new, dict):
         return dict(ChainMap(new, old))
     if isinstance(old, list) and isinstance(new, list):
@@ -112,7 +113,7 @@ def trace_insert(data: Dict[str, Any], trace_id: Optional[str] = None):
             return
         for key, new_value in data.items():
             existing_value = current_trace_data.__getattribute__(key)
-            current_trace_data.__setattr__(key, merge(existing_value, new_value) if existing_value else new_value)
+            current_trace_data.__setattr__(key, merge(existing_value, new_value, key) if existing_value else new_value)
     except Exception as e:
         logger.debug(f"Error occurred inserting data into trace log, {e}", exc_info=e)
 
