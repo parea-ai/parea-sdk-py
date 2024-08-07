@@ -12,6 +12,7 @@ from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.helpers import serialize_metadata_values
 from parea.schemas.log import TraceIntegrations
 from parea.schemas.models import CreateGetProjectResponseSchema, TraceLog, UpdateLog
+from parea.utils.trace_integrations.langchain_utils import _dumps_json
 from parea.utils.universal_encoder import json_dumps
 
 logger = logging.getLogger()
@@ -90,7 +91,7 @@ class PareaLogger:
         self._client.request(
             "POST",
             VENDOR_LOG_ENDPOINT.format(vendor=vendor.value),
-            data=json.loads(json_dumps(data)),  # uuid is not serializable
+            data=json.loads(_dumps_json(data)),  # uuid is not serializable
         )
 
     async def arecord_vendor_log(self, data: Dict[str, Any], vendor: TraceIntegrations) -> None:
@@ -101,7 +102,7 @@ class PareaLogger:
         await self._client.request_async(
             "POST",
             VENDOR_LOG_ENDPOINT.format(vendor=vendor.value),
-            data=json.loads(json_dumps(data)),  # uuid is not serializable
+            data=json.loads(_dumps_json(data)),  # uuid is not serializable
         )
 
 
