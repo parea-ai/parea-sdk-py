@@ -276,13 +276,15 @@ class OpenAIWrapper:
 
     @staticmethod
     def _get_output(result: Any, model: Optional[str] = None) -> str:
+        PARSED_CHAT_COMPLETION_AVAILABLE = False
         try:
-            from openai.types.chat import ParsedChatCompletion, ParsedChatCompletionMessage
+            from openai.types.chat import ParsedChatCompletionMessage
+
+            PARSED_CHAT_COMPLETION_AVAILABLE = True
         except ImportError:
-            ParsedChatCompletion = None
             ParsedChatCompletionMessage = None
 
-        if not isinstance(result, (OpenAIObject, ParsedChatCompletion)) and isinstance(result, dict):
+        if isinstance(result, dict):
             result = convert_to_openai_object(
                 {
                     "choices": [
@@ -295,8 +297,8 @@ class OpenAIWrapper:
                 }
             )
         response_message = result.choices[0].message
-        if isinstance(response_message, ParsedChatCompletionMessage):
-            completion = response_message.parsed.model_dump_json() if response_message.parsed else ""
+        if PARSED_CHAT_COMPLETION_AVAILABLE and isinstance(response_message, ParsedChatCompletionMessage):
+            completion = json_dumps(response_message.parsed) if response_message.parsed else ""
         elif not response_message.get("content", None) if is_old_openai else not response_message.content:
             completion = OpenAIWrapper._format_function_call(response_message)
         else:
