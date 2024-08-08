@@ -28,10 +28,6 @@ else:
         if "model" not in kwargs:
             kwargs["model"] = "model"
         if "choices" in kwargs and isinstance(kwargs["choices"], list) and len(kwargs["choices"]) > 0:
-            if "message" in kwargs["choices"][0]:
-                if "parsed" in kwargs["choices"][0]["message"]:
-                    kwargs["choices"][0]["message"]["content"] = json_dumps(kwargs["choices"][0]["message"]["parsed"])
-
             if "finish_reason" not in kwargs["choices"][0]:
                 kwargs["choices"][0]["finish_reason"] = "stop"
 
@@ -289,7 +285,7 @@ class OpenAIWrapper:
         except ImportError:
             ParsedChatCompletionMessage = None
 
-        if not isinstance(result, OpenAIObject) and isinstance(result, dict):
+        if isinstance(result, dict):
             result = convert_to_openai_object(
                 {
                     "choices": [
@@ -303,7 +299,7 @@ class OpenAIWrapper:
             )
         response_message = result.choices[0].message
         if PARSED_CHAT_COMPLETION_AVAILABLE and isinstance(response_message, ParsedChatCompletionMessage):
-            completion = response_message.parsed.model_dump_json() if response_message.parsed else ""
+            completion = json_dumps(response_message.parsed) if response_message.parsed else ""
         elif not response_message.get("content", None) if is_old_openai else not response_message.content:
             completion = OpenAIWrapper._format_function_call(response_message)
         else:
