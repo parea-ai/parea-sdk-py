@@ -30,7 +30,6 @@ else:
         if "choices" in kwargs and isinstance(kwargs["choices"], list) and len(kwargs["choices"]) > 0:
             if "finish_reason" not in kwargs["choices"][0]:
                 kwargs["choices"][0]["finish_reason"] = "stop"
-
         return OpenAIObject(**kwargs)
 
 
