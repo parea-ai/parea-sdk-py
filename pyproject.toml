@@ -36,7 +36,7 @@ classifiers = [
 python = "^3.8.1"
 httpx = ">=0.25.0"
 python-dotenv = "^1.0.1"
-poetry-plugin-dotenv = "^0.6.3"
+poetry-plugin-dotenv = ">=0.6.3,<2.3.0"
 pyupgrade = "^3.9.0"
 jupyter = "^1.0.0"
 contextvars = "^2.4"
