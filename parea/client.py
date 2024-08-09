@@ -14,7 +14,7 @@ from parea.api_client import HTTPClient
 from parea.cache.cache import Cache
 from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.experiment.datasets import create_test_cases, create_test_collection
-from parea.helpers import gen_trace_id, serialize_metadata_values, structure_trace_log_from_api, structure_trace_logs_from_api
+from parea.helpers import create_paginated_trace_logs_response_from_api, gen_trace_id, serialize_metadata_values, structure_trace_log_from_api, structure_trace_logs_from_api
 from parea.parea_logger import parea_logger
 from parea.schemas import EvaluationResult
 from parea.schemas.models import (
@@ -30,7 +30,9 @@ from parea.schemas.models import (
     FeedbackRequest,
     FinishExperimentRequestSchema,
     ListExperimentUUIDsFilters,
+    PaginatedTraceLogsResponse,
     ProjectSchema,
+    QueryParams,
     TestCaseCollection,
     TraceLogFilters,
     TraceLogTree,
@@ -59,6 +61,7 @@ UPDATE_TEST_CASE_ENDPOINT = "/update_test_case/{dataset_id}/{test_case_id}"
 GET_TRACE_LOG_ENDPOINT = "/trace_log/{trace_id}"
 LIST_EXPERIMENTS_ENDPOINT = "/experiments"
 GET_EXPERIMENT_LOGS_ENDPOINT = "/experiment/{experiment_uuid}/trace_logs"
+GET_TRACE_LOGS_ENDPOINT = "/get_trace_logs"
 
 
 @define
@@ -523,6 +526,14 @@ class Parea:
         response_json = response.json()
         result = response_json[0] if isinstance(response_json, list) else None
         return structure(result, ExperimentWithPinnedStatsSchema)
+
+    def get_trace_logs(self, query_params: QueryParams) -> PaginatedTraceLogsResponse:
+        response = self._client.request("POST", GET_TRACE_LOGS_ENDPOINT, data=asdict(query_params))
+        return create_paginated_trace_logs_response_from_api(response.json())
+
+    async def aget_trace_logs(self, query_params: QueryParams) -> PaginatedTraceLogsResponse:
+        response = await self._client.request_async("POST", GET_TRACE_LOGS_ENDPOINT, data=asdict(query_params))
+        return create_paginated_trace_logs_response_from_api(response.json())
 
 
 def patch_openai_client_classes(openai_client, parea_client: Parea):
