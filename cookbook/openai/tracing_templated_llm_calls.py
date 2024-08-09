@@ -16,6 +16,7 @@ response = client.chat.completions.create(
     messages=[
         {"role": "user", "content": "Make up {{number}} people."},
     ],
-    template_inputs={"number": "three"},
+    template_inputs={"number": "three"},  # with Parea wrapper, we can specify template_inputs which will appear as inputs and are used to fill-in the templated messages
+    # metadata={"template_id": "make-up-people-v1"},  # via Parea wrapper, can associate request with any metadata
 )
 print(response.choices[0].message.content)
