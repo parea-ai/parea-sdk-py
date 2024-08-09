@@ -480,5 +480,41 @@ class FilterOperator(str, Enum):
 @define
 class TraceLogFilters:
     filter_field: Optional[str] = None
+    filter_key: Optional[str] = None
     filter_operator: Optional[FilterOperator] = None
     filter_value: Optional[str] = None
+
+
+class TimeRange(str, Enum):
+    NA = "na"
+    LAST_1_HOUR = "1h"
+    LAST_3_HOURS = "3h"
+    LAST_6_HOURS = "6h"
+    LAST_24_HOURS = "24h"
+    LAST_7_DAYS = "7d"
+    LAST_1_MONTH = "1m"
+    LAST_3_MONTHS = "3m"
+    LAST_6_MONTHS = "6m"
+    LAST_12_MONTHS = "1y"
+
+
+@define
+class QueryParams:
+    project_name: str
+    filter_field: Optional[str] = None
+    filter_key: Optional[str] = None
+    filter_operator: Optional[FilterOperator] = None
+    filter_value: Optional[str] = None
+    page: int = 1
+    page_size: int = 20
+    time_range: TimeRange = TimeRange.NA
+    status: Optional[str] = None
+
+
+@define
+class PaginatedTraceLogsResponse:
+    total: int
+    page: int
+    total_pages: int
+    page_size: int
+    results: List[TraceLogTree]

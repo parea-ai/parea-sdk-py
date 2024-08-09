@@ -11,7 +11,7 @@ from attr import asdict, fields_dict
 from cattrs import GenConverter
 
 from parea.constants import ADJECTIVES, NOUNS, TURN_OFF_PAREA_LOGGING
-from parea.schemas.models import Completion, TraceLog, TraceLogTree, UpdateLog
+from parea.schemas.models import Completion, PaginatedTraceLogsResponse, TraceLog, TraceLogTree, UpdateLog
 from parea.utils.universal_encoder import json_dumps
 
 
@@ -103,11 +103,33 @@ def structure_trace_log_from_api(d: dict) -> TraceLogTree:
     converter.register_structure_hook(Union[str, Dict[str, str], None], structure_union_type)
     converter.register_structure_hook(float, structure_float_or_none)
     converter.register_structure_hook(Optional[float], structure_float_or_none)
+
+    def structure_trace_log_tree(data, _):
+        kwargs = {}
+        for key, value in data.items():
+            if key == "children_logs":
+                kwargs["children_logs"] = [structure_trace_log_tree(child, TraceLogTree) for child in value]
+            elif key in fields_dict(TraceLogTree):
+                kwargs[key] = value
+        return TraceLogTree(**kwargs)
+
+    converter.register_structure_hook(TraceLogTree, structure_trace_log_tree)
+
     return converter.structure(d, TraceLogTree)
 
 
 def structure_trace_logs_from_api(data: List[dict]) -> List[TraceLogTree]:
     return [structure_trace_log_from_api(d) for d in data]
+
+
+def create_paginated_trace_logs_response_from_api(data: dict) -> PaginatedTraceLogsResponse:
+    return PaginatedTraceLogsResponse(
+        total=data["total"],
+        page=data["page"],
+        total_pages=data["total_pages"],
+        page_size=data["page_size"],
+        results=structure_trace_logs_from_api(data["results"]),
+    )
 
 
 PAREA_LOGGING_DISABLED = False
