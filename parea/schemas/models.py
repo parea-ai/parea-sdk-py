@@ -27,6 +27,7 @@ class Completion:
     log_omit_inputs: bool = False
     log_omit_outputs: bool = False
     log_omit: bool = False
+    log_sample_rate: float = 1.0
     experiment_uuid: Optional[str] = None
     project_uuid: str = "default"
 
@@ -123,6 +124,7 @@ class TraceLog(EvaluatedLog):
     output_for_eval_metrics: Optional[str] = None
     evaluation_metric_names: Optional[List[str]] = field(factory=list)
     apply_eval_frac: float = 1.0
+    log_sample_rate: float = 1.0
     feedback_score: Optional[float] = None
 
     # info filled from decorator

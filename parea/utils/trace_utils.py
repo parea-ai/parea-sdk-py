@@ -130,8 +130,11 @@ def fill_trace_data(trace_id: str, data: Dict[str, Any], scenario: UpdateTraceSc
             trace_data.get()[trace_id].error = data["error"]
             trace_data.get()[trace_id].status = "error"
         elif scenario == UpdateTraceScenario.CHAIN:
-            trace_data.get()[trace_id].parent_trace_id = data["parent_trace_id"]
-            trace_data.get()[data["parent_trace_id"]].children.append(trace_id)
+            parent_trace_id = data["parent_trace_id"]
+            trace_data.get()[trace_id].parent_trace_id = parent_trace_id
+            trace_data.get()[parent_trace_id].children.append(trace_id)
+            if trace_data.get()[parent_trace_id].log_sample_rate != trace_data.get()[trace_id].log_sample_rate:
+                trace_data.get()[trace_id].log_sample_rate = trace_data.get()[parent_trace_id].log_sample_rate
         elif scenario == UpdateTraceScenario.LANGCHAIN_CHILD:
             trace_data.get()[data["parent_trace_id"]].children.append(trace_id)
         elif scenario == UpdateTraceScenario.OPENAICONFIG:
@@ -162,6 +165,7 @@ def trace(
     log_omit_outputs: Optional[bool] = False,
     overwrite_trace_id: Optional[str] = None,
     overwrite_inputs: Optional[Dict[str, Any]] = None,
+    log_sample_rate: Optional[float] = 1.0,
 ):
     def init_trace(func_name, _parea_target_field, args, kwargs, func) -> Tuple[str, datetime, contextvars.Token]:
         start_time = timezone_aware_now()
@@ -224,6 +228,7 @@ def trace(
                 deployment_id=deployment_id,
                 depth=depth,
                 execution_order=execution_order,
+                log_sample_rate=log_sample_rate,
             )
 
             if parent_trace_id:
