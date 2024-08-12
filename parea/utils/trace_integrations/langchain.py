@@ -24,7 +24,7 @@ class PareaAILangchainTracer(BaseTracer):
     _metadata: Dict[str, Any] = {}
     _end_user_identifier: Optional[str] = None
     _deployment_id: Optional[str] = None
-    _log_sample_rate: Optional[float] = 1.0,
+    _log_sample_rate: Optional[float] = 1.0
 
     def __init__(
         self,
