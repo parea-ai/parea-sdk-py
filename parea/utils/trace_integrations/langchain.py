@@ -24,6 +24,7 @@ class PareaAILangchainTracer(BaseTracer):
     _metadata: Dict[str, Any] = {}
     _end_user_identifier: Optional[str] = None
     _deployment_id: Optional[str] = None
+    _log_sample_rate: Optional[float] = 1.0,
 
     def __init__(
         self,
@@ -32,12 +33,14 @@ class PareaAILangchainTracer(BaseTracer):
         metadata: Optional[Dict[str, Any]] = None,
         end_user_identifier: Optional[str] = None,
         deployment_id: Optional[str] = None,
+        log_sample_rate: Optional[float] = 1.0,
         **kwargs: Any,
     ):
         super().__init__(**kwargs)
         self._session_id = session_id
         self._end_user_identifier = end_user_identifier
         self._deployment_id = deployment_id
+        self._log_sample_rate = log_sample_rate
         if tags:
             self._tags = tags
         if metadata:
@@ -56,6 +59,7 @@ class PareaAILangchainTracer(BaseTracer):
             data["_metadata"] = self._metadata
             data["_end_user_identifier"] = self._end_user_identifier
             data["_deployment_id"] = self._deployment_id
+            data["_log_sample_rate"] = self._log_sample_rate
             # check if run has an attribute execution order
             if (hasattr(run, "execution_order") and run.execution_order == 1) or run.parent_run_id is None:
                 data["_parea_parent_trace_id"] = self._parea_parent_trace_id or None
