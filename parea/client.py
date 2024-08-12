@@ -76,31 +76,21 @@ class Parea:
         self._client.set_api_key(self.api_key)
         parea_logger.set_client(self._client)
 
-        if self.api_key:
-            try:
-                project_api_response: CreateGetProjectResponseSchema = self._create_or_get_project(self.project_name)
+        if not self.api_key:
+            logger.warning("No API key found. Parea client will not be able to send data to the Parea API.")
+
+    def _get_project_uuid(self) -> str:
+        try:
+            if not (self._project and self._project.uuid):
+                project_api_response: CreateGetProjectResponseSchema = self._create_or_get_project(self.project_name or "default")
                 if project_api_response.was_created:
                     print(f"Created project {project_api_response.name}")
                 self._project = structure(asdict(project_api_response), ProjectSchema)
                 parea_logger.set_project_uuid(self._project.uuid, self.project_name)
-            except httpx.HTTPStatusError as e:
-                if e.response.status_code == 502:
-                    logger.error("Error creating Parea project please try again")
-                else:
-                    raise
-        else:
-            logger.warning("No API key found. Parea client will not be able to send data to the Parea API.")
-
-    def _get_project_uuid(self) -> Optional[str]:
-        if not (self._project and self._project.uuid):
-            project_api_response: CreateGetProjectResponseSchema = self._create_or_get_project(self.project_name or "default")
-            self._project = structure(asdict(project_api_response), ProjectSchema)
-            parea_logger.set_project_uuid(self._project.uuid, self.project_name)
-        try:
             return self._project.uuid
         except Exception as e:
-            logger.error(f"Parea: Error getting project uuid for project {self.project_name}: {e}")
-            return None
+            logger.error(f"Parea: Error getting project UUID for project {self.project_name}: {e}")
+            raise
 
     def wrap_openai_client(self, client: "OpenAI", integration: Optional[str] = None) -> None:
         """Only necessary for instance client with OpenAI version >= 1.0.0"""
