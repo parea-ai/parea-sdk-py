@@ -166,6 +166,7 @@ def trace(
     overwrite_trace_id: Optional[str] = None,
     overwrite_inputs: Optional[Dict[str, Any]] = None,
     log_sample_rate: Optional[float] = 1.0,
+    fn_transform_generator_outputs: Callable[[List[Any]], str] = None,
 ):
     def init_trace(func_name, _parea_target_field, args, kwargs, func) -> Tuple[str, datetime, contextvars.Token]:
         start_time = timezone_aware_now()
@@ -258,24 +259,60 @@ def trace(
         thread_eval_funcs_then_log(trace_id, eval_funcs)
         trace_context.reset(context_token)
 
+    def _handle_iterator_cleanup(items, trace_id, start_time, context_token):
+        if fn_transform_generator_outputs:
+            result = fn_transform_generator_outputs(items)
+        elif all(isinstance(item, str) for item in items):
+            result = "".join(items)
+        else:
+            result = ""
+        if not is_logging_disabled() and not log_omit_outputs:
+            fill_trace_data(trace_id, {"result": result}, UpdateTraceScenario.RESULT)
+
+        cleanup_trace(trace_id, start_time, context_token)
+
+    async def _wrap_async_iterator(iterator, trace_id, start_time, context_token):
+        items = []
+        try:
+            async for item in iterator:
+                items.append(item)
+                yield item
+        finally:
+            _handle_iterator_cleanup(items, trace_id, start_time, context_token)
+
+    def _wrap_sync_iterator(iterator, trace_id, start_time, context_token):
+        items = []
+        try:
+            for item in iterator:
+                items.append(item)
+                yield item
+        finally:
+            _handle_iterator_cleanup(items, trace_id, start_time, context_token)
+
     def decorator(func):
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
             _parea_target_field = kwargs.pop("_parea_target_field", None)
             trace_id, start_time, context_token = init_trace(func.__name__, _parea_target_field, args, kwargs, func)
             output_as_list = check_multiple_return_values(func)
+            result = None
             try:
                 result = await func(*args, **kwargs)
                 if not is_logging_disabled() and not log_omit_outputs:
                     fill_trace_data(trace_id, {"result": result, "output_as_list": output_as_list, "eval_funcs_names": eval_funcs_names}, UpdateTraceScenario.RESULT)
-                return result
             except Exception as e:
                 logger.error(f"Error occurred in function {func.__name__}, {e}")
                 fill_trace_data(trace_id, {"error": traceback.format_exc()}, UpdateTraceScenario.ERROR)
                 raise e
             finally:
                 try:
-                    cleanup_trace(trace_id, start_time, context_token)
+                    if inspect.isasyncgen(result):
+                        return _wrap_async_iterator(result, trace_id, start_time, context_token)
+                    else:
+                        cleanup_trace(trace_id, start_time, context_token)
+                        # to not swallow any exceptions
+                        if result is not None:
+                            return result
                 except Exception as e:
                     logger.debug(f"Error occurred cleaning up trace for function {func.__name__}, {e}", exc_info=e)
 
@@ -284,18 +321,24 @@ def trace(
             _parea_target_field = kwargs.pop("_parea_target_field", None)
             trace_id, start_time, context_token = init_trace(func.__name__, _parea_target_field, args, kwargs, func)
             output_as_list = check_multiple_return_values(func)
+            result = None
             try:
                 result = func(*args, **kwargs)
                 if not is_logging_disabled() and not log_omit_outputs:
                     fill_trace_data(trace_id, {"result": result, "output_as_list": output_as_list, "eval_funcs_names": eval_funcs_names}, UpdateTraceScenario.RESULT)
-                return result
             except Exception as e:
                 logger.error(f"Error occurred in function {func.__name__}, {e}")
                 fill_trace_data(trace_id, {"error": traceback.format_exc()}, UpdateTraceScenario.ERROR)
                 raise e
             finally:
                 try:
-                    cleanup_trace(trace_id, start_time, context_token)
+                    if inspect.isgenerator(result):
+                        return _wrap_sync_iterator(result, trace_id, start_time, context_token)
+                    else:
+                        cleanup_trace(trace_id, start_time, context_token)
+                        # to not swallow any exceptions
+                        if result is not None:
+                            return result
                 except Exception as e:
                     logger.debug(f"Error occurred cleaning up trace for function {func.__name__}, {e}", exc_info=e)
 
