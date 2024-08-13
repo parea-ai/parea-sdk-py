@@ -5,8 +5,7 @@ from copy import deepcopy
 from datetime import datetime
 
 from anthropic import AsyncMessageStreamManager, AsyncStream, Client, MessageStreamManager, Stream
-from anthropic.types import ContentBlockDeltaEvent, Message, MessageDeltaEvent, MessageStartEvent, TextBlock, \
-    InputJSONDelta, ToolUseBlock
+from anthropic.types import ContentBlockDeltaEvent, InputJSONDelta, Message, MessageDeltaEvent, MessageStartEvent, TextBlock, ToolUseBlock
 
 from parea.cache.cache import Cache
 from parea.helpers import timezone_aware_now

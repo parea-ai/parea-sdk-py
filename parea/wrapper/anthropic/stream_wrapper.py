@@ -3,7 +3,7 @@ from __future__ import annotations
 from types import TracebackType
 from typing import Callable
 
-from anthropic import AsyncMessageStreamManager, MessageStreamManager, Stream, AsyncStream
+from anthropic import AsyncMessageStreamManager, AsyncStream, MessageStreamManager, Stream
 from anthropic.types import Message
 
 

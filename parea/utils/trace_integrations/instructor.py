@@ -1,7 +1,7 @@
-import logging
-from typing import Any, Callable, Mapping, Tuple, List
+from typing import Any, Callable, List, Mapping, Tuple
 
 import contextvars
+import logging
 from json import JSONDecodeError
 
 from instructor.retry import InstructorRetryException
@@ -91,13 +91,7 @@ class _RetryWrapper:
                     logger.warning(f"Failed to serialize generator output: {e}", exc_info=e)
                     return ""
 
-            return trace(
-                name=trace_name,
-                overwrite_trace_id=trace_id,
-                overwrite_inputs=inputs,
-                metadata=metadata,
-                fn_transform_generator_outputs=fn_transform_generator_outputs
-            )(
+            return trace(name=trace_name, overwrite_trace_id=trace_id, overwrite_inputs=inputs, metadata=metadata, fn_transform_generator_outputs=fn_transform_generator_outputs)(
                 wrapped
             )(*args, **kwargs)
         except (InstructorRetryException, ValidationError, JSONDecodeError) as e:

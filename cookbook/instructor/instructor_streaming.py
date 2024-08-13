@@ -1,9 +1,9 @@
 import os
 
+import anthropic
 import instructor
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
-import anthropic
 from pydantic import BaseModel
 
 from parea import Parea, trace
@@ -15,7 +15,7 @@ ant_client = anthropic.AsyncClient()
 
 p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 
-p.wrap_openai_client(oai_aclient, 'instructor')
+p.wrap_openai_client(oai_aclient, "instructor")
 p.wrap_anthropic_client(ant_client)
 
 oai_aclient = instructor.from_openai(oai_aclient)
