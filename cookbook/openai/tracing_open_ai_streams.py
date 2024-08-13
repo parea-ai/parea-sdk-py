@@ -18,9 +18,15 @@ p.wrap_openai_client(aclient)
 
 
 @trace
-def call_openai_stream(data: dict):
+def _call_openai_stream(data: dict):
     data["stream"] = True
     stream = client.chat.completions.create(**data)
+    for chunk in stream:
+        yield chunk
+
+
+def call_openai_stream(data: dict):
+    stream = _call_openai_stream(data)
     for chunk in stream:
         print(chunk.choices[0].delta or "")
 
