@@ -5,7 +5,8 @@ from copy import deepcopy
 from datetime import datetime
 
 from anthropic import AsyncMessageStreamManager, AsyncStream, Client, MessageStreamManager, Stream
-from anthropic.types import ContentBlockDeltaEvent, Message, MessageDeltaEvent, MessageStartEvent, TextBlock
+from anthropic.types import ContentBlockDeltaEvent, Message, MessageDeltaEvent, MessageStartEvent, TextBlock, \
+    InputJSONDelta, ToolUseBlock
 
 from parea.cache.cache import Cache
 from parea.helpers import timezone_aware_now
@@ -43,8 +44,6 @@ class AnthropicWrapper:
     def resolver(trace_id: str, _args: Sequence[Any], kwargs: Dict[str, Any], response: Optional[Message]) -> Optional[Any]:
         if response:
             if len(response.content) > 1:
-                from anthropic.types.beta.tools import ToolUseBlock
-
                 output_list = []
                 for content in response.content:
                     if isinstance(content, TextBlock):
@@ -185,7 +184,10 @@ class AnthropicWrapper:
         if isinstance(chunk, MessageStartEvent):
             info_from_response["input_tokens"] = chunk.message.usage.input_tokens
         elif isinstance(chunk, ContentBlockDeltaEvent):
-            accumulator["content"].append(chunk.delta.text)
+            if isinstance(chunk.delta, InputJSONDelta):
+                accumulator["content"].append(chunk.delta.partial_json)
+            else:
+                accumulator["content"].append(chunk.delta.text)
             if not info_from_response.get("first_token_timestamp"):
                 info_from_response["first_token_timestamp"] = timezone_aware_now()
         elif isinstance(chunk, MessageDeltaEvent):
