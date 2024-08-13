@@ -1,4 +1,5 @@
-from typing import Any, Callable, Mapping, Tuple
+import logging
+from typing import Any, Callable, Mapping, Tuple, List
 
 import contextvars
 from json import JSONDecodeError
@@ -12,6 +13,9 @@ from parea.helpers import gen_trace_id
 from parea.schemas import EvaluationResult, UpdateLog
 from parea.utils.trace_integrations.wrapt_utils import CopyableFunctionWrapper
 from parea.utils.trace_utils import logger_update_record, trace_data, trace_insert
+from parea.utils.universal_encoder import json_dumps
+
+logger = logging.getLogger()
 
 instructor_trace_id = contextvars.ContextVar("instructor_trace_id", default="")
 instructor_val_err_count = contextvars.ContextVar("instructor_val_err_count", default=0)
@@ -50,14 +54,11 @@ def report_instructor_validation_errors() -> None:
         score=instructor_val_err_count.get(),
         reason=reason,
     )
-    last_child_trace_id = trace_data.get()[instructor_trace_id.get()].children[-1]
-    trace_insert(
-        {
-            "scores": [instructor_score],
-            "configuration": trace_data.get()[last_child_trace_id].configuration,
-        },
-        instructor_trace_id.get(),
-    )
+    trace_update_dict = {"scores": [instructor_score]}
+    if children := trace_data.get()[instructor_trace_id.get()].children:
+        last_child_trace_id = children[-1]
+        trace_update_dict["configuration"] = trace_data.get()[last_child_trace_id].configuration
+    trace_insert(trace_update_dict, instructor_trace_id.get())
     instructor_trace_id.set("")
     instructor_val_err_count.set(0)
     instructor_val_errs.set([])
@@ -82,11 +83,20 @@ class _RetryWrapper:
             trace_name = "instructor"
             if "response_model" in kwargs and kwargs["response_model"] and hasattr(kwargs["response_model"], "__name__"):
                 trace_name = kwargs["response_model"].__name__
+
+            def fn_transform_generator_outputs(items: List) -> str:
+                try:
+                    return json_dumps(items[-1])
+                except Exception as e:
+                    logger.warning(f"Failed to serialize generator output: {e}", exc_info=e)
+                    return ""
+
             return trace(
                 name=trace_name,
                 overwrite_trace_id=trace_id,
                 overwrite_inputs=inputs,
                 metadata=metadata,
+                fn_transform_generator_outputs=fn_transform_generator_outputs
             )(
                 wrapped
             )(*args, **kwargs)
