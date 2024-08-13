@@ -17,17 +17,24 @@ p.wrap_anthropic_client(aclient)
 
 
 def anthropic_sync(create_kwargs):
-    message = client.beta.tools.messages.create(**create_kwargs)
+    message = client.messages.create(**create_kwargs)
     print(message.content)
 
 
+def anthropic_sync_stream(create_kwargs):
+    message = client.messages.create(stream=True, **create_kwargs)
+    for m in message:
+        print(m)
+
+
 async def async_anthropic(create_kwargs):
-    message = await aclient.beta.tools.messages.create(**create_kwargs)
+    message = await aclient.messages.create(**create_kwargs)
     print(message.content)
 
 
 if __name__ == "__main__":
     anthropic_sync(single_tool_use)
+    anthropic_sync_stream(single_tool_use)
     anthropic_sync(multiple_tool_use)
     anthropic_sync(missing_information)
     # asyncio.run(async_anthropic(single_tool_use))
