@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional, Union
 
+import json
 import math
 from enum import Enum
 
@@ -67,6 +68,36 @@ class Log:
     output_tokens: Optional[int] = 0
     total_tokens: Optional[int] = 0
     cost: Optional[float] = 0.0
+
+    def convert_to_jsonl_row_for_finetuning(self) -> dict:
+        """Converts the trace log to a row in the finetuning jsonl format."""
+        jsonl_row = {"messages": [m.to_dict() for m in self.configuration.messages]}
+        output = self.output
+        try:
+            tool_calls = json.loads(output)
+            tools = self.configuration.functions
+            # if 'arguments' is in the output, it was actually a function call
+            if "arguments" in tool_calls:
+                function_call = tool_calls[0] if isinstance(tool_calls, List) else tool_calls
+                function_call["arguments"] = json.dumps(function_call["arguments"])
+                assistant_response = {
+                    "role": "assistant",
+                    "function_call": function_call,
+                }
+                jsonl_row["functions"] = tools
+            else:
+                tool_calls = tool_calls if isinstance(tool_calls, List) else [tool_calls]
+                for tool_call in tool_calls:
+                    tool_call["arguments"] = json.dumps(tool_call["arguments"])
+                assistant_response = {
+                    "role": "assistant",
+                    "tool_calls": tool_calls,
+                }
+                jsonl_row["tools"] = [{"type": "function", "function": tool} for tool in tools]
+        except json.JSONDecodeError:
+            assistant_response = {"role": "assistant", "content": output}
+        jsonl_row["messages"].append(assistant_response)
+        return jsonl_row
 
 
 @define
