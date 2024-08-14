@@ -6,7 +6,9 @@ import sys
 from functools import lru_cache, wraps
 
 import tiktoken
+from openai import NotGiven
 from openai import __version__ as openai_version
+from pydantic._internal._model_construction import ModelMetaclass
 
 from parea.constants import ALL_NON_AZURE_MODELS_INFO, AZURE_MODEL_INFO, TURN_OFF_PAREA_EVAL_LOGGING
 from parea.parea_logger import parea_logger
@@ -220,9 +222,12 @@ def _format_function_call(response_message) -> str:
 
 def _resolve_functions(kwargs):
     if "functions" in kwargs:
-        return kwargs.get("functions", [])
+        f = kwargs.get("functions", [])
+        return None if isinstance(f, NotGiven) else f
     elif "tools" in kwargs:
         tools = kwargs["tools"]
+        if isinstance(tools, NotGiven):
+            return None
         if isinstance(tools, list):
             return [d.get("function", {}) for d in tools]
 
@@ -234,19 +239,27 @@ def _resolve_functions(kwargs):
 def _kwargs_to_llm_configuration(kwargs, model=None) -> LLMInputs:
     functions = _resolve_functions(kwargs)
     function_call_default = "auto" if functions else None
+    function_call = kwargs.get("function_call", function_call_default) or kwargs.get("tool_choice", function_call_default)
+    response_format = kwargs.get("response_format", None)
+    response_format = {"type": "json_schema", "json_schema": str(response_format)} if isinstance(response_format, ModelMetaclass) else response_format
+    temp = kwargs.get("temperature", 1.0)
+    max_length = kwargs.get("max_tokens", None)
+    top_p = kwargs.get("top_p", 1.0)
+    frequency_penalty = kwargs.get("frequency_penalty", 0.0)
+    presence_penalty = kwargs.get("presence_penalty", 0.0)
     return LLMInputs(
         model=model or kwargs.get("model", None),
         provider="openai",
         messages=_convert_oai_messages(kwargs.get("messages", None)),
         functions=functions,
-        function_call=kwargs.get("function_call", function_call_default) or kwargs.get("tool_choice", function_call_default),
+        function_call=None if isinstance(function_call, NotGiven) else function_call,
         model_params=ModelParams(
-            temp=kwargs.get("temperature", 1.0),
-            max_length=kwargs.get("max_tokens", None),
-            top_p=kwargs.get("top_p", 1.0),
-            frequency_penalty=kwargs.get("frequency_penalty", 0.0),
-            presence_penalty=kwargs.get("presence_penalty", 0.0),
-            response_format=kwargs.get("response_format", None),
+            temp=None if isinstance(temp, NotGiven) else temp,
+            max_length=None if isinstance(max_length, NotGiven) else max_length,
+            top_p=None if isinstance(top_p, NotGiven) else top_p,
+            frequency_penalty=None if isinstance(frequency_penalty, NotGiven) else frequency_penalty,
+            presence_penalty=None if isinstance(presence_penalty, NotGiven) else presence_penalty,
+            response_format=response_format,
         ),
     )
 
@@ -302,7 +315,11 @@ def _compute_cost(prompt_tokens: int, completion_tokens: int, model: str) -> flo
 
 def _process_response(response, model_inputs, trace_id):
     response_message = response.choices[0].message
-    if response_message.content:
+    if response_message.finish_reason == "content_filter":
+        trace_insert({"error": "Error: The content was filtered due to policy violations."}, trace_id)
+    if hasattr(response_message, "refusal"):
+        completion = response_message.refusal
+    elif response_message.content:
         completion = response_message.content
     else:
         completion = _format_function_call(response_message)

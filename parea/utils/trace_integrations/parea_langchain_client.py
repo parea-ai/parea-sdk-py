@@ -1,7 +1,6 @@
-from typing import Any, Dict, List, Optional, Union, cast
-
 import datetime
 import uuid
+from typing import Any, Dict, List, Optional, Union, cast
 
 from langchain_core.tracers.schemas import Run
 
@@ -14,6 +13,7 @@ class PareaLangchainClient:
     created: List[RunLikeDict] = []
     updated: List[RunLikeDict] = []
     _langchain_to_parea_root_data: Dict[str, Dict[str, str]] = {}
+    _log_sample_rate: Optional[float] = 1.0
 
     def __init__(
         self,
@@ -22,6 +22,7 @@ class PareaLangchainClient:
         metadata: Optional[Dict[str, Any]] = None,
         end_user_identifier: Optional[str] = None,
         deployment_id: Optional[str] = None,
+        log_sample_rate: Optional[float] = 1.0,
     ) -> None:
         self.project_uuid: Optional[str] = parea_logger.get_project_uuid()
         self._session_id = session_id
@@ -29,6 +30,7 @@ class PareaLangchainClient:
         self._metadata = metadata
         self._end_user_identifier = end_user_identifier
         self._deployment_id = deployment_id
+        self._log_sample_rate = log_sample_rate
 
     def create_run(self, *args, **kwargs) -> None:
         pass
@@ -150,4 +152,5 @@ class PareaLangchainClient:
         run["trace_id"] = data.get("root_trace_id", run["trace_id"])
         run["project_uuid"] = self.project_uuid
         run["experiment_uuid"] = data.get("experiment_uuid")
+        run["_log_sample_rate"] = self._log_sample_rate
         return run

@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
-
 import logging
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from langchain_core.tracers import LangChainTracer
@@ -29,11 +28,12 @@ class PareaAILangchainTracer(LangChainTracer):
         metadata: Optional[Dict[str, Any]] = None,
         end_user_identifier: Optional[str] = None,
         deployment_id: Optional[str] = None,
+        log_sample_rate: Optional[float] = 1.0,
         **kwargs: Any,
     ) -> None:
         """Initialize the Parea tracer."""
         super().__init__(**kwargs)
-        self.client = PareaLangchainClient(session_id, tags, metadata, end_user_identifier, deployment_id)
+        self.client = PareaLangchainClient(session_id, tags, metadata, end_user_identifier, deployment_id, log_sample_rate)
         self.is_streaming = False
 
     def _persist_run(self, run: Run) -> None:

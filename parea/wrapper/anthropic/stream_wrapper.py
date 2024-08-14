@@ -3,7 +3,7 @@ from __future__ import annotations
 from types import TracebackType
 from typing import Callable
 
-from anthropic import AsyncMessageStreamManager, MessageStreamManager, Stream
+from anthropic import AsyncMessageStreamManager, AsyncStream, MessageStreamManager, Stream
 from anthropic.types import Message
 
 
@@ -16,8 +16,8 @@ class AnthropicStreamWrapper:
         self._info_from_response = info_from_response
 
     def __getattr__(self, attr):
-        # delegate attribute access to the original async_stream
-        return getattr(self._async_stream, attr)
+        # delegate attribute access to the original stream
+        return getattr(self._stream, attr) if hasattr(self._stream, attr) else None
 
     def __iter__(self):
         for chunk in self._stream:
@@ -28,7 +28,7 @@ class AnthropicStreamWrapper:
 
 
 class AnthropicAsyncStreamWrapper:
-    def __init__(self, stream: Stream, accumulator, info_from_response, update_accumulator_streaming, final_processing_and_logging):
+    def __init__(self, stream: AsyncStream, accumulator, info_from_response, update_accumulator_streaming, final_processing_and_logging):
         self._stream = stream
         self._final_processing_and_logging = final_processing_and_logging
         self._update_accumulator_streaming = update_accumulator_streaming
@@ -37,7 +37,7 @@ class AnthropicAsyncStreamWrapper:
 
     def __getattr__(self, attr):
         # delegate attribute access to the original async_stream
-        return getattr(self._async_stream, attr)
+        return getattr(self._stream, attr) if hasattr(self._stream, attr) else None
 
     async def __aiter__(self):
         async for chunk in self._stream:

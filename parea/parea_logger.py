@@ -1,7 +1,6 @@
-from typing import Optional
-
 import json
 import logging
+from typing import Optional
 
 from attrs import asdict, define, field
 from cattrs import structure
@@ -35,10 +34,12 @@ class PareaLogger:
         if not self._project_uuid:
             self._project_uuid = self._create_or_get_project(self._project_name or "default").uuid
         try:
+            if not self._project_uuid:
+                self._project_uuid = self._create_or_get_project(self._project_name or "default").uuid
             return self._project_uuid
         except Exception as e:
             logger.error(f"PareaLogger: Error getting project uuid for project {self._project_name}: {e}")
-            return None
+            raise
 
     def _create_or_get_project(self, name: str) -> CreateGetProjectResponseSchema:
         r = self._client.request(
@@ -67,7 +68,7 @@ class PareaLogger:
 
     async def arecord_log(self, data: TraceLog) -> None:
         data = serialize_metadata_values(data)
-        data.project_uuid = self._project_uuid
+        data.project_uuid = self._get_project_uuid()
         await self._client.request_async(
             "POST",
             LOG_ENDPOINT,
@@ -85,7 +86,7 @@ class PareaLogger:
         self._client.request(
             "POST",
             VENDOR_LOG_ENDPOINT.format(vendor=vendor.value),
-            data=json.loads(data),  # uuid is not serializable
+            data=json.loads(data),
         )
 
     async def arecord_vendor_log(self, data: bytes, vendor: TraceIntegrations) -> None:

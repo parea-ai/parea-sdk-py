@@ -113,7 +113,7 @@ class Wrapper:
                 trace_name=self.name,
                 end_user_identifier=None,
                 session_id=None,
-                metadata=None,
+                metadata=kwargs.pop("metadata", None),
                 target=None,
                 tags=None,
                 inputs=template_inputs,

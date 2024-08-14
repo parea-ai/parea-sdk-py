@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, TypedDict, TypeVar, Union
-
 import copy
 import datetime
 import functools
@@ -10,6 +8,7 @@ import logging
 import re
 import uuid
 from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, TypedDict, TypeVar, Union
 
 from orjson import orjson
 
@@ -156,14 +155,20 @@ def _dumps_json_single(obj: Any, default: Optional[Callable[[Any], Any]] = None)
 
 def _dumps_json(obj: Any, depth: int = 0, serialize_py: bool = True) -> bytes:
     """Serialize an object to a JSON formatted string.
+<<<<<<< HEAD
 
+=======
+>>>>>>> main
     Parameters
     ----------
     obj : Any
         The object to serialize.
     default : Callable[[Any], Any] or None, default=None
         The default function to use for serialization.
+<<<<<<< HEAD
 
+=======
+>>>>>>> main
     Returns:
     -------
     str

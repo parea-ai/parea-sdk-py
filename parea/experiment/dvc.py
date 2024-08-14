@@ -9,7 +9,7 @@ def is_git_repo():
     try:
         subprocess.check_output(["git", "branch"], stderr=subprocess.STDOUT)
         return True
-    except subprocess.CalledProcessError:
+    except:
         return False
 
 

@@ -58,6 +58,13 @@ class OpenAIWrapper:
                 original_methods = {"chat.completions.create": module_client.chat.completions.create}
             except openai.OpenAIError:
                 original_methods = {}
+
+            try:
+                latest_methods = {"beta.chat.completions.parse": module_client.beta.chat.completions.parse}
+                original_methods.update(latest_methods)
+            except Exception:
+                pass
+
         return list(original_methods.keys())
 
     def init(self, log: Callable, cache: Cache = None, module_client=openai):
@@ -103,7 +110,7 @@ class OpenAIWrapper:
         trace_data.get()[trace_id].output_tokens = output_tokens
         trace_data.get()[trace_id].total_tokens = total_tokens
         trace_data.get()[trace_id].cost = _compute_cost(input_tokens, output_tokens, model)
-        trace_data.get()[trace_id].output = output
+        trace_data.get()[trace_id].output = json_dumps(output) if not isinstance(output, str) else output
         return response
 
     def gen_resolver(self, trace_id: str, _args: Sequence[Any], kwargs: Dict[str, Any], response, final_log):
@@ -269,7 +276,15 @@ class OpenAIWrapper:
 
     @staticmethod
     def _get_output(result: Any, model: Optional[str] = None) -> str:
-        if not isinstance(result, OpenAIObject) and isinstance(result, dict):
+        PARSED_CHAT_COMPLETION_AVAILABLE = False
+        try:
+            from openai.types.chat import ParsedChatCompletionMessage
+
+            PARSED_CHAT_COMPLETION_AVAILABLE = True
+        except ImportError:
+            ParsedChatCompletionMessage = None
+
+        if isinstance(result, dict):
             result = convert_to_openai_object(
                 {
                     "choices": [
@@ -282,7 +297,9 @@ class OpenAIWrapper:
                 }
             )
         response_message = result.choices[0].message
-        if not response_message.get("content", None) if is_old_openai else not response_message.content:
+        if PARSED_CHAT_COMPLETION_AVAILABLE and isinstance(response_message, ParsedChatCompletionMessage):
+            completion = json_dumps(response_message.parsed) if response_message.parsed else ""
+        elif not response_message.get("content", None) if is_old_openai else not response_message.content:
             completion = OpenAIWrapper._format_function_call(response_message)
         else:
             completion = response_message.content
