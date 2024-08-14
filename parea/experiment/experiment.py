@@ -155,6 +155,9 @@ async def experiment(
                 except Exception as e:
                     status = ExperimentStatus.FAILED
                     if stop_on_error:
+                        import traceback
+
+                        traceback.print_exc()
                         print(f"\nExperiment stopped due to an error (note you can deactivate this behavior by setting stop_on_error=False): {str(e)}\n")
                         for task in tasks:
                             task.cancel()
