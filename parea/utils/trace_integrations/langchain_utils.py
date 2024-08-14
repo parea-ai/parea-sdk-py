@@ -156,24 +156,12 @@ def _dumps_json_single(obj: Any, default: Optional[Callable[[Any], Any]] = None)
 
 def _dumps_json(obj: Any, depth: int = 0, serialize_py: bool = True) -> bytes:
     """Serialize an object to a JSON formatted string.
-    <<<<<<< HEAD
-
-    =======
-    >>>>>>> main
-        Parameters
-        ----------
-        obj : Any
-            The object to serialize.
-        default : Callable[[Any], Any] or None, default=None
-            The default function to use for serialization.
-    <<<<<<< HEAD
-
-    =======
-    >>>>>>> main
-        Returns:
-        -------
-        str
-            The JSON formatted string.
+    Args:
+        obj: The object to serialize.
+        depth: The current depth of the serialization.
+        serialize_py: Whether to serialize Python objects.
+    Returns:
+        The serialized JSON formatted string.
     """
     return _dumps_json_single(obj, functools.partial(_serialize_json, depth=depth, serialize_py=serialize_py))
 
