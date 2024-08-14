@@ -33,6 +33,14 @@ async def amain():
     )
 
 
+def stream_main():
+    for chunk in llm.stream(
+        "what color is the sky?",
+        config={"callbacks": [handler]},
+    ):
+        print(chunk.content, end=" ", flush=True)
+
+
 if __name__ == "__main__":
-    print(main())
+    # print(main())
     print(asyncio.run(amain()))

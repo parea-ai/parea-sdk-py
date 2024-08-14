@@ -1,30 +1,26 @@
-from typing import Any, Dict, List, Optional, Union
+from __future__ import annotations
+
+from typing import Any, Dict, List, Optional
 
 import logging
 from uuid import UUID
 
-from langchain_core.tracers import BaseTracer
-from langchain_core.tracers.schemas import ChainRun, LLMRun, Run, ToolRun
+from langchain_core.tracers import LangChainTracer
+from langchain_core.tracers.schemas import Run
 
+from parea import get_current_trace_id, get_root_trace_id
 from parea.helpers import is_logging_disabled
-from parea.parea_logger import parea_logger
 from parea.schemas import UpdateTraceScenario
-from parea.schemas.log import TraceIntegrations
-from parea.utils.trace_utils import fill_trace_data, get_current_trace_id, get_root_trace_id
+from parea.utils.trace_integrations.parea_langchain_client import PareaLangchainClient
+from parea.utils.trace_utils import fill_trace_data, trace_data
 
 logger = logging.getLogger()
 
 
-class PareaAILangchainTracer(BaseTracer):
+class PareaAILangchainTracer(LangChainTracer):
+    """Base callback handler that can be used to handle callbacks from langchain."""
+
     parent_trace_id: UUID
-    _parea_root_trace_id: str = None
-    _parea_parent_trace_id: str = None
-    _session_id: Optional[str] = None
-    _tags: List[str] = []
-    _metadata: Dict[str, Any] = {}
-    _end_user_identifier: Optional[str] = None
-    _deployment_id: Optional[str] = None
-    _log_sample_rate: Optional[float] = 1.0
 
     def __init__(
         self,
@@ -35,51 +31,49 @@ class PareaAILangchainTracer(BaseTracer):
         deployment_id: Optional[str] = None,
         log_sample_rate: Optional[float] = 1.0,
         **kwargs: Any,
-    ):
+    ) -> None:
+        """Initialize the Parea tracer."""
         super().__init__(**kwargs)
-        self._session_id = session_id
-        self._end_user_identifier = end_user_identifier
-        self._deployment_id = deployment_id
-        self._log_sample_rate = log_sample_rate
-        if tags:
-            self._tags = tags
-        if metadata:
-            self._metadata = metadata
+        self.client = PareaLangchainClient(session_id, tags, metadata, end_user_identifier, deployment_id, log_sample_rate)
+        self.is_streaming = False
 
-    def _persist_run(self, run: Union[Run, LLMRun, ChainRun, ToolRun]) -> None:
+    def _persist_run(self, run: Run) -> None:
         if is_logging_disabled():
             return
         try:
-            self.parent_trace_id = run.id
-            # using .dict() since langchain Run class currently set to Pydantic v1
-            data = run.dict()
-            data["_parea_root_trace_id"] = self._parea_root_trace_id or None
-            data["_session_id"] = self._session_id
-            data["_tags"] = self._tags
-            data["_metadata"] = self._metadata
-            data["_end_user_identifier"] = self._end_user_identifier
-            data["_deployment_id"] = self._deployment_id
-            data["_log_sample_rate"] = self._log_sample_rate
-            # check if run has an attribute execution order
-            if (hasattr(run, "execution_order") and run.execution_order == 1) or run.parent_run_id is None:
-                data["_parea_parent_trace_id"] = self._parea_parent_trace_id or None
-            parea_logger.record_vendor_log(data, TraceIntegrations.LANGCHAIN)
+            self._set_parea_root_and_parent_trace_id(run)
+            if self.is_streaming:
+                self.client.stream_log(run)
+            else:
+                self.client.log()
         except Exception as e:
-            logger.exception(f"Error occurred while logging langchain run: {e}", stack_info=True)
+            logger.exception(f"Error persisting langchain run: {e}")
+
+    def _on_run_create(self, run: Run) -> None:
+        try:
+            self.client.create_run_trace(run)
+        except Exception as e:
+            logger.exception(f"Error creating langchain run: {e}")
+
+    def _on_run_update(self, run: Run) -> None:
+        try:
+            self.client.update_run_trace(run)
+        except Exception as e:
+            logger.exception(f"Error updating langchain run: {e}")
+
+    def on_llm_new_token(self, *args: Any, **kwargs: Any):
+        super().on_llm_new_token(*args, **kwargs)
+        self.is_streaming = True
+
+    def _set_parea_root_and_parent_trace_id(self, run) -> None:
+        self.parent_trace_id = run.id
+        if (hasattr(run, "execution_order") and run.execution_order == 1) or run.parent_run_id is None:
+            parea_root_trace_id = get_root_trace_id()
+            if parent_trace_id := get_current_trace_id():
+                _experiment_uuid = trace_data.get()[parent_trace_id].experiment_uuid
+                fill_trace_data(str(run.id), {"parent_trace_id": parent_trace_id}, UpdateTraceScenario.LANGCHAIN_CHILD)
+                langchain_to_parea_root_data = {run.id: {"parent_trace_id": parent_trace_id, "root_trace_id": parea_root_trace_id, "experiment_uuid": _experiment_uuid}}
+                self.client.set_parea_root_and_parent_trace_id(langchain_to_parea_root_data)
 
     def get_parent_trace_id(self) -> UUID:
         return self.parent_trace_id
-
-    def _on_run_create(self, run: Run) -> None:
-        if (hasattr(run, "execution_order") and run.execution_order == 1) or run.parent_run_id is None:
-            # need to check if any traces already exist
-            self._parea_root_trace_id = get_root_trace_id()
-            if parent_trace_id := get_current_trace_id():
-                self._parea_parent_trace_id = parent_trace_id
-                fill_trace_data(str(run.id), {"parent_trace_id": parent_trace_id}, UpdateTraceScenario.LANGCHAIN_CHILD)
-
-    def _on_llm_end(self, run: Run) -> None:
-        self._persist_run(run)
-
-    def _on_chain_end(self, run: Run) -> None:
-        self._persist_run(run)

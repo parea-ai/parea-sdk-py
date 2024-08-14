@@ -156,16 +156,12 @@ def _dumps_json_single(obj: Any, default: Optional[Callable[[Any], Any]] = None)
 
 def _dumps_json(obj: Any, depth: int = 0, serialize_py: bool = True) -> bytes:
     """Serialize an object to a JSON formatted string.
-    Parameters
-    ----------
-    obj : Any
-        The object to serialize.
-    default : Callable[[Any], Any] or None, default=None
-        The default function to use for serialization.
+    Args:
+        obj: The object to serialize.
+        depth: The current depth of the serialization.
+        serialize_py: Whether to serialize Python objects.
     Returns:
-    -------
-    str
-        The JSON formatted string.
+        The serialized JSON formatted string.
     """
     return _dumps_json_single(obj, functools.partial(_serialize_json, depth=depth, serialize_py=serialize_py))
 
@@ -198,8 +194,10 @@ def _middle_copy(val: T, memo: Dict[int, Any], max_depth: int = 4, _depth: int =
 
 def deepish_copy(val: T) -> T:
     """Deep copy a value with a compromise for uncopyable objects.
+
     Args:
         val: The value to be deep copied.
+
     Returns:
         The deep copied value.
     """

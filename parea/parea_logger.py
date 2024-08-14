@@ -1,18 +1,15 @@
-from typing import Any, Dict, Optional
+from typing import Optional
 
 import json
 import logging
-import os
 
 from attrs import asdict, define, field
 from cattrs import structure
 
 from parea.api_client import HTTPClient
-from parea.constants import PAREA_OS_ENV_EXPERIMENT_UUID
 from parea.helpers import serialize_metadata_values
 from parea.schemas.log import TraceIntegrations
 from parea.schemas.models import CreateGetProjectResponseSchema, TraceLog, UpdateLog
-from parea.utils.trace_integrations.langchain_utils import _dumps_json
 from parea.utils.universal_encoder import json_dumps
 
 logger = logging.getLogger()
@@ -34,7 +31,9 @@ class PareaLogger:
         self._project_uuid = project_uuid
         self._project_name = project_name
 
-    def _get_project_uuid(self) -> str:
+    def get_project_uuid(self) -> Optional[str]:
+        if not self._project_uuid:
+            self._project_uuid = self._create_or_get_project(self._project_name or "default").uuid
         try:
             if not self._project_uuid:
                 self._project_uuid = self._create_or_get_project(self._project_name or "default").uuid
@@ -61,7 +60,7 @@ class PareaLogger:
 
     def record_log(self, data: TraceLog) -> None:
         data = serialize_metadata_values(data)
-        data.project_uuid = self._get_project_uuid()
+        data.project_uuid = self.get_project_uuid()
         self._client.request(
             "POST",
             LOG_ENDPOINT,
@@ -83,26 +82,20 @@ class PareaLogger:
                 data.target = json_dumps(data.target)
             self.record_log(data)
 
-    def record_vendor_log(self, data: Dict[str, Any], vendor: TraceIntegrations) -> None:
-        data["project_uuid"] = self._get_project_uuid()
-        if experiment_uuid := os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None):
-            data["experiment_uuid"] = experiment_uuid
+    def record_vendor_log(self, data: bytes, vendor: TraceIntegrations) -> None:
         self._client.add_integration("langchain")
         self._client.request(
             "POST",
             VENDOR_LOG_ENDPOINT.format(vendor=vendor.value),
-            data=json.loads(_dumps_json(data)),  # uuid is not serializable
+            data=json.loads(data),
         )
 
-    async def arecord_vendor_log(self, data: Dict[str, Any], vendor: TraceIntegrations) -> None:
-        data["project_uuid"] = self._get_project_uuid()
-        if experiment_uuid := os.getenv(PAREA_OS_ENV_EXPERIMENT_UUID, None):
-            data["experiment_uuid"] = experiment_uuid
+    async def arecord_vendor_log(self, data: bytes, vendor: TraceIntegrations) -> None:
         self._client.add_integration("langchain")
         await self._client.request_async(
             "POST",
             VENDOR_LOG_ENDPOINT.format(vendor=vendor.value),
-            data=json.loads(_dumps_json(data)),  # uuid is not serializable
+            data=json.loads(data),  # uuid is not serializable
         )
 
 
