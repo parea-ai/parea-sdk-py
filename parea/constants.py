@@ -161,6 +161,11 @@ OPENAI_MODEL_INFO: Dict[str, Dict[str, Union[float, int, Dict[str, int]]]] = {
         "completion": 0.6,
         "token_limit": {"max_completion_tokens": 4096, "max_prompt_tokens": 128000},
     },
+    "chatgpt-4o-latest": {
+        "prompt": 5.0,
+        "completion": 10.0,
+        "token_limit": {"max_completion_tokens": 16384, "max_prompt_tokens": 128000},
+    },
 }
 AZURE_MODEL_INFO: Dict[str, Dict[str, Union[float, int, Dict[str, int]]]] = {
     "gpt-35-turbo": {
