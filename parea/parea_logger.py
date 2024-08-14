@@ -1,6 +1,7 @@
+from typing import Optional
+
 import json
 import logging
-from typing import Optional
 
 from attrs import asdict, define, field
 from cattrs import structure
