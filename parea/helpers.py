@@ -11,7 +11,8 @@ from attr import asdict, fields_dict
 from cattrs import GenConverter
 
 from parea.constants import ADJECTIVES, NOUNS, TURN_OFF_PAREA_LOGGING
-from parea.schemas.models import Completion, PaginatedTraceLogsResponse, TraceLog, TraceLogTree, UpdateLog
+from parea.schemas import EvaluationResult, LLMInputs, Message, ModelParams, Role
+from parea.schemas.models import Completion, PaginatedTraceLogsResponse, TraceLog, TraceLogAnnotationSchema, TraceLogCommentSchema, TraceLogImage, TraceLogTree, UpdateLog
 from parea.utils.universal_encoder import json_dumps
 
 
@@ -104,13 +105,54 @@ def structure_trace_log_from_api(d: dict) -> TraceLogTree:
     converter.register_structure_hook(float, structure_float_or_none)
     converter.register_structure_hook(Optional[float], structure_float_or_none)
 
+    # Register structure hooks for nested types
+    converter.register_structure_hook(Role, lambda obj, _: Role(obj))
+    converter.register_structure_hook(Message, lambda obj, _: Message(**obj))
+    converter.register_structure_hook(LLMInputs, lambda obj, _: LLMInputs(**obj))
+    converter.register_structure_hook(EvaluationResult, lambda obj, _: EvaluationResult(**obj))
+    converter.register_structure_hook(TraceLogImage, lambda obj, _: TraceLogImage(**obj))
+    converter.register_structure_hook(TraceLogCommentSchema, lambda obj, _: TraceLogCommentSchema(**obj))
+    converter.register_structure_hook(TraceLogAnnotationSchema, lambda obj, _: TraceLogAnnotationSchema(**obj))
+
+    def structure_model_params(obj, _):
+        valid_params = {k: v for k, v in obj.items() if k in fields_dict(ModelParams)}
+        return ModelParams(**valid_params)
+
+    converter.register_structure_hook(ModelParams, structure_model_params)
+
+    def structure_llm_inputs(obj, _):
+        if obj is None:
+            return None
+        kwargs = {}
+        for key, value in obj.items():
+            if key == "messages":
+                kwargs[key] = [converter.structure(msg, Message) for msg in value]
+            elif key == "model_params":
+                kwargs[key] = converter.structure(value, ModelParams)
+            else:
+                kwargs[key] = value
+        return LLMInputs(**kwargs)
+
+    converter.register_structure_hook(LLMInputs, structure_llm_inputs)
+
     def structure_trace_log_tree(data, _):
         kwargs = {}
         for key, value in data.items():
             if key == "children_logs":
                 kwargs["children_logs"] = [structure_trace_log_tree(child, TraceLogTree) for child in value]
+            elif key == "configuration":
+                kwargs["configuration"] = converter.structure(value, LLMInputs)
+            elif key == "scores":
+                kwargs["scores"] = [converter.structure(score, EvaluationResult) for score in value]
+            elif key == "images":
+                kwargs["images"] = [converter.structure(image, TraceLogImage) for image in value]
+            elif key == "comments":
+                kwargs["comments"] = [converter.structure(comment, TraceLogCommentSchema) for comment in value]
+            elif key == "annotations":
+                kwargs["annotations"] = {int(k): {sk: converter.structure(sv, TraceLogAnnotationSchema) for sk, sv in v.items()} for k, v in value.items()}
             elif key in fields_dict(TraceLogTree):
-                kwargs[key] = value
+                field_type = fields_dict(TraceLogTree)[key].type
+                kwargs[key] = converter.structure(value, field_type)
         return TraceLogTree(**kwargs)
 
     converter.register_structure_hook(TraceLogTree, structure_trace_log_tree)
