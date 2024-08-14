@@ -6,7 +6,6 @@ import logging
 import os
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
-from copy import deepcopy
 from functools import partial
 from urllib.parse import quote
 
@@ -119,7 +118,11 @@ async def experiment(
         len_test_cases = len(data) if isinstance(data, list) else 0
 
     if n_trials > 1:
-        data = duplicate_dicts(data, n_trials)
+        try:
+            data = duplicate_dicts(data, n_trials)
+        except TypeError as e:
+            logger.error(f"Error duplicating input data. You need to manually duplicate input data and set n_trials=1. \n", exc_info=e)
+            raise e
         len_test_cases = len(data) if isinstance(data, list) else 0
         print(f"Running {n_trials} trials of the experiment \n")
 
@@ -129,14 +132,12 @@ async def experiment(
 
     async def limit_concurrency(sample):
         async with sem:
-            sample_copy = deepcopy(sample)
-            target = sample_copy.pop("target", None)
-            return await func(_parea_target_field=target, **sample_copy)
+            kwargs = {"_parea_target_field": sample.get("target", None), **{k: v for k, v in sample.items() if k != "target"}}
+            return await func(**kwargs)
 
     def limit_concurrency_sync(sample):
-        sample_copy = deepcopy(sample)
-        target = sample_copy.pop("target", None)
-        return func(_parea_target_field=target, **sample_copy)
+        kwargs = {"_parea_target_field": sample.get("target", None), **{k: v for k, v in sample.items() if k != "target"}}
+        return func(**kwargs)
 
     if inspect.iscoroutinefunction(func):
         tasks = [asyncio.ensure_future(limit_concurrency(sample)) for sample in data]
@@ -158,7 +159,7 @@ async def experiment(
                         import traceback
 
                         traceback.print_exc()
-                        print(f"\nExperiment stopped due to an error (note you can deactivate this behavior by setting stop_on_error=False): {str(e)}\n")
+                        logger.error(f"\nExperiment stopped due to an error (note you can deactivate this behavior by setting stop_on_error=False): {str(e)}\n", exc_info=e)
                         for task in tasks:
                             task.cancel()
                     else:
