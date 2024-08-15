@@ -241,24 +241,26 @@ class Experiment:
                     raise ValueError("Metadata should not contain a key 'Dataset' when using uploaded dataset (data is a string).")
                 self.metadata["Dataset"] = self.data
 
-    def _gen_run_name_if_none(self, name: Optional[str]):
+    def _gen_run_name_if_none(self, name: Optional[str], prefix: Optional[str] = None):
         if not name:
-            self.run_name = gen_random_name()
+            new_name = gen_random_name()
+            self.run_name = f"{prefix}_{new_name}" if prefix else new_name
             print(f"Run name set to: {self.run_name}, since a name was not provided.")
         else:
-            self.run_name = name
+            self.run_name = f"{prefix}_{name}" if prefix else name
 
-    def run(self, run_name: Optional[str] = None) -> None:
+    def run(self, run_name: Optional[str] = None, prefix: Optional[str] = None) -> None:
         """Run the experiment and save the results to DVC.
         param run_name: The run name of the experiment. This name must be unique across experiment runs.
         If no run name is provided a memorable name will be generated automatically.
+        param prefix: The prefix to use for the run name. This is useful for grouping runs together.
         """
         if is_logging_disabled():
             print("Parea logging is turned off. Experiment can't be run without logging. Set env var TURN_OFF_PAREA_LOGGING to False to enable.")
             return
 
         try:
-            self._gen_run_name_if_none(run_name)
+            self._gen_run_name_if_none(run_name, prefix)
             experiment_schema: ExperimentSchema = self.p.create_experiment(CreateExperimentRequest(name=self.experiment_name, run_name=self.run_name, metadata=self.metadata))
             self.experiment_uuid = experiment_schema.uuid
             self.experiment_stats = asyncio.run(
@@ -281,17 +283,18 @@ class Experiment:
             traceback.print_exc()
             print(f"Error running experiment: {e}")
 
-    async def arun(self, run_name: Optional[str] = None) -> None:
+    async def arun(self, run_name: Optional[str] = None, prefix: Optional[str] = None) -> None:
         """Run the experiment and save the results to DVC.
         param run_name: The run name of the experiment. This name must be unique across experiment runs.
         If no run name is provided a memorable name will be generated automatically.
+        param prefix: The prefix to use for the run name. This is useful for grouping runs together.
         """
         if is_logging_disabled():
             print("Parea logging is turned off. Experiment can't be run without logging. Set env var TURN_OFF_PAREA_LOGGING to False to enable.")
             return
 
         try:
-            self._gen_run_name_if_none(run_name)
+            self._gen_run_name_if_none(run_name, prefix)
             experiment_schema: ExperimentSchema = await self.p.acreate_experiment(
                 CreateExperimentRequest(name=self.experiment_name, run_name=self.run_name, metadata=self.metadata)
             )
