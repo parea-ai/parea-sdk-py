@@ -22,7 +22,7 @@ def fetch_trace_logs_as_jsonl() -> List[Dict]:
         filter_value="personalize_email_german",
         filter_operator=FilterOperator.EQUALS,
         page_size=page_size,
-        status='success',
+        status="success",
     )
     initial_fetch = p.get_trace_logs(query_params)
     fetched_trace_logs = initial_fetch.results
