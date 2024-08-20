@@ -87,8 +87,10 @@ class Log:
                 jsonl_row["functions"] = tools
             else:
                 tool_calls = tool_calls if isinstance(tool_calls, List) else [tool_calls]
-                for tool_call in tool_calls:
-                    tool_call["arguments"] = json.dumps(tool_call["arguments"])
+                tool_calls = [
+                    {"id": tool["id"], "type": "function", "function": {"name": tool["function"]["name"], "arguments": json.dumps(tool["function"]["arguments"])}}
+                    for tool in tool_calls
+                ]
                 assistant_response = {
                     "role": "assistant",
                     "tool_calls": tool_calls,
