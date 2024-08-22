@@ -65,6 +65,10 @@ class HTTPClient:
             if e.response.status_code == 422:
                 # update the error message to include the validation errors
                 e.args = (f"{e.args[0]}: {e.response.json()}",)
+            logger.error(
+                f"HTTP error {e.response.status_code} for {e.request.method} with: {e.args}",
+                extra={"request_data": data, "request_params": params},
+            )
             raise
         except httpx.TimeoutException as e:
             logger.error(
@@ -100,6 +104,10 @@ class HTTPClient:
             if e.response.status_code == 422:
                 # update the error message to include the validation errors
                 e.args = (f"{e.args[0]}: {e.response.json()}",)
+            logger.error(
+                f"HTTP error {e.response.status_code} for {e.request.method} with: {e.args}",
+                extra={"request_data": data, "request_params": params},
+            )
             raise
         except httpx.TimeoutException as e:
             logger.error(
@@ -137,6 +145,10 @@ class HTTPClient:
             if e.response.status_code == 422:
                 # update the error message to include the validation errors
                 e.args = (f"{e.args[0]}: {e.response.json()}",)
+            logger.error(
+                f"HTTP error {e.response.status_code} for {e.request.method} with: {e.args}",
+                extra={"request_data": data, "request_params": params},
+            )
             raise
         except httpx.TimeoutException as e:
             logger.error(
@@ -174,6 +186,10 @@ class HTTPClient:
             if e.response.status_code == 422:
                 # update the error message to include the validation errors
                 e.args = (f"{e.args[0]}: {e.response.json()}",)
+            logger.error(
+                f"HTTP error {e.response.status_code} for {e.request.method} with: {e.args}",
+                extra={"request_data": data, "request_params": params},
+            )
             raise
         except httpx.TimeoutException as e:
             logger.error(
