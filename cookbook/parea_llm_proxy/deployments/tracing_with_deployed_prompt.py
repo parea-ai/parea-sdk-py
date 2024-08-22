@@ -8,7 +8,7 @@ from attrs import asdict
 from dotenv import load_dotenv
 
 from parea import Parea, get_current_trace_id, trace
-from parea.schemas import Completion, CompletionResponse, LLMInputs, Message, Role
+from parea.schemas import Completion, CompletionResponse, FeedbackRequest, LLMInputs, Message, Role
 
 load_dotenv()
 
@@ -101,10 +101,10 @@ if __name__ == "__main__":
         additional_description="Provide a concise, few sentence argument on why coffee is good for you.",
     )
     print(json.dumps(asdict(result2), indent=2))
-    # p.record_feedback(
-    #     FeedbackRequest(
-    #         trace_id=trace_id,
-    #         score=0.7,  # 0.0 (bad) to 1.0 (good)
-    #         target="Coffee is wonderful. End of story.",
-    #     )
-    # )
+    p.record_feedback(
+        FeedbackRequest(
+            trace_id=trace_id,
+            score=0.7,  # 0.0 (bad) to 1.0 (good)
+            target="Coffee is wonderful. End of story.",
+        )
+    )
