@@ -82,6 +82,7 @@ class FeedbackRequest:
     trace_id: Optional[str] = None
     name: Optional[str] = None
     target: Optional[str] = None
+    comment: Optional[str] = None
 
 
 @define
