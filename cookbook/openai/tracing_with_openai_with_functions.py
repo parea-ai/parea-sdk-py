@@ -3,9 +3,9 @@ from typing import Tuple
 import json
 import os
 
-import openai
 import requests
 from dotenv import load_dotenv
+from openai import OpenAI
 
 from parea import Parea, get_current_trace_id, trace
 from parea.schemas import FeedbackRequest
@@ -14,7 +14,7 @@ load_dotenv()
 
 API_KEY = os.getenv("GOOGLE_PLACES_API_KEY")
 PLACES_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
-openai.api_key = os.getenv("OPENAI_API_KEY")
+openai = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 p = Parea(api_key=os.getenv("PAREA_API_KEY"))
 p.wrap_openai_client(openai)
