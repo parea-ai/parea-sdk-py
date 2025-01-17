@@ -34,7 +34,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.8.1"
-httpx = ">=0.25.0"
+httpx = ">=0.28.1"
 python-dotenv = "^1.0.1"
 poetry-plugin-dotenv = "^2.2.3"
 pyupgrade = "^3.9.0"
@@ -44,10 +44,10 @@ pysbd = "^0.3.4"
 cattrs = ">=22.1.0"
 tiktoken = ">=0.5.2"
 levenshtein = "^0.25.0"
-pytz = "^2024.1"
-wrapt = "^1.16.0"
+pytz = "^2024.2"
+wrapt = "^1.17.2"
 tenacity = "*"
-orjson = "^3.10.7"
+orjson = "^3.10.14"
 
 [tool.poetry.group.dev.dependencies]
 bandit = "^1.7.1"
