@@ -31,7 +31,6 @@ classifiers = [
 ]
 
 
-
 [tool.poetry.dependencies]
 python = "^3.8.1"
 httpx = ">=0.28.1"
