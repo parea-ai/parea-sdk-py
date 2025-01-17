@@ -55,10 +55,12 @@ def report_instructor_validation_errors() -> None:
         reason=reason,
     )
     trace_update_dict = {"scores": [instructor_score]}
-    if children := trace_data.get()[instructor_trace_id.get()].children:
-        last_child_trace_id = children[-1]
-        trace_update_dict["configuration"] = trace_data.get()[last_child_trace_id].configuration
-    trace_insert(trace_update_dict, instructor_trace_id.get())
+    i_trace_id = instructor_trace_id.get()
+    if i_trace_id:
+        if children := trace_data.get()[i_trace_id].children:
+            last_child_trace_id = children[-1]
+            trace_update_dict["configuration"] = trace_data.get()[last_child_trace_id].configuration
+        trace_insert(trace_update_dict, i_trace_id)
     instructor_trace_id.set("")
     instructor_val_err_count.set(0)
     instructor_val_errs.set([])
@@ -99,7 +101,11 @@ class _RetryWrapper:
             reasons = get_reasons(e)
             instructor_val_errs.set(instructor_val_errs.get() + reasons)
 
-            report_instructor_validation_errors()
+            try:
+                report_instructor_validation_errors()
+            except Exception as e:
+                logger.error(f"Failed to report instructor validation errors: {e}", exc_info=e)
+
             current_log = trace_data.get()[trace_id]
             logger_update_record(UpdateLog(trace_id=trace_id, field_name_to_value_map={"scores": current_log.scores}, root_trace_id=current_log.root_trace_id))
 
@@ -120,5 +126,8 @@ class _AttemptManagerExitWrapper:
                 reasons = get_reasons(args[1])
                 instructor_val_errs.set(instructor_val_errs.get() + reasons)
             else:
-                report_instructor_validation_errors()
+                try:
+                    report_instructor_validation_errors()
+                except Exception as e:
+                    logger.error(f"Failed to report instructor validation errors: {e}", exc_info=e)
         return wrapped(*args, **kwargs)

@@ -6,7 +6,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry]
 name = "parea-ai"
 packages = [{ include = "parea" }]
-version = "0.2.215"
+version = "0.2.216"
 description = "Parea python sdk"
 readme = "README.md"
 authors = ["joel-parea-ai <joel@parea.ai>"]
@@ -31,23 +31,22 @@ classifiers = [
 ]
 
 
-
 [tool.poetry.dependencies]
-python = "^3.8.1"
-httpx = ">=0.25.0"
+python = ">=3.9,<4.0"
+httpx = ">=0.28.1"
 python-dotenv = "^1.0.1"
-poetry-plugin-dotenv = "^2.2.3"
-pyupgrade = "^3.9.0"
+poetry-plugin-dotenv = "^2.6.1"
+pyupgrade = "^3.19.1"
 contextvars = "^2.4"
 openai = "*"
 pysbd = "^0.3.4"
 cattrs = ">=22.1.0"
 tiktoken = ">=0.5.2"
-levenshtein = "^0.25.0"
-pytz = "^2024.1"
-wrapt = "^1.16.0"
+levenshtein = "^0.26.1"
+pytz = "^2024.2"
+wrapt = "^1.17.2"
 tenacity = "*"
-orjson = "^3.10.7"
+orjson = "^3.10.14"
 
 [tool.poetry.group.dev.dependencies]
 bandit = "^1.7.1"
@@ -65,14 +64,14 @@ coverage = "^7.2.7"
 coverage-badge = "^1.1.0"
 pytest-html = "^4.1.1"
 pytest-cov = "^4.1.0"
-langchain = "^0.1.20"
-langchainhub = "^0.1.14"
+langchain = "*"
+langchainhub = "*"
 faiss-cpu = "^1.7.4"
 langchain-experimental = "*"
 langchain-community = "*"
 langchain-core = "*"
 anthropic = "^0.25.1"
-ragas = "^0.0.22"
+ragas = "*"
 html2text = "^2020.1.16"
 boto3 = "^1.34.6"
 langchain-openai = "*"
