@@ -92,7 +92,7 @@ class Parea:
             return self._project.uuid
         except Exception as e:
             logger.error(f"Parea: Error getting project UUID for project {self.project_name}: {e}")
-            raise
+            return self._project.uuid if self._project else ""
 
     def wrap_openai_client(self, client: "OpenAI", integration: Optional[str] = None) -> None:
         """Only necessary for instance client with OpenAI version >= 1.0.0"""
