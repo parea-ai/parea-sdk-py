@@ -6,7 +6,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry]
 name = "parea-ai"
 packages = [{ include = "parea" }]
-version = "0.2.216"
+version = "0.2.217"
 description = "Parea python sdk"
 readme = "README.md"
 authors = ["joel-parea-ai <joel@parea.ai>"]
@@ -49,6 +49,7 @@ tenacity = "*"
 orjson = "^3.10.14"
 
 [tool.poetry.group.dev.dependencies]
+instructor = "^1.7.2"
 bandit = "^1.7.1"
 black = { version = "^24.1.0", allow-prereleases = true }
 darglint = "^1.8.1"

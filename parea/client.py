@@ -75,6 +75,8 @@ class Parea:
     def __attrs_post_init__(self):
         self._client.set_api_key(self.api_key)
         parea_logger.set_client(self._client)
+        if not self._project:
+            self._get_project_uuid()
 
         if not self.api_key:
             logger.warning("No API key found. Parea client will not be able to send data to the Parea API.")
