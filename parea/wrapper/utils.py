@@ -66,18 +66,18 @@ def _num_tokens_from_messages(messages, model="gpt-3.5-turbo-0613", is_azure: bo
     if (
         model
         in {
-            "gpt-3.5-turbo",
-            "gpt-3.5-turbo-1106",
             "gpt-3.5-turbo-0125",
+            "gpt-3.5-turbo-1106",
             "gpt-3.5-turbo-0613",
             "gpt-3.5-turbo-16k-0613",
             "gpt-4-0314",
             "gpt-4-32k-0314",
             "gpt-4-0613",
             "gpt-4-32k-0613",
-            "gpt-4-turbo-preview",
             "gpt-4-1106-preview",
             "gpt-4-0125-preview",
+            "gpt-4o-mini-2024-07-18",
+            "gpt-4o-2024-08-06",
         }
         or is_azure
     ):
@@ -86,6 +86,22 @@ def _num_tokens_from_messages(messages, model="gpt-3.5-turbo-0613", is_azure: bo
     elif model == "gpt-3.5-turbo-0301":
         tokens_per_message = 4  # every message follows <|start|>{role/name}\n{content}<|end|>\n
         tokens_per_name = -1  # if there's a name, the role is omitted
+    elif "gpt-3.5-turbo" in model:
+        print("Warning: gpt-3.5-turbo may update over time. Returning num tokens assuming gpt-3.5-turbo-0125.")
+        return _num_tokens_from_messages(messages, model="gpt-3.5-turbo-0125")
+    elif model in ["gpt-4o-mini", "o1-mini", "o1-mini-2024-09-12"]:
+        print("Warning: gpt-4o-mini may update over time. Returning num tokens assuming gpt-4o-mini-2024-07-18.")
+        return _num_tokens_from_messages(messages, model="gpt-4o-mini-2024-07-18")
+    elif model in [
+        "gpt-4o",
+        "chatgpt-4o-latest",
+        "o1-preview",
+        "o1-preview-2024-09-12",
+        "o1",
+        "o1-2024-12-17",
+    ]:
+        print("Warning: gpt-4o and gpt-4o-mini may update over time. Returning num tokens assuming gpt-4o-2024-08-06.")
+        return _num_tokens_from_messages(messages, model="gpt-4o-2024-08-06")
     elif "gpt-4" in model:
         print("Warning: gpt-4 may update over time. Returning num tokens assuming gpt-4-0613.")
         return _num_tokens_from_messages(messages, model="gpt-4-0613")
@@ -100,7 +116,8 @@ def _num_tokens_from_messages(messages, model="gpt-3.5-turbo-0613", is_azure: bo
     for message in messages:
         num_tokens += tokens_per_message
         for key, value in message.items():
-            num_tokens += _safe_encode(encoding, value)
+            value_str = value if isinstance(value, str) else json.dumps(value)
+            num_tokens += _safe_encode(encoding, value_str)
             if key == "name":
                 num_tokens += tokens_per_name
     num_tokens += 3  # every reply is primed with <|start|>assistant<|message|>
