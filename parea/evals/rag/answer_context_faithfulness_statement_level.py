@@ -96,9 +96,10 @@ Answer:
         final_answer = "Final verdict for each statement in order:".lower()
         if final_answer in verdicts:
             verdicts = verdicts[verdicts.find(final_answer) + len(final_answer) :]
-            yes_count = sum(0 if "yes" in answer else 1 for answer in verdicts.strip().split(".") if answer != "")
-            return yes_count / len(statements_formatted)
+            yes_count = sum(1 if "yes" in answer else 0 for answer in verdicts.strip().split(".") if answer.strip())
         else:
-            return max(0, output.count("verdict: no")) / len(statements_formatted)
+            # No summary line: fall back to counting the per-statement verdicts in the grader's response.
+            yes_count = max(0, len(statements_formatted) - verdicts.count("verdict: no"))
+        return min(1.0, yes_count / len(statements_formatted))
 
     return answer_context_faithfulness_statement_level
