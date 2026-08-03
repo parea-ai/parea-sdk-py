@@ -1,8 +1,9 @@
 from typing import Callable, List, Optional, Union
 
 import re
+import warnings
 
-from parea.evals.utils import call_openai, get_context
+from parea.evals.utils import call_openai, get_context, safe_json_loads
 from parea.schemas.log import Log
 
 
@@ -78,13 +79,17 @@ classification:
             temperature=0.0,
             is_azure=is_azure,
         )
-        pattern = r"\[\s*\{.*?\}(\s*,\s*\{.*?\})*\s*\]"
-        match = re.search(pattern, classification.replace("\n", ""))
-        if match:
-            response = eval(classification)
-            numerator = sum(item.get("Attributed").lower() == "yes" for item in response)
-            return numerator / len(response)
-        else:
-            return 0.0
+        pattern = r"\[\s*\{.*?\}(?:\s*,\s*\{.*?\})*\s*\]"
+        match = re.search(pattern, classification, flags=re.DOTALL)
+        if not match:
+            warnings.warn(f"Could not find a classification in the model response: {classification}")
+            return None
+
+        response = safe_json_loads(match.group(0))
+        if not isinstance(response, list) or not response:
+            return None
+
+        numerator = sum(1 for item in response if isinstance(item, dict) and str(item.get("Attributed", "")).lower() == "yes")
+        return numerator / len(response)
 
     return percent_target_supported_by_context
