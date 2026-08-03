@@ -113,8 +113,9 @@ def dcg(y_true, ranking):
     """Discounted cumulative gain (DCG) at rank k."""
     import numpy as np
 
-    y_true = np.asarray(y_true)
-    ranking = np.asarray(ranking)
+    # float, so that 2**rel doesn't silently overflow int64 once there are >62 relevance grades
+    y_true = np.asarray(y_true, dtype=float)
+    ranking = np.asarray(ranking, dtype=int)
     rel = y_true[ranking]
     gains = 2**rel - 1
     discounts = np.log2(np.arange(len(ranking)) + 2)
@@ -128,6 +129,8 @@ def ndcg(y_true, ranking):
     k = len(ranking)
     best_ranking = np.argsort(y_true)[::-1]
     best = dcg(y_true, best_ranking[:k])
+    if best == 0:
+        return 0.0
     return dcg(y_true, ranking) / best
 
 

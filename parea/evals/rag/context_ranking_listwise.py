@@ -1,5 +1,7 @@
 from typing import Callable, List, Optional
 
+import re
+
 from parea.evals.utils import call_openai, get_context, ndcg
 from parea.schemas.log import Log
 
@@ -64,9 +66,18 @@ def context_ranking_listwise_factory(
             is_azure=is_azure,
         )
 
-        s = sorted_list.strip("[] ").replace(" ", "")
-        number_strings = s.split(",")
-        return [int(num) for num in number_strings if num.isdigit()]
+        # The prompt numbers the passages starting at 1, and models answer either with bare numbers
+        # ("3, 1, 2") or with the passage names ("Passage3, Passage1, Passage2"), so pull out every
+        # integer and shift it back to a 0-based index.
+        ranked = []
+        for match in re.findall(r"\d+", sorted_list):
+            index = int(match) - 1
+            if 0 <= index < len(contexts) and index not in ranked:
+                ranked.append(index)
+        # Passages the model dropped or mangled keep their original relative order at the end, so
+        # that the result is always a permutation of the contexts.
+        ranked += [i for i in range(len(contexts)) if i not in ranked]
+        return ranked
 
     def progressive_reranking(query: str, contexts: List[str]) -> List[int]:
         """Returns the indices of the contexts in the order of their relevance (most relevant to least relevant)."""
@@ -74,7 +85,7 @@ def context_ranking_listwise_factory(
             return listwise_reranking(query, contexts)
 
         window_size = n_contexts_to_rank
-        window_step = n_contexts_to_rank // 2
+        window_step = max(1, n_contexts_to_rank // 2)
         offset = len(contexts) - window_size
 
         indices = list(range(len(contexts)))
@@ -101,10 +112,20 @@ def context_ranking_listwise_factory(
         question = log.inputs[question_field]
         contexts = get_context(log, context_fields, True)
 
+        if not contexts:
+            return 0.0
+
         reranked_indices = progressive_reranking(question, contexts)
 
         if ranking_measurement == "ndcg":
-            return ndcg(reranked_indices, list(range(len(contexts))))
+            # `reranked_indices[j]` is the index of the j-th most relevant context, so the context the
+            # reranker put first gets the highest relevance grade. The retriever proposed the contexts
+            # in the order 0, 1, ..., n-1, and NDCG measures how well that order agrees with the grades.
+            n_contexts = len(contexts)
+            relevance = [0] * n_contexts
+            for rank, context_index in enumerate(reranked_indices):
+                relevance[context_index] = n_contexts - rank
+            return ndcg(relevance, list(range(n_contexts)))
         else:
             raise NotImplementedError
 
