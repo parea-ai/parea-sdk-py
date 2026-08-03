@@ -28,14 +28,7 @@ def context_ranking_pointwise_factory(
     Returns:
         Callable[[Log], float]: A function that takes a log as input and returns a score between 0 and 1 indicating
         how well the retrieved context is ranked by their relevancy.
-
-    Raises:
-        ImportError: If numpy is not installed.
     """
-    try:
-        import numpy as np
-    except ImportError:
-        raise ImportError("Please install numpy to use this metric.")
 
     def context_ranking_pointwise(log: Log) -> float:
         """Quantifies if the retrieved context is ranked by their relevancy"""
@@ -76,8 +69,13 @@ verification:""",
             verifications.append(response)
 
         if ranking_measurement == "average_precision":
-            response = [safe_json_loads(item) for item in verifications]
-            response = [int("yes" in resp.get("verdict", " ").lower()) if resp.get("verdict") else np.nan for resp in response]
+            # A missing or unparseable verdict counts as "not relevant"; using NaN here would poison
+            # the sums below and silently turn the whole score into NaN.
+            response = []
+            for item in verifications:
+                parsed = safe_json_loads(item)
+                verdict = parsed.get("verdict") if isinstance(parsed, dict) else None
+                response.append(int("yes" in str(verdict).lower()) if verdict else 0)
             denominator = sum(response) + 1e-10
             numerator = sum([(sum(response[: i + 1]) / (i + 1)) * response[i] for i in range(len(response))])
             return numerator / denominator
