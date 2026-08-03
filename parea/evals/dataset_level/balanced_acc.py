@@ -11,7 +11,9 @@ def balanced_acc_factory(score_name: str):
         total = defaultdict(int)
         for log in logs:
             if (eval_result := log.get_score(score_name)) is not None:
-                correct[log.target] += int(eval_result.score)
+                # Threshold instead of truncating: int(0.9) is 0, which would report a class as
+                # entirely wrong even though every one of its scores was almost perfect.
+                correct[log.target] += int(eval_result.score >= 0.5)
                 total[log.target] += 1
         recalls = [correct[key] / total[key] for key in correct]
 
