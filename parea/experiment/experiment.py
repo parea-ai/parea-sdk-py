@@ -55,11 +55,15 @@ def async_wrapper(fn, **kwargs):
     return asyncio.run(fn(**kwargs))
 
 
-def apply_dataset_eval(dataset_level_evals: List[Callable]) -> List[EvaluationResult]:
-    root_traces = []
-    for trace in trace_data.get().values():
-        if trace.root_trace_id == trace.trace_id:
-            root_traces.append(trace)
+def apply_dataset_eval(dataset_level_evals: List[Callable], experiment_uuid: str) -> List[EvaluationResult]:
+    """Run dataset-level evals on root traces that belong to this experiment.
+
+    Trace logs live in a process-wide map that is not cleared between runs, so
+    filtering by experiment_uuid is required. Without it, a later experiment in
+    the same process silently scores leftover traces from earlier experiments
+    and from unrelated tracing.
+    """
+    root_traces = [trace for trace in trace_data.get().values() if trace.root_trace_id == trace.trace_id and trace.experiment_uuid == experiment_uuid]
 
     results = []
     for dataset_level_eval in dataset_level_evals:
@@ -179,7 +183,7 @@ async def experiment(
         pbar.update(total_evals)
 
     if dataset_level_evals:
-        dataset_level_eval_results = apply_dataset_eval(dataset_level_evals)
+        dataset_level_eval_results = apply_dataset_eval(dataset_level_evals, experiment_uuid)
     else:
         dataset_level_eval_results = []
 
